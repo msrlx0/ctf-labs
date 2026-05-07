@@ -31,7 +31,7 @@ Nao use comandos, payloads ou tecnicas deste lab contra terceiros, sistemas reai
 
 Somente:
 
-- `http://localhost:8080`
+- `http://localhost:8088`
 - containers criados pelo `docker compose` desta pasta
 
 O MySQL fica acessivel apenas pela rede interna do Docker Compose. A porta `3306` nao e publicada no host.
@@ -84,7 +84,7 @@ sudo docker compose down -v
 ## URL
 
 ```text
-http://localhost:8080
+http://localhost:8088
 ```
 
 ## Credenciais Legitimas Para Fluxo Normal
@@ -105,12 +105,12 @@ O usuario `admin` existe no banco, mas o caminho esperado para obter sessao admi
 Os comandos completos de validacao do release candidate estao em [../VALIDATION.md](../VALIDATION.md).
 
 ```bash
-curl -i http://localhost:8080
-curl -i http://localhost:8080/status
-curl -i http://localhost:8080/robots.txt
-curl -i http://localhost:8080/dev.txt
-curl -i "http://localhost:8080/download?file=public-info.txt"
-curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
+curl -i http://localhost:8088
+curl -i http://localhost:8088/status
+curl -i http://localhost:8088/robots.txt
+curl -i http://localhost:8088/dev.txt
+curl -i "http://localhost:8088/download?file=public-info.txt"
+curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
 ```
 
 ## Checklist Final do Instrutor

