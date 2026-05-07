@@ -12,6 +12,12 @@ A aplicacao alvo se chama **MiniBank Internal Portal** e simula um portal intern
 - Pessoas praticando enumeracao web basica
 - Instrutores validando fluxo de coleta de evidencias e relatorio tecnico
 
+## Orientação de enumeração
+
+Antes de tentar explorar falhas, o aluno deve começar pela enumeração web básica. Observe com calma a página inicial, o código-fonte HTML, arquivos comuns de orientação para crawlers, links visíveis, formulários, parâmetros de URL, mensagens de erro e respostas HTTP.
+
+O objetivo é seguir pistas deixadas pela própria aplicação, e não adivinhar rotas aleatórias.
+
 ## Aviso de Uso Autorizado
 
 Este lab foi criado somente para execucao local e autorizada.
@@ -124,3 +130,18 @@ curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
 - [ ] `/account/2` mostra `FLAG{idor_capturada}`
 - [ ] Path traversal mostra `FLAG{path_traversal_capturada}`
 - [ ] `grep` de flags retorna somente as 4 flags finais
+
+## Orientação de enumeração
+
+Antes de tentar explorar qualquer falha, comece pela enumeração web básica. Observe com atenção:
+
+- página inicial
+- código-fonte HTML
+- arquivos comuns de orientação para crawlers
+- links visíveis
+- formulários
+- parâmetros de URL
+- mensagens de erro
+- respostas HTTP
+
+O objetivo é seguir pistas deixadas pela própria aplicação, e não adivinhar rotas aleatórias.
