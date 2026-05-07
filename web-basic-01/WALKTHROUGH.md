@@ -16,13 +16,13 @@ O foco desta fase sao quatro vulnerabilidades principais com flag:
 Entre na pasta do lab:
 
 ```bash
-cd web-basic-01
+cd ~/ctf-labs/web-basic-01
 ```
 
 Suba os containers:
 
 ```bash
-docker compose up --build
+sudo docker compose up --build
 ```
 
 O esperado e o Compose iniciar:
@@ -409,7 +409,38 @@ Correcao:
 - garantir que o caminho final continue dentro do diretorio permitido
 - evitar aceitar paths arbitrarios do usuario
 
-## 10. Lista final de flags
+## 10. Validacao rapida do release candidate
+
+Antes de entregar o lab para uma turma, valide se apenas as quatro flags finais aparecem no projeto. O comando completo de `grep` esta documentado em `../VALIDATION.md`.
+
+O resultado esperado e:
+
+```text
+FLAG{credencial_exposta_capturada}
+FLAG{idor_capturada}
+FLAG{path_traversal_capturada}
+FLAG{sqli_capturada}
+```
+
+Com a aplicacao em execucao, valide as pistas e o downloader:
+
+Suba a aplicacao:
+
+```bash
+cd ~/ctf-labs/web-basic-01
+sudo docker compose up --build
+```
+
+```bash
+curl -i http://localhost:8080
+curl -i http://localhost:8080/health
+curl -i http://localhost:8080/robots.txt
+curl -i http://localhost:8080/dev-notes.txt
+curl -i "http://localhost:8080/download?file=public-info.txt"
+curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
+```
+
+## 11. Lista final de flags
 
 As quatro flags reais do `web-basic-01` sao:
 
@@ -420,9 +451,9 @@ As quatro flags reais do `web-basic-01` sao:
 
 Nao ha flag propria em `/admin`, `/backup`, `/health`, `robots.txt` ou comentario HTML.
 
-## 11. Checklist de validacao manual
+## 12. Checklist de validacao manual
 
-- [ ] `docker compose up --build` sobe sem erro dentro de `web-basic-01`
+- [ ] `sudo docker compose up --build` sobe sem erro dentro de `web-basic-01`
 - [ ] `http://localhost:8080` responde
 - [ ] `/health` responde e serve como pista
 - [ ] `/robots.txt` existe e lista rotas suspeitas
@@ -437,7 +468,7 @@ Nao ha flag propria em `/admin`, `/backup`, `/health`, `robots.txt` ou comentari
 - [ ] `/download?file=../../../../flags/final.txt` mostra `FLAG{path_traversal_capturada}`
 - [ ] somente as quatro flags oficiais foram coletadas
 
-## 12. Como corrigir cada vulnerabilidade
+## 13. Como corrigir cada vulnerabilidade
 
 SQL Injection:
 

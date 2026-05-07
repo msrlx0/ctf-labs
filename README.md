@@ -1,40 +1,18 @@
 # ctf-labs
 
-Colecao de laboratorios CTF locais e intencionalmente vulneraveis para treinamento de pentest autorizado, validacao de agentes de IA e estudo pratico de seguranca web.
+Indice de laboratorios CTF locais e intencionalmente vulneraveis para treinamento de pentest autorizado.
 
-## Aviso
-
-Use estes laboratorios somente em ambiente local ou explicitamente autorizado.
-
-Nao use tecnicas, payloads ou fluxos destes labs contra terceiros, sistemas reais ou qualquer ambiente fora do escopo permitido.
+Cada pasta deste repositorio representa um CTF independente, com seu proprio `docker-compose.yml`, documentacao, walkthrough e solucao.
 
 ## Labs
 
 | Lab | Tema | Porta | Status |
 |---|---|---:|---|
-| [web-basic-01](./web-basic-01/) | Web basico: SQLi, IDOR, credencial vazada e path traversal | 8080 | Fase 1.0.1 |
+| [web-basic-01](./web-basic-01/) | Fundamentos web: SQLi, IDOR, credencial exposta e path traversal | 8080 | Release candidate |
 
-## Como usar
+## Uso Autorizado
 
-Cada lab tem seu proprio `docker-compose.yml` e deve ser executado a partir da pasta do lab.
+Use estes laboratorios somente em ambiente local ou explicitamente autorizado.
 
-Exemplo:
-
-```bash
-cd web-basic-01
-docker compose up --build
-```
-
-Depois acesse:
-
-```text
-http://localhost:8080
-```
-
-## Escopo geral
-
-O escopo autorizado de cada lab e descrito no respectivo `README.md`. Por padrao, considere autorizado somente:
-
-- `localhost` nas portas publicadas pelo lab
-- containers criados pelo `docker compose` daquele lab
+Nao execute payloads, tecnicas ou fluxos destes labs contra terceiros, sistemas reais ou qualquer ambiente fora do escopo permitido.
 

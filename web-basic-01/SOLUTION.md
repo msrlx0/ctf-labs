@@ -11,8 +11,8 @@ http://localhost:8080
 ## 1. Subir e validar
 
 ```bash
-cd web-basic-01
-docker compose up --build
+cd ~/ctf-labs/web-basic-01
+sudo docker compose up --build
 ```
 
 Validar:
@@ -157,6 +157,8 @@ FLAG{path_traversal_capturada}
 Motivo tecnico: `/download?file=` usa `path.join(filesDir, requestedFile)` e le o resultado sem validar se o caminho final ainda esta dentro de `/usr/src/app/files`.
 
 ## 7. Flags finais
+
+Valide as flags no repositorio usando o comando de `grep` documentado em `../VALIDATION.md`.
 
 - `FLAG{sqli_capturada}`
 - `FLAG{idor_capturada}`

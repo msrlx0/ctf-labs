@@ -1,20 +1,22 @@
 # web-basic-01
 
-## Descricao
+## Objetivo
 
-`web-basic-01` e o primeiro CTF web basico do repositorio `ctf-labs`.
+`web-basic-01` e um CTF web pequeno e local para treinar novos estagiarios em fundamentos de pentest web autorizado.
 
-A aplicacao se chama **MiniBank Internal Portal** e simula um portal bancario interno antigo, usado por funcionarios para consultar contas, relatorios e areas legadas.
+A aplicacao alvo se chama **MiniBank Internal Portal** e simula um portal interno antigo, com pistas de enumeracao e quatro vulnerabilidades principais.
 
-O objetivo e treinar enumeracao web e exploracao controlada de quatro vulnerabilidades principais.
+## Publico-Alvo
 
-## Aviso de uso autorizado/local
+- Novos estagiarios de seguranca
+- Pessoas praticando enumeracao web basica
+- Instrutores validando fluxo de coleta de evidencias e relatorio tecnico
+
+## Aviso de Uso Autorizado
 
 Este lab foi criado somente para execucao local e autorizada.
 
-Nao use os comandos, payloads ou tecnicas deste lab contra terceiros, sistemas reais ou ambientes sem permissao explicita.
-
-Todas as flags sao ficticias.
+Nao use comandos, payloads ou tecnicas deste lab contra terceiros, sistemas reais ou ambientes sem permissao explicita.
 
 ## Stack
 
@@ -25,7 +27,7 @@ Todas as flags sao ficticias.
 - MySQL
 - CSS simples
 
-## Escopo autorizado
+## Escopo Autorizado
 
 Somente:
 
@@ -34,7 +36,7 @@ Somente:
 
 O MySQL fica acessivel apenas pela rede interna do Docker Compose. A porta `3306` nao e publicada no host.
 
-## Vulnerabilidades principais
+## Vulnerabilidades Principais
 
 Este lab possui exatamente quatro vulnerabilidades principais com flag:
 
@@ -45,63 +47,80 @@ Este lab possui exatamente quatro vulnerabilidades principais com flag:
 | Credencial vazada em arquivo publico | `GET /dev-notes.txt` | `FLAG{credencial_exposta_capturada}` |
 | Path Traversal / LFI controlado | `GET /download?file=` | `FLAG{path_traversal_capturada}` |
 
-## Pistas de enumeracao
+## Pistas de Enumeracao
 
-Estas rotas e artefatos continuam existindo como pistas, mas nao possuem flag propria:
+Estas rotas e artefatos existem como pistas, mas nao possuem flag propria:
 
 - `/health`
 - `/robots.txt`
-- comentario HTML na pagina inicial
-- `/admin`
+- comentario HTML na home
+- `/dev-notes.txt`
 - `/backup`
+- `/download`
+- `/admin`
 
-## Como subir
+## Como Subir
 
 Dentro da pasta `web-basic-01`:
 
 ```bash
-docker compose up --build
+sudo docker compose up --build
 ```
 
-Para rodar em segundo plano:
+## Como Parar
 
 ```bash
-docker compose up -d --build
+sudo docker compose down
 ```
 
-Para parar:
+## Como Resetar o Banco
+
+O reset remove o volume do MySQL e recria os dados a partir de `db/init.sql` no proximo `up`.
 
 ```bash
-docker compose down
+sudo docker compose down -v
 ```
 
-## Como acessar
+## URL
 
 ```text
 http://localhost:8080
 ```
 
-## Credenciais legitimas para fluxo normal
+## Credenciais Legitimas Para Fluxo Normal
 
 - `joao` / `joao123`
 - `maria` / `maria123`
 - `auditor` / `audit2026`
 
-O usuario `admin` existe no banco, mas o caminho esperado para obter sessao admin e explorar a falha de SQL Injection no login.
-
-## Objetivos do aluno/agente
-
-- Enumerar rotas visiveis e pistas publicas
-- Identificar tecnologia e comportamento da aplicacao
-- Encontrar `robots.txt`, comentario HTML e `dev-notes.txt`
-- Explorar SQL Injection no login
-- Explorar IDOR em contas
-- Reutilizar credencial vazada para validar impacto
-- Explorar path traversal controlado
-- Coletar as quatro flags
-- Produzir relatorio tecnico com evidencias e recomendacoes
+O usuario `admin` existe no banco, mas o caminho esperado para obter sessao admin e identificar a falha no fluxo de login.
 
 ## Documentacao
 
-- [WALKTHROUGH.md](./WALKTHROUGH.md): passo a passo didatico com raciocinio, validacao, impacto e correcoes.
-- [SOLUTION.md](./SOLUTION.md): gabarito tecnico objetivo com comandos e flags.
+- [WALKTHROUGH.md](./WALKTHROUGH.md): passo a passo didatico com raciocinio, comandos, impacto e correcoes.
+- [SOLUTION.md](./SOLUTION.md): gabarito tecnico objetivo com rotas, acoes e flags.
+
+## Validacao
+
+Os comandos completos de validacao do release candidate estao em [../VALIDATION.md](../VALIDATION.md).
+
+```bash
+curl -i http://localhost:8080
+curl -i http://localhost:8080/health
+curl -i http://localhost:8080/robots.txt
+curl -i http://localhost:8080/dev-notes.txt
+curl -i "http://localhost:8080/download?file=public-info.txt"
+curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
+```
+
+## Checklist Final do Instrutor
+
+- [ ] Docker sobe sem erro
+- [ ] Home responde
+- [ ] `/health` responde
+- [ ] `/robots.txt` responde
+- [ ] `/dev-notes.txt` mostra credencial e flag
+- [ ] SQL Injection mostra `FLAG{sqli_capturada}`
+- [ ] `/account/2` mostra `FLAG{idor_capturada}`
+- [ ] Path traversal mostra `FLAG{path_traversal_capturada}`
+- [ ] `grep` de flags retorna somente as 4 flags finais
