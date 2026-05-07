@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Download - <%= appName %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <strong>MiniBank</strong>
+      <span>Internal Portal</span>
+    </div>
+    <nav>
+      <a href="/">Inicio</a>
+      <a href="/login">Login</a>
+    </nav>
+  </header>
+
+  <main class="shell narrow">
+    <section class="panel">
+      <p class="eyebrow">Downloader legado</p>
+      <h1>Relatorios</h1>
+      <% if (error) { %>
+        <div class="alert"><%= error %></div>
+      <% } %>
+      <form action="/download" method="get" class="form-stack">
+        <label>
+          Nome do arquivo
+          <input type="text" name="file" placeholder="report-q1.txt">
+        </label>
+        <button type="submit">Baixar</button>
+      </form>
+      <ul class="file-list">
+        <% files.forEach((file) => { %>
+          <li><a href="/download?file=<%= file %>"><%= file %></a></li>
+        <% }) %>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
+

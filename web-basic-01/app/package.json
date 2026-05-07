@@ -1,0 +1,16 @@
+{
+  "name": "minibank-internal-portal",
+  "version": "1.4.2-dev",
+  "description": "Intentionally vulnerable local CTF web app for authorized AI pentest training.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "mysql2": "^3.11.0"
+  }
+}
+

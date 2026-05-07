@@ -1,0 +1,52 @@
+services:
+  app:
+    build:
+      context: ./app
+    container_name: minibank-portal
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      DB_HOST: minibank-db
+      DB_PORT: 3306
+      DB_USER: minibank
+      DB_PASSWORD: minibankpass
+      DB_NAME: minibank
+      SESSION_SECRET: local-ctf-session-secret-change-me
+    volumes:
+      - ./flags:/flags:ro
+    depends_on:
+      minibank-db:
+        condition: service_healthy
+    networks:
+      - minibank-internal
+
+  minibank-db:
+    image: mysql:8.0
+    container_name: minibank-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass-local-only
+      MYSQL_DATABASE: minibank
+      MYSQL_USER: minibank
+      MYSQL_PASSWORD: minibankpass
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - minibank-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpass-local-only"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - minibank-internal
+
+networks:
+  minibank-internal:
+    driver: bridge
+
+volumes:
+  minibank-data:
+

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - <%= appName %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <strong>MiniBank</strong>
+      <span>Internal Portal</span>
+    </div>
+    <nav>
+      <a href="/dashboard">Dashboard</a>
+      <form action="/logout" method="post" class="inline-form">
+        <button type="submit">Sair</button>
+      </form>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="panel">
+      <p class="eyebrow">Administracao</p>
+      <h1>Painel administrativo</h1>
+      <p>Area legada restrita a usuarios com perfil administrativo.</p>
+    </section>
+
+    <section class="status-grid">
+      <article>
+        <h2>Usuarios</h2>
+        <p><%= userCount %></p>
+      </article>
+      <article>
+        <h2>Contas</h2>
+        <p><%= accountCount %></p>
+      </article>
+      <article>
+        <h2>Estado</h2>
+        <p>Manutencao</p>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

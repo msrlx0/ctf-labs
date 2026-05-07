@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backup - <%= appName %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <strong>MiniBank</strong>
+      <span>Internal Portal</span>
+    </div>
+    <nav>
+      <a href="/">Inicio</a>
+      <a href="/download">Downloader</a>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="panel">
+      <p class="eyebrow">Modulo legado</p>
+      <h1>Backups e relatorios</h1>
+      <p>Arquivos antigos disponiveis para auditoria interna.</p>
+      <p class="muted">Alguns relatorios antigos ainda podem ser recuperados pelo downloader legado.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Arquivos listados</h2>
+      <ul class="file-list">
+        <% files.forEach((file) => { %>
+          <li><a href="/download?file=<%= file %>"><%= file %></a></li>
+        <% }) %>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

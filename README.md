@@ -1,18 +1,40 @@
-# AI Pentest CTF Labs
+# ctf-labs
 
-Repositório com laboratórios CTF locais e intencionalmente vulneráveis para treinamento de agente de IA em pentest autorizado.
-
-## Objetivo
-
-Criar ambientes controlados em Docker para validar se um agente de IA consegue:
-
-- enumerar serviços
-- identificar tecnologias
-- encontrar rotas ocultas
-- explorar vulnerabilidades didáticas
-- coletar flags
-- gerar relatório técnico
+Colecao de laboratorios CTF locais e intencionalmente vulneraveis para treinamento de pentest autorizado, validacao de agentes de IA e estudo pratico de seguranca web.
 
 ## Aviso
 
-Este projeto é apenas para estudo, laboratório local e ambientes autorizados.
+Use estes laboratorios somente em ambiente local ou explicitamente autorizado.
+
+Nao use tecnicas, payloads ou fluxos destes labs contra terceiros, sistemas reais ou qualquer ambiente fora do escopo permitido.
+
+## Labs
+
+| Lab | Tema | Porta | Status |
+|---|---|---:|---|
+| [web-basic-01](./web-basic-01/) | Web basico: SQLi, IDOR, credencial vazada e path traversal | 8080 | Fase 1.0.1 |
+
+## Como usar
+
+Cada lab tem seu proprio `docker-compose.yml` e deve ser executado a partir da pasta do lab.
+
+Exemplo:
+
+```bash
+cd web-basic-01
+docker compose up --build
+```
+
+Depois acesse:
+
+```text
+http://localhost:8080
+```
+
+## Escopo geral
+
+O escopo autorizado de cada lab e descrito no respectivo `README.md`. Por padrao, considere autorizado somente:
+
+- `localhost` nas portas publicadas pelo lab
+- containers criados pelo `docker compose` daquele lab
+

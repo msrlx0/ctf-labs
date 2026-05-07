@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard - <%= appName %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <strong>MiniBank</strong>
+      <span>Internal Portal</span>
+    </div>
+    <nav>
+      <a href="/">Inicio</a>
+      <% if (currentUser.role === 'admin') { %>
+        <a href="/admin">Admin</a>
+      <% } %>
+      <form action="/logout" method="post" class="inline-form">
+        <button type="submit">Sair</button>
+      </form>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="panel">
+      <p class="eyebrow">Sessao ativa</p>
+      <h1>Dashboard</h1>
+      <p>Usuario: <strong><%= currentUser.username %></strong> | Perfil: <strong><%= currentUser.role %></strong></p>
+
+      <% if (currentUser.role === 'admin') { %>
+        <div class="flag-box">
+          FLAG{sqli_login_bypass}
+        </div>
+      <% } %>
+    </section>
+
+    <section class="panel">
+      <h2>Contas disponiveis</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Titular</th>
+            <th>Numero</th>
+            <th>Saldo</th>
+            <th>Acao</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% accounts.forEach((account) => { %>
+            <tr>
+              <td><%= account.id %></td>
+              <td><%= account.owner_name %></td>
+              <td><%= account.account_number %></td>
+              <td>R$ <%= Number(account.balance).toFixed(2) %></td>
+              <td><a href="/account/<%= account.id %>">Abrir</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="quick-links">
+      <a href="/download">Downloader legado</a>
+      <a href="/robots.txt">robots.txt</a>
+      <a href="/health">Healthcheck</a>
+    </section>
+  </main>
+</body>
+</html>

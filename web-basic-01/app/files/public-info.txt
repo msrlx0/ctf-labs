@@ -1,0 +1,5 @@
+MiniBank Internal Portal - Informacoes publicas
+
+Este arquivo existe para testes do downloader legado.
+Nao deve conter dados reais de clientes.
+

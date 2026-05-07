@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= appName %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <!-- legacy admin panel moved to /admin, check robots.txt before release -->
+  <header class="topbar">
+    <div>
+      <strong>MiniBank</strong>
+      <span>Internal Portal</span>
+    </div>
+    <nav>
+      <% if (currentUser) { %>
+        <a href="/dashboard">Dashboard</a>
+        <form action="/logout" method="post" class="inline-form">
+          <button type="submit">Sair</button>
+        </form>
+      <% } else { %>
+        <a href="/login">Login</a>
+      <% } %>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">Sistema legado interno</p>
+      <h1>MiniBank Internal Portal</h1>
+      <p>
+        Portal antigo para consulta de clientes, contas, backups e relatorios operacionais.
+        Ambiente local de treinamento autorizado.
+      </p>
+      <div class="actions">
+        <a class="button" href="/login">Entrar no portal</a>
+        <a class="button secondary" href="/health">Healthcheck</a>
+      </div>
+    </section>
+
+    <section class="status-grid">
+      <article>
+        <h2>Ambiente</h2>
+        <p>Desenvolvimento interno</p>
+      </article>
+      <article>
+        <h2>Versao</h2>
+        <p><%= appVersion %></p>
+      </article>
+      <article>
+        <h2>Modulo</h2>
+        <p>Contas e relatorios</p>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
+

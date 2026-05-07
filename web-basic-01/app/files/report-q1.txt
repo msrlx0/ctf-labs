@@ -1,0 +1,11 @@
+MiniBank Internal Portal - Relatorio Q1
+Classificacao: interno
+
+Resumo:
+- Migracao parcial do modulo de contas concluida.
+- Auditoria de acessos legados pendente.
+- Downloader antigo mantido para compatibilidade com relatorios historicos.
+
+Observacao:
+Validar controles de autorizacao antes do proximo fechamento.
+

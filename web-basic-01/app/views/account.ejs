@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conta <%= account.id %> - <%= appName %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <strong>MiniBank</strong>
+      <span>Internal Portal</span>
+    </div>
+    <nav>
+      <a href="/dashboard">Dashboard</a>
+      <form action="/logout" method="post" class="inline-form">
+        <button type="submit">Sair</button>
+      </form>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="panel">
+      <p class="eyebrow">Consulta de conta</p>
+      <h1>Conta #<%= account.id %></h1>
+
+      <% if (isForeignAccount) { %>
+        <div class="notice">Visualizacao liberada pelo modulo legado de auditoria.</div>
+      <% } %>
+
+      <dl class="details">
+        <dt>Titular</dt>
+        <dd><%= account.owner_name %></dd>
+        <dt>Numero</dt>
+        <dd><%= account.account_number %></dd>
+        <dt>Saldo</dt>
+        <dd>R$ <%= Number(account.balance).toFixed(2) %></dd>
+        <dt>Nota sigilosa</dt>
+        <dd><%= account.secret_note %></dd>
+      </dl>
+    </section>
+
+    <section class="panel">
+      <h2>Transacoes recentes</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Descricao</th>
+            <th>Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% transactions.forEach((transaction) => { %>
+            <tr>
+              <td><%= transaction.id %></td>
+              <td><%= transaction.description %></td>
+              <td>R$ <%= Number(transaction.amount).toFixed(2) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>
+
