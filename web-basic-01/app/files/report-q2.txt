@@ -3,9 +3,8 @@ Classificacao: interno
 
 Resumo:
 - Equipe de operacoes solicitou revisao do portal de backup.
-- Healthcheck de desenvolvimento ainda apresenta detalhes internos.
+- Status de desenvolvimento ainda apresenta detalhes internos.
 - Registros antigos podem existir fora da pasta publica de relatorios.
 
 Observacao:
 Planejar limpeza de endpoints legados.
-

@@ -1,6 +1,6 @@
 User-agent: *
 Disallow: /admin
 Disallow: /backup
-Disallow: /dev-notes.txt
+Disallow: /dev.txt
 Disallow: /download
-
+Disallow: /status

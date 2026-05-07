@@ -76,7 +76,7 @@ app.get('/', (req, res) => {
   res.render('index');
 });
 
-app.get('/health', (req, res) => {
+app.get('/status', (req, res) => {
   res.json({
     status: 'ok',
     app: appName,

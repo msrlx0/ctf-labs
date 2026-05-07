@@ -44,17 +44,17 @@ Este lab possui exatamente quatro vulnerabilidades principais com flag:
 |---|---|---|
 | SQL Injection no login | `POST /login` | `FLAG{sqli_capturada}` |
 | IDOR em contas | `GET /account/:id` | `FLAG{idor_capturada}` |
-| Credencial vazada em arquivo publico | `GET /dev-notes.txt` | `FLAG{credencial_exposta_capturada}` |
+| Credencial vazada em arquivo publico | `GET /dev.txt` | `FLAG{credencial_exposta_capturada}` |
 | Path Traversal / LFI controlado | `GET /download?file=` | `FLAG{path_traversal_capturada}` |
 
 ## Pistas de Enumeracao
 
 Estas rotas e artefatos existem como pistas, mas nao possuem flag propria:
 
-- `/health`
+- `/status`
 - `/robots.txt`
 - comentario HTML na home
-- `/dev-notes.txt`
+- `/dev.txt`
 - `/backup`
 - `/download`
 - `/admin`
@@ -106,9 +106,9 @@ Os comandos completos de validacao do release candidate estao em [../VALIDATION.
 
 ```bash
 curl -i http://localhost:8080
-curl -i http://localhost:8080/health
+curl -i http://localhost:8080/status
 curl -i http://localhost:8080/robots.txt
-curl -i http://localhost:8080/dev-notes.txt
+curl -i http://localhost:8080/dev.txt
 curl -i "http://localhost:8080/download?file=public-info.txt"
 curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
 ```
@@ -117,9 +117,9 @@ curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
 
 - [ ] Docker sobe sem erro
 - [ ] Home responde
-- [ ] `/health` responde
+- [ ] `/status` responde
 - [ ] `/robots.txt` responde
-- [ ] `/dev-notes.txt` mostra credencial e flag
+- [ ] `/dev.txt` mostra credencial e flag
 - [ ] SQL Injection mostra `FLAG{sqli_capturada}`
 - [ ] `/account/2` mostra `FLAG{idor_capturada}`
 - [ ] Path traversal mostra `FLAG{path_traversal_capturada}`
