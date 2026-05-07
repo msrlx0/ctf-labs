@@ -42,7 +42,7 @@ INSERT INTO users (id, username, password, role) VALUES
 
 INSERT INTO accounts (id, user_id, owner_name, balance, account_number, secret_note) VALUES
   (1, 2, 'Joao Silva', 12840.55, 'MB-1001-2026', 'Conta operacional sem restricoes especiais.'),
-  (2, 3, 'Maria Oliveira', 98220.10, 'MB-1002-2026', 'FLAG{idor_account_access}'),
+  (2, 3, 'Maria Oliveira', 98220.10, 'MB-1002-2026', 'FLAG{idor_capturada}'),
   (3, 4, 'Carlos Backup', 4430.00, 'MB-1003-2026', 'Conta usada para testes do modulo de backup legado.'),
   (4, 1, 'Admin User', 250000.00, 'MB-0001-ROOT', 'Conta administrativa de reconciliacao interna.'),
   (5, 2, 'Joao Silva - Reserva', 3210.75, 'MB-1001-RES', 'Conta reserva vinculada ao atendimento interno.');

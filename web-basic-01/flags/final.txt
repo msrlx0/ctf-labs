@@ -1,1 +1,1 @@
-FLAG{path_traversal_file_read}
+FLAG{path_traversal_capturada}

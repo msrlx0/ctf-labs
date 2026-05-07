@@ -40,10 +40,10 @@ Este lab possui exatamente quatro vulnerabilidades principais com flag:
 
 | Vulnerabilidade | Local principal | Flag |
 |---|---|---|
-| SQL Injection no login | `POST /login` | `FLAG{sqli_login_bypass}` |
-| IDOR em contas | `GET /account/:id` | `FLAG{idor_account_access}` |
-| Credencial vazada em arquivo publico | `GET /dev-notes.txt` | `FLAG{exposed_dev_credentials}` |
-| Path Traversal / LFI controlado | `GET /download?file=` | `FLAG{path_traversal_file_read}` |
+| SQL Injection no login | `POST /login` | `FLAG{sqli_capturada}` |
+| IDOR em contas | `GET /account/:id` | `FLAG{idor_capturada}` |
+| Credencial vazada em arquivo publico | `GET /dev-notes.txt` | `FLAG{credencial_exposta_capturada}` |
+| Path Traversal / LFI controlado | `GET /download?file=` | `FLAG{path_traversal_capturada}` |
 
 ## Pistas de enumeracao
 
@@ -105,4 +105,3 @@ O usuario `admin` existe no banco, mas o caminho esperado para obter sessao admi
 
 - [WALKTHROUGH.md](./WALKTHROUGH.md): passo a passo didatico com raciocinio, validacao, impacto e correcoes.
 - [SOLUTION.md](./SOLUTION.md): gabarito tecnico objetivo com comandos e flags.
-

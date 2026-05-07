@@ -2,7 +2,7 @@ TODO:
 - remover credencial temporaria antes de producao
 - backup_user:backup123
 - endpoint antigo: /backup
-- validacao do lab: FLAG{exposed_dev_credentials}
+- validacao do lab: FLAG{credencial_exposta_capturada}
 
 Notas:
 - revisar downloader legado antes de liberar novos relatorios

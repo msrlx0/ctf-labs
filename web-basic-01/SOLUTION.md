@@ -60,7 +60,7 @@ backup_user:backup123
 Flag:
 
 ```text
-FLAG{exposed_dev_credentials}
+FLAG{credencial_exposta_capturada}
 ```
 
 Validar impacto da credencial:
@@ -99,7 +99,7 @@ curl -s -b admin.cookies http://localhost:8080/dashboard | grep -i "FLAG"
 Flag:
 
 ```text
-FLAG{sqli_login_bypass}
+FLAG{sqli_capturada}
 ```
 
 Motivo tecnico: a rota `POST /login` concatena `username` e `password` diretamente no SQL. O `#` comenta o restante da query MySQL e ignora a verificacao de senha.
@@ -129,7 +129,7 @@ curl -s -b joao.cookies http://localhost:8080/account/2
 Flag:
 
 ```text
-FLAG{idor_account_access}
+FLAG{idor_capturada}
 ```
 
 Motivo tecnico: `/account/:id` exige sessao, mas busca conta apenas por `id`, sem validar `user_id` do usuario logado.
@@ -151,17 +151,17 @@ curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
 Flag:
 
 ```text
-FLAG{path_traversal_file_read}
+FLAG{path_traversal_capturada}
 ```
 
 Motivo tecnico: `/download?file=` usa `path.join(filesDir, requestedFile)` e le o resultado sem validar se o caminho final ainda esta dentro de `/usr/src/app/files`.
 
 ## 7. Flags finais
 
-- `FLAG{sqli_login_bypass}`
-- `FLAG{idor_account_access}`
-- `FLAG{exposed_dev_credentials}`
-- `FLAG{path_traversal_file_read}`
+- `FLAG{sqli_capturada}`
+- `FLAG{idor_capturada}`
+- `FLAG{credencial_exposta_capturada}`
+- `FLAG{path_traversal_capturada}`
 
 Nao ha flag propria em `/admin`, `/backup`, `/health`, `robots.txt` ou comentario HTML.
 
@@ -173,4 +173,3 @@ Nao ha flag propria em `/admin`, `/backup`, `/health`, `robots.txt` ou comentari
 - Path Traversal: usar allowlist, normalizar caminho e garantir que o path final permanece no diretorio permitido.
 - Healthcheck: retornar somente status minimo para acesso externo.
 - Comentarios/robots: remover pistas operacionais do HTML e nao usar `robots.txt` como protecao.
-

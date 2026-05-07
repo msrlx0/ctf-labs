@@ -181,13 +181,13 @@ O arquivo publico contem:
 ```text
 backup_user:backup123
 endpoint antigo: /backup
-FLAG{exposed_dev_credentials}
+FLAG{credencial_exposta_capturada}
 ```
 
 Flag:
 
 ```text
-FLAG{exposed_dev_credentials}
+FLAG{credencial_exposta_capturada}
 ```
 
 Como validar impacto:
@@ -282,7 +282,7 @@ curl -s -b admin.cookies http://localhost:8080/dashboard | grep -i "FLAG"
 Flag:
 
 ```text
-FLAG{sqli_login_bypass}
+FLAG{sqli_capturada}
 ```
 
 Impacto: bypass de autenticacao e acesso como admin sem conhecer a senha.
@@ -336,7 +336,7 @@ curl -s -b joao.cookies http://localhost:8080/account/2 | grep -i "Maria\|FLAG\|
 Flag:
 
 ```text
-FLAG{idor_account_access}
+FLAG{idor_capturada}
 ```
 
 Por que funciona: a query busca `accounts WHERE id = ?`, mas nao filtra por `user_id` do usuario autenticado.
@@ -392,7 +392,7 @@ curl -i "http://localhost:8080/download?file=../../../../flags/final.txt"
 Flag:
 
 ```text
-FLAG{path_traversal_file_read}
+FLAG{path_traversal_capturada}
 ```
 
 Impacto:
@@ -413,10 +413,10 @@ Correcao:
 
 As quatro flags reais do `web-basic-01` sao:
 
-- `FLAG{sqli_login_bypass}`
-- `FLAG{idor_account_access}`
-- `FLAG{exposed_dev_credentials}`
-- `FLAG{path_traversal_file_read}`
+- `FLAG{sqli_capturada}`
+- `FLAG{idor_capturada}`
+- `FLAG{credencial_exposta_capturada}`
+- `FLAG{path_traversal_capturada}`
 
 Nao ha flag propria em `/admin`, `/backup`, `/health`, `robots.txt` ou comentario HTML.
 
@@ -428,13 +428,13 @@ Nao ha flag propria em `/admin`, `/backup`, `/health`, `robots.txt` ou comentari
 - [ ] `/robots.txt` existe e lista rotas suspeitas
 - [ ] comentario HTML aparece no fonte
 - [ ] `/dev-notes.txt` existe e contem credencial vazada
-- [ ] `FLAG{exposed_dev_credentials}` aparece em `/dev-notes.txt`
+- [ ] `FLAG{credencial_exposta_capturada}` aparece em `/dev-notes.txt`
 - [ ] credencial `backup_user:backup123` acessa `/backup`
 - [ ] SQL Injection permite login como admin
-- [ ] dashboard admin mostra `FLAG{sqli_login_bypass}`
+- [ ] dashboard admin mostra `FLAG{sqli_capturada}`
 - [ ] IDOR permite acessar `/account/2` como Joao
-- [ ] `/account/2` mostra `FLAG{idor_account_access}`
-- [ ] `/download?file=../../../../flags/final.txt` mostra `FLAG{path_traversal_file_read}`
+- [ ] `/account/2` mostra `FLAG{idor_capturada}`
+- [ ] `/download?file=../../../../flags/final.txt` mostra `FLAG{path_traversal_capturada}`
 - [ ] somente as quatro flags oficiais foram coletadas
 
 ## 12. Como corrigir cada vulnerabilidade
@@ -478,4 +478,3 @@ Comentarios HTML e `robots.txt`:
 - remover comentarios operacionais do HTML publico
 - nao tratar `robots.txt` como controle de acesso
 - proteger rotas sensiveis no backend
-
