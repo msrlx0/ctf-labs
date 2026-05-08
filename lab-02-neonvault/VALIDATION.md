@@ -77,7 +77,7 @@ Esperado:
 - `5000` presente apenas como `INTERNAL_PORT`
 - nenhuma publicação de `5000` no host
 
-## Rotas basicas
+## Rotas básicas
 
 ```bash
 curl -i http://127.0.0.1:8092/
@@ -401,23 +401,21 @@ Erro de permissão Docker:
 - confirme que seu usuário tem acesso ao Docker
 - ou rode os comandos conforme o padrão do seu ambiente local
 
-## Checklist final de aceite
+## Checklist de release
 
 - [ ] `docker compose up --build` sobe sem erro
-- [ ] `/` responde `200`
-- [ ] `/login` responde `200`
+- [ ] Home e login retornam `200`
 - [ ] login `nova / nova2099` retorna cookie JWT
 - [ ] rotas autenticadas respondem com cookie
 - [ ] `bash scripts/validate.sh` retorna `34 OK, 0 FAIL`
+- [ ] README não contém flags nem spoilers críticos
 - [ ] porta `5000` não está publicada
-- [ ] README não contém flags
-- [ ] Blind SQLi revela a flag esperada
-- [ ] JWT forjado revela a flag esperada
-- [ ] SSRF revela a flag esperada
-- [ ] SSTI revela a flag esperada
-- [ ] Upload bypass revela a flag esperada
-- [ ] Logs SQLi revela a flag esperada
-- [ ] API IDOR revela a flag esperada
-- [ ] Path Traversal revela a flag esperada
+- [ ] Lab 1 não foi alterado
+- [ ] 8 flags estão alcançáveis pelos fluxos esperados
+- [ ] uploads temporários não estão versionados
+- [ ] `uploads/.gitkeep` está versionado
 - [ ] `backup/` continua no singular
-- [ ] `git diff --name-only -- lab-01-minibank` não lista arquivos
+- [ ] `backup/legacy-admin-notes.bak` está versionado
+- [ ] `var/log/neonvault/access.log` está versionado
+- [ ] documentação final foi revisada
+- [ ] interface foi revisada em navegador

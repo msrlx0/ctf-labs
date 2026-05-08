@@ -297,7 +297,7 @@ curl -i -b cookies.txt -G http://127.0.0.1:8092/logs \
   --data-urlencode "level=error' OR '1'='1'-- "
 ```
 
-### Evidencia esperada
+### Evidência esperada
 
 O filtro normal mostra logs comuns. O filtro manipulado expande a listagem e revela o log oculto.
 
