@@ -1,0 +1,7 @@
+NeonVault Identity Quarterly Report
+Format: legacy text export pretending to be a PDF
+
+Summary:
+- Identity sync is stable for regular operators.
+- Legacy download adapters are still enabled.
+- Internal backup references should never be exposed through public tooling.

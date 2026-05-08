@@ -1,0 +1,27 @@
+<%- include('partials/header', { title: 'Dashboard' }) %>
+
+<section class="page-head">
+  <p class="eyebrow">Painel de identidade</p>
+  <h1>Dashboard</h1>
+  <p>Telemetria sintetica do vault corporativo NeonCore.</p>
+</section>
+
+<section class="grid cards">
+  <% stats.forEach((item) => { %>
+    <article class="card status-card">
+      <span><%= item[0] %></span>
+      <strong><%= item[1] %></strong>
+    </article>
+  <% }) %>
+</section>
+
+<section class="panel">
+  <h2>Fila operacional</h2>
+  <div class="terminal">
+    <p>&gt; sync identity-grid --sector neo-sampa</p>
+    <p>&gt; warning: legacy adapters still reachable</p>
+    <p>&gt; next: review logs, files, webhook tester and preview renderer</p>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,18 @@
+<%- include('partials/header', { title: 'Files' }) %>
+
+<section class="page-head">
+  <p class="eyebrow">Repositorio legado</p>
+  <h1>Files</h1>
+  <p>Arquivos publicados pelo downloader antigo.</p>
+</section>
+
+<section class="grid cards">
+  <% files.forEach((file) => { %>
+    <article class="card file-card">
+      <h2><%= file %></h2>
+      <a class="button small" href="/download?file=<%= encodeURIComponent(file) %>">Baixar</a>
+    </article>
+  <% }) %>
+</section>
+
+<%- include('partials/footer') %>

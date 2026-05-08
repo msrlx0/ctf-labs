@@ -1,0 +1,40 @@
+<%- include('partials/header', { title: 'Home' }) %>
+
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">NeonCore identity grid</p>
+    <h1>Lab 2 — NeonVault: Cyber Identity Breach</h1>
+    <p>
+      Um painel futurista de identidade digital em Neo-Sampa 2099, cheio de integracoes legadas,
+      tokens fracos, templates perigosos e arquivos esquecidos em corredores neon.
+    </p>
+    <div class="actions">
+      <a class="button" href="/login">Entrar no vault</a>
+      <a class="button ghost" href="/recover">Recuperacao de acesso</a>
+    </div>
+  </div>
+  <div class="signal-panel">
+    <div class="signal-row"><span>CORE</span><strong>DEGRADED</strong></div>
+    <div class="signal-row"><span>JWT</span><strong>HS256</strong></div>
+    <div class="signal-row"><span>WEBHOOK</span><strong>OPEN</strong></div>
+    <div class="signal-row"><span>LEGACY</span><strong>ONLINE</strong></div>
+  </div>
+</section>
+
+<section class="grid cards">
+  <article class="card">
+    <h2>Entrada inicial</h2>
+    <p>Use uma conta operacional comum para explorar o dashboard, logs, arquivos e ferramentas.</p>
+    <code>nova / nova2099</code>
+  </article>
+  <article class="card">
+    <h2>Rotas principais</h2>
+    <p>O vault expõe recuperacao, webhooks, previews, uploads, APIs e downloads legados.</p>
+  </article>
+  <article class="card">
+    <h2>Objetivo</h2>
+    <p>Comprometer o nucleo administrativo e coletar as oito evidencias de impacto do lab.</p>
+  </article>
+</section>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,22 @@
+<%- include('partials/header', { title: 'Webhook' }) %>
+
+<section class="panel">
+  <p class="eyebrow">Ferramenta de integracao</p>
+  <h1>Webhook Tester</h1>
+  <form class="form-stack" action="/tools/webhook" method="post">
+    <label>
+      URL alvo
+      <input name="url" value="<%= targetUrl %>" placeholder="https://example.com" required>
+    </label>
+    <button type="submit">Enviar teste</button>
+  </form>
+  <% if (error) { %>
+    <div class="alert"><%= error %></div>
+  <% } %>
+  <% if (response) { %>
+    <h2>Resposta</h2>
+    <pre><code><%= response %></code></pre>
+  <% } %>
+</section>
+
+<%- include('partials/footer') %>

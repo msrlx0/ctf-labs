@@ -1,0 +1,34 @@
+<%- include('partials/header', { title: 'Logs' }) %>
+
+<section class="page-head">
+  <p class="eyebrow">Observabilidade neon</p>
+  <h1>Logs</h1>
+  <p>Filtro legado de eventos por nivel.</p>
+</section>
+
+<section class="panel">
+  <form class="inline-form" action="/logs" method="get">
+    <label>
+      Level
+      <input name="level" value="<%= level %>">
+    </label>
+    <button type="submit">Filtrar</button>
+  </form>
+  <p class="muted">Query montada pelo modulo legado:</p>
+  <pre><code><%= sql %></code></pre>
+  <% if (injected) { %>
+    <div class="success">Filtro expandido por entrada manipulada.</div>
+  <% } %>
+</section>
+
+<section class="grid cards">
+  <% logs.forEach((entry) => { %>
+    <article class="card">
+      <p class="eyebrow">#<%= entry.id %> :: <%= entry.level %></p>
+      <h2><%= entry.source %></h2>
+      <p><%= entry.message %></p>
+    </article>
+  <% }) %>
+</section>
+
+<%- include('partials/footer') %>

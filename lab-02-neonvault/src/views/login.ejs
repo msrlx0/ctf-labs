@@ -1,0 +1,22 @@
+<%- include('partials/header', { title: 'Login' }) %>
+
+<section class="panel narrow">
+  <p class="eyebrow">Acesso operacional</p>
+  <h1>Login</h1>
+  <% if (error) { %>
+    <div class="alert"><%= error %></div>
+  <% } %>
+  <form class="form-stack" action="/login" method="post">
+    <label>
+      Identidade
+      <input name="username" autocomplete="username" required>
+    </label>
+    <label>
+      Senha
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <button type="submit">Autenticar</button>
+  </form>
+</section>
+
+<%- include('partials/footer') %>

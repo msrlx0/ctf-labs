@@ -1,0 +1,19 @@
+<%- include('partials/header', { title: 'Message Preview' }) %>
+
+<section class="panel">
+  <p class="eyebrow">Template lab</p>
+  <h1>Messages Preview</h1>
+  <form class="form-stack" action="/messages/preview" method="post">
+    <label>
+      Mensagem
+      <textarea name="template" rows="6"><%= template %></textarea>
+    </label>
+    <button type="submit">Renderizar preview</button>
+  </form>
+  <% if (preview !== null) { %>
+    <h2>Preview</h2>
+    <div class="terminal"><%= preview %></div>
+  <% } %>
+</section>
+
+<%- include('partials/footer') %>

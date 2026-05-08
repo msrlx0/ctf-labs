@@ -1,0 +1,17 @@
+{
+  "name": "lab-02-neonvault",
+  "version": "1.0.0",
+  "description": "Lab 2 - NeonVault: Cyber Identity Breach",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
