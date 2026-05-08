@@ -90,3 +90,16 @@ Explorar oito vulnerabilidades diferentes, sem repetir o fluxo simples do Lab 1:
 - Path Traversal guiado por logs e backup legado
 
 As solucoes completas e flags ficam em `SOLUTIONS.md`.
+
+## Dificuldade e foco
+
+| Area | Dificuldade | Foco |
+|---|---:|---|
+| Blind SQL Injection | Medio | Inferencia por tempo em fluxo auxiliar |
+| JWT Weak Secret | Medio | Claims, assinatura e controle de acesso |
+| SSRF | Medio | Integracoes internas e alcance server-side |
+| SSTI | Medio | Renderizacao de templates e contexto inseguro |
+| Upload Bypass | Facil/Medio | Validacao fraca por nome de arquivo |
+| Logs SQL Injection | Facil/Medio | Filtro legado e dados ocultos |
+| API IDOR | Facil | Objetos previsiveis e autorizacao ausente |
+| Path Traversal | Medio | Downloader legado, logs e backup |

@@ -405,6 +405,28 @@ button {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.briefing-panel {
+  border-color: rgba(54, 255, 154, 0.3);
+}
+
+.briefing-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.briefing-list p {
+  margin: 0;
+  border: 1px solid rgba(53, 217, 255, 0.16);
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.briefing-list strong {
+  color: var(--green);
+}
+
 .panel {
   margin-top: 1rem;
   background:
@@ -670,6 +692,7 @@ textarea:focus {
   .topbar,
   .hero,
   .grid,
+  .briefing-list,
   .inline-form,
   .auth-layout,
   .core-grid {

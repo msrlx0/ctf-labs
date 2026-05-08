@@ -3,7 +3,7 @@
 <section class="panel narrow">
   <p class="eyebrow">Upload de identidade</p>
   <h1>Avatar</h1>
-  <p class="muted">O filtro legado confere nomes de arquivos antes de sincronizar assets do operador.</p>
+  <p class="muted">O filtro legado confere nomes de arquivos antes de sincronizar assets do operador no cache de badges.</p>
   <% if (error) { %>
     <div class="alert"><%= error %></div>
   <% } %>
@@ -25,7 +25,7 @@
   </form>
   <div class="terminal mini-terminal">
     <p>&gt; accepted pipeline: avatar assets</p>
-    <p>&gt; validator profile: filename-first</p>
+    <p>&gt; validator profile: filename-first badge renderer</p>
   </div>
 </section>
 
