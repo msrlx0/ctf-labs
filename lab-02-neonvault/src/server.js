@@ -79,7 +79,7 @@ function requireAdmin(req, res, next) {
   if (res.locals.currentUser.role !== 'admin') {
     return res.status(403).render('error', {
       title: 'Core bloqueado',
-      message: 'Token valido, mas a role nao autoriza acesso ao nucleo administrativo.'
+      message: 'Token válido, mas a role não autoriza acesso ao núcleo administrativo.'
     });
   }
 
@@ -188,7 +188,7 @@ app.post('/login', (req, res) => {
 
   if (/('|--|union|sleep\s*\(|or\s+1\s*=\s*1)/i.test(username + password)) {
     return res.status(401).render('login', {
-      error: 'Gateway de login rejeitou payload basico. Tente enumerar recuperacao de acesso.'
+      error: 'Gateway de login rejeitou payload básico. Tente enumerar recuperação de acesso.'
     });
   }
 
@@ -196,7 +196,7 @@ app.post('/login', (req, res) => {
 
   if (!user) {
     return res.status(401).render('login', {
-      error: 'Identidade ou senha invalida.'
+      error: 'Identidade ou senha inválida.'
     });
   }
 
@@ -228,12 +228,12 @@ app.post('/recover', (req, res) => {
   if (user && user.username === 'admin' && user.recoveryCode === recoveryCode) {
     return res.render('recover', {
       error: null,
-      result: `Codigo aceito para admin. ${flags.blindSqli}`
+      result: `Código aceito para admin. ${flags.blindSqli}`
     });
   }
 
   return res.status(401).render('recover', {
-    error: 'Codigo de recuperacao invalido.',
+    error: 'Código de recuperação inválido.',
     result: null
   });
 });
@@ -292,7 +292,7 @@ app.get('/download', (req, res) => {
   fs.readFile(targetPath, 'utf8', (error, content) => {
     if (error) {
       return res.status(404).render('download', {
-        error: 'Arquivo nao encontrado no downloader legado.',
+        error: 'Arquivo não encontrado no downloader legado.',
         files: ['report.pdf', 'identity-map.txt', 'ops-readme.txt']
       });
     }
@@ -345,7 +345,7 @@ app.post('/avatar', requireLogin, upload.single('avatar'), (req, res) => {
   if (!weakUploadAllowed(req.file.originalname)) {
     fs.unlink(req.file.path, () => {});
     return res.status(400).render('avatar', {
-      error: 'Extensao recusada pelo filtro legado.',
+      error: 'Extensão recusada pelo filtro legado.',
       upload: null,
       flag: null
     });
@@ -372,8 +372,8 @@ app.get('/uploads/:name', requireLogin, (req, res) => {
   fs.readFile(targetPath, 'utf8', (error, content) => {
     if (error) {
       return res.status(404).render('error', {
-        title: 'Upload nao encontrado',
-        message: 'O asset solicitado nao existe mais no cache neon.'
+        title: 'Upload não encontrado',
+        message: 'O asset solicitado não existe mais no cache neon.'
       });
     }
 
@@ -465,7 +465,7 @@ internalApp.get('/internal/flag', (req, res) => {
 app.use((req, res) => {
   res.status(404).render('error', {
     title: 'Rota perdida na chuva neon',
-    message: 'O recurso solicitado nao existe neste setor do vault.'
+    message: 'O recurso solicitado não existe neste setor do vault.'
   });
 });
 
@@ -473,7 +473,7 @@ app.use((error, req, res, next) => {
   console.error(error);
   res.status(500).render('error', {
     title: 'Falha no core',
-    message: 'O NeonVault encontrou uma excecao inesperada.'
+    message: 'O NeonVault encontrou uma exceção inesperada.'
   });
 });
 

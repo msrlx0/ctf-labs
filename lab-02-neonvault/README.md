@@ -1,16 +1,24 @@
 # Lab 2 — NeonVault: Cyber Identity Breach
 
-## Historia
+## Descrição
 
-NeonVault e um painel futurista de identidade digital usado pela corporacao NeonCore em Neo-Sampa 2099. O sistema mistura componentes modernos com adaptadores legados: recuperacao de acesso, webhooks, templates, uploads, APIs internas e arquivos esquecidos em backup legado.
+NeonVault é um laboratório web local sobre comprometimento de identidade digital em um painel cyberpunk da corporação NeonCore.
 
-O jogador assume o papel de um estagiario de seguranca autorizado a testar o ambiente local e precisa comprometer o nucleo administrativo do vault, coletando evidencias de impacto ao longo do caminho.
+O jogador entra no **NeonVault Identity Grid**, em Neo-Sampa 2099, e investiga recuperação de acesso, claims de sessão, integrações internas, templates, uploads, APIs, logs e arquivos legados.
+
+Este lab foi desenhado como uma evolução natural da trilha: os conceitos continuam didáticos, mas os fluxos são mais variados e exigem correlação entre módulos.
+
+## História
+
+A NeonCore opera identidades digitais de funcionários, operadores e sistemas automatizados em Neo-Sampa 2099. O NeonVault nasceu moderno, mas ainda carrega adaptadores antigos de migração, ferramentas internas de diagnóstico e componentes legados que sobreviveram ao tempo.
+
+Você recebeu uma credencial operacional básica para auditar o ambiente. O objetivo é entender como o Identity Grid se comporta, seguir pistas internas e provar impacto sobre o núcleo administrativo.
 
 ## Aviso de uso autorizado
 
-Este laboratorio foi criado apenas para execucao local e educacional.
+Este laboratório foi criado apenas para execução local e educacional.
 
-Nao exponha este projeto na internet. Nao use payloads, tecnicas ou comandos deste lab contra sistemas reais, terceiros ou ambientes sem permissao explicita.
+Não exponha este projeto na internet. Não use comandos, payloads ou técnicas deste lab contra sistemas reais, terceiros ou ambientes sem permissão explícita.
 
 ## Stack
 
@@ -19,12 +27,12 @@ Nao exponha este projeto na internet. Nao use payloads, tecnicas ou comandos des
 - EJS
 - JWT
 - Multer
-- Armazenamento local simples em memoria e arquivos
+- Armazenamento local simples em memória e arquivos
 - Docker Compose
 
-## Como rodar localmente
+## Como rodar com Docker
 
-O metodo recomendado e Docker. Nao e necessario ter `npm` instalado no host: as dependencias sao instaladas dentro do container durante o build.
+Docker é o método recomendado. Não é necessário ter `npm` instalado no host: as dependências são instaladas dentro do container durante o build.
 
 ```bash
 cd lab-02-neonvault
@@ -43,9 +51,11 @@ URL principal:
 http://127.0.0.1:8092
 ```
 
-O app tambem inicia um servico interno em `127.0.0.1:5000`, usado somente para o exercicio de SSRF. A porta interna nao e publicada pelo Docker Compose.
+O app também inicia um serviço interno na porta `5000`, usado apenas pelo próprio ambiente para o exercício de SSRF. Essa porta não deve ser publicada no Docker Compose.
 
-Opcionalmente, com Node.js e npm instalados no host:
+## Execução opcional sem Docker
+
+Use apenas se você já tiver Node.js e npm instalados no host:
 
 ```bash
 cd lab-02-neonvault
@@ -78,28 +88,96 @@ nova / nova2099
 
 ## Objetivo do jogador
 
-Explorar oito vulnerabilidades diferentes, sem repetir o fluxo simples do Lab 1:
+Investigar o NeonVault como um operador autenticado, correlacionar pistas dos módulos e capturar oito evidências de impacto.
 
-- Blind SQL Injection em recuperacao/verificacao de usuario
-- JWT com segredo fraco
-- SSRF em testador de webhook
-- SSTI em preview de mensagens
-- Bypass de upload de avatar/assets
+Tipos de falha presentes no lab:
+
+- Blind SQL Injection
+- JWT Forgery
+- SSRF
+- SSTI
+- Upload Bypass
 - SQL Injection em filtro de logs
-- IDOR em API de tickets
-- Path Traversal guiado por logs e backup legado
+- IDOR em API
+- Path Traversal
 
-As solucoes completas e flags ficam em `SOLUTIONS.md`.
+As soluções completas ficam em `SOLUTIONS.md`. Esse arquivo contém spoilers e deve ser usado apenas por instrutores, validadores ou depois da tentativa do jogador.
 
-## Dificuldade e foco
+## Mapa de habilidades
 
-| Area | Dificuldade | Foco |
-|---|---:|---|
-| Blind SQL Injection | Medio | Inferencia por tempo em fluxo auxiliar |
-| JWT Weak Secret | Medio | Claims, assinatura e controle de acesso |
-| SSRF | Medio | Integracoes internas e alcance server-side |
-| SSTI | Medio | Renderizacao de templates e contexto inseguro |
-| Upload Bypass | Facil/Medio | Validacao fraca por nome de arquivo |
-| Logs SQL Injection | Facil/Medio | Filtro legado e dados ocultos |
-| API IDOR | Facil | Objetos previsiveis e autorizacao ausente |
-| Path Traversal | Medio | Downloader legado, logs e backup |
+| Área | Vulnerabilidade | Dificuldade | Foco |
+|---|---|---:|---|
+| Recuperação | Blind SQLi | Médio | Inferência por tempo em fluxo auxiliar |
+| Sessão | JWT fraco | Médio | Claims e assinatura |
+| Integrações | SSRF | Médio | Acesso a recurso interno |
+| Templates | SSTI | Médio | Renderização insegura |
+| Upload | Bypass de validação | Fácil/Médio | Validação por nome/extensão |
+| Logs | SQLi em filtro | Fácil/Médio | Filtro legado |
+| API | IDOR | Fácil | Controle de acesso por objeto |
+| Arquivos | Path Traversal | Médio | Leitura fora do diretório |
+
+## Regras do lab
+
+- Execute apenas localmente.
+- Comece pela credencial inicial.
+- Use a interface para entender os módulos antes de automatizar testes.
+- Não altere o código durante a resolução.
+- Não exponha o container em rede pública.
+- Registre evidências de impacto de forma organizada.
+
+## Estrutura resumida
+
+```text
+lab-02-neonvault/
+├── src/                 # servidor Express, dados e views EJS
+├── public/              # CSS, imagem e arquivos publicados
+├── backup/              # artefatos legados do cenário
+├── var/log/neonvault/   # logs usados no fluxo de investigação
+├── uploads/             # cache local de uploads do lab
+├── scripts/             # validação automatizada
+├── Dockerfile
+├── docker-compose.yml
+├── README.md
+├── SOLUTIONS.md
+└── VALIDATION.md
+```
+
+## Próximos passos para o jogador
+
+1. Suba o lab com Docker.
+2. Acesse `http://127.0.0.1:8092`.
+3. Entre com a credencial inicial.
+4. Use o dashboard como briefing.
+5. Explore os módulos sem abrir `SOLUTIONS.md`.
+6. Capture as oito evidências.
+
+## Troubleshooting rápido
+
+Ver containers:
+
+```bash
+docker compose ps
+```
+
+Ver logs:
+
+```bash
+docker compose logs -f
+```
+
+Parar o lab:
+
+```bash
+docker compose down
+```
+
+Rebuildar do zero:
+
+```bash
+docker compose down
+docker compose up --build
+```
+
+Se a porta `8092` estiver em uso, pare o processo antigo ou outro container que esteja ocupando a porta.
+
+Se o Docker retornar erro de permissão, verifique se seu usuário pode acessar o daemon Docker ou execute o comando conforme o padrão do seu ambiente local.

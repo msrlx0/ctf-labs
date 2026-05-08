@@ -1,9 +1,9 @@
 <%- include('partials/header', { title: 'Recover' }) %>
 
 <section class="panel narrow">
-  <p class="eyebrow">Fluxo de recuperacao</p>
+  <p class="eyebrow">Fluxo de recuperação</p>
   <h1>Recover</h1>
-  <p class="muted">Canal de contingencia usado por identidades antigas quando o gateway principal falha.</p>
+  <p class="muted">Canal de contingência usado por identidades antigas quando o gateway principal falha.</p>
   <% if (error) { %>
     <div class="alert"><%= error %></div>
   <% } %>
@@ -19,7 +19,7 @@
       Recovery code
       <input name="recovery_code" placeholder="4 caracteres" required>
     </label>
-    <button type="submit">Validar codigo</button>
+    <button type="submit">Validar código</button>
   </form>
   <div class="terminal mini-terminal">
     <p>&gt; auxiliary identity check: /api/check-user</p>
