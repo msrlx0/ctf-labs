@@ -9,4 +9,4 @@ services:
       INTERNAL_PORT: 5000
       JWT_SECRET: neon
     ports:
-      - "8092:8092"
+      - "127.0.0.1:8092:8092"

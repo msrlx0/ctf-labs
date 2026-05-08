@@ -2,7 +2,7 @@
 
 ## Historia
 
-NeonVault e um painel futurista de identidade digital usado pela corporacao NeonCore em Neo-Sampa 2099. O sistema mistura componentes modernos com adaptadores legados: recuperacao de acesso, webhooks, templates, uploads, APIs internas e arquivos esquecidos em backups.
+NeonVault e um painel futurista de identidade digital usado pela corporacao NeonCore em Neo-Sampa 2099. O sistema mistura componentes modernos com adaptadores legados: recuperacao de acesso, webhooks, templates, uploads, APIs internas e arquivos esquecidos em backup legado.
 
 O jogador assume o papel de um estagiario de seguranca autorizado a testar o ambiente local e precisa comprometer o nucleo administrativo do vault, coletando evidencias de impacto ao longo do caminho.
 
@@ -18,24 +18,23 @@ Nao exponha este projeto na internet. Nao use payloads, tecnicas ou comandos des
 - Express
 - EJS
 - JWT
+- Multer
 - Armazenamento local simples em memoria e arquivos
-- Docker opcional
+- Docker Compose
 
 ## Como rodar localmente
 
-Com Node.js instalado:
-
-```bash
-cd lab-02-neonvault
-npm install
-npm start
-```
-
-Com Docker:
+O metodo recomendado e Docker. Nao e necessario ter `npm` instalado no host: as dependencias sao instaladas dentro do container durante o build.
 
 ```bash
 cd lab-02-neonvault
 docker compose up --build
+```
+
+Para parar:
+
+```bash
+docker compose down
 ```
 
 URL principal:
@@ -45,6 +44,14 @@ http://127.0.0.1:8092
 ```
 
 O app tambem inicia um servico interno em `127.0.0.1:5000`, usado somente para o exercicio de SSRF. A porta interna nao e publicada pelo Docker Compose.
+
+Opcionalmente, com Node.js e npm instalados no host:
+
+```bash
+cd lab-02-neonvault
+npm install
+npm start
+```
 
 ## Credencial inicial
 

