@@ -6,6 +6,7 @@ Escopo autorizado:
 
 ```text
 http://127.0.0.1:8088
+```
 
 Este arquivo mostra o caminho completo para capturar as flags. Use como material do instrutor ou como apoio final para alunos que já tentaram resolver o lab.
 
