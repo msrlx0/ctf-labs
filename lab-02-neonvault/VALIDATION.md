@@ -26,6 +26,13 @@ Para parar ao final:
 docker compose down
 ```
 
+Validar publicacao de portas:
+
+```bash
+docker compose config | grep -E 'host_ip|published|INTERNAL_PORT'
+docker compose config | grep -q 'published: "5000"' && echo "FAIL: porta 5000 publicada" || echo "OK: porta 5000 nao publicada"
+```
+
 ## Rotas basicas
 
 ```bash
@@ -54,6 +61,16 @@ curl -i -b cookies.txt http://127.0.0.1:8092/messages/preview
 curl -i -b cookies.txt http://127.0.0.1:8092/avatar
 curl -i -b cookies.txt http://127.0.0.1:8092/tools/webhook
 ```
+
+## Validacao automatizada opcional
+
+Com o container rodando, execute:
+
+```bash
+bash scripts/validate.sh
+```
+
+O script assume `http://127.0.0.1:8092`, faz login com `nova / nova2099`, testa rotas autenticadas, exercita as oito vulnerabilidades e imprime `[OK]` ou `[FAIL]` por item. Ele nao substitui a validacao manual abaixo, mas acelera regressao durante desenvolvimento.
 
 ## Vulnerabilidades
 
@@ -148,3 +165,25 @@ git diff --name-only -- lab-01-minibank
 ```
 
 O segundo comando nao deve listar arquivos.
+
+## Checklist final de aprovacao
+
+- [ ] `docker compose up --build` sobe sem erro
+- [ ] `/` responde `200`
+- [ ] `/login` responde `200`
+- [ ] login `nova / nova2099` retorna cookie JWT
+- [ ] `/dashboard`, `/profile`, `/logs`, `/files`, `/messages/preview`, `/avatar` e `/tools/webhook` respondem autenticados
+- [ ] login comum rejeita SQLi basica
+- [ ] Blind SQLi em `/api/check-user` tem delay condicional
+- [ ] `/recover` aceita `admin / N3ON`
+- [ ] `/admin/core` bloqueia usuario comum
+- [ ] JWT forjado com segredo `neon` acessa `/admin/core`
+- [ ] SSRF alcanca `127.0.0.1:5000` a partir do servidor
+- [ ] porta `5000` nao esta publicada no host
+- [ ] SSTI retorna `49` com `{{7*7}}`
+- [ ] upload bypass revela evidencia com arquivo controlado
+- [ ] filtro de logs com SQLi revela log oculto
+- [ ] API IDOR revela ticket `777`
+- [ ] Path Traversal segue `access.log` para `../../backup/legacy-admin-notes.bak`
+- [ ] README nao contem flags
+- [ ] `git diff --name-only -- lab-01-minibank` nao lista arquivos
