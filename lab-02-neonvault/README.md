@@ -151,6 +151,14 @@ lab-02-neonvault/
 5. Explore os módulos sem abrir `SOLUTIONS.md`.
 6. Capture as oito evidências.
 
+## Status do laboratório
+
+- Status: pronto para uso local.
+- Validação automatizada: `scripts/validate.sh`.
+- Vulnerabilidades: 8.
+- Execução recomendada: Docker Compose.
+- Exposição recomendada: somente localhost.
+
 ## Troubleshooting rápido
 
 Ver containers:
