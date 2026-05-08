@@ -101,7 +101,7 @@ Tipos de falha presentes no lab:
 - IDOR em API
 - Path Traversal
 
-As soluções completas ficam em `SOLUTIONS.md`. Esse arquivo contém spoilers e deve ser usado apenas por instrutores, validadores ou depois da tentativa do jogador.
+O passo a passo didático fica em `WALKTHROUGH.md`, e as soluções objetivas ficam em `SOLUTIONS.md`. Esses arquivos contêm spoilers e devem ser usados apenas por instrutores, validadores ou depois da tentativa do jogador.
 
 ## Mapa de habilidades
 
@@ -138,6 +138,7 @@ lab-02-neonvault/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── README.md
+├── WALKTHROUGH.md
 ├── SOLUTIONS.md
 └── VALIDATION.md
 ```

@@ -2,6 +2,8 @@
 
 Este documento contém spoilers completos, payloads e flags. Use apenas em ambiente local autorizado.
 
+Para uma explicação mais didática em modo real, com navegação pela interface, DevTools, Burp Suite e terminal, consulte também `WALKTHROUGH.md`.
+
 ## Pré-requisitos
 
 - Docker e Docker Compose disponíveis
