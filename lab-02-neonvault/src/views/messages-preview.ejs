@@ -1,7 +1,7 @@
 <%- include('partials/header', { title: 'Message Preview' }) %>
 
 <section class="panel">
-  <p class="eyebrow">Template lab</p>
+  <p class="eyebrow">Editor de operador</p>
   <h1>Messages Preview</h1>
   <p class="muted">Templates de operador sao renderizados antes da publicacao no painel neon.</p>
   <form class="form-stack" action="/messages/preview" method="post">
@@ -12,8 +12,11 @@
     <button type="submit">Renderizar preview</button>
   </form>
   <% if (preview !== null) { %>
-    <h2>Preview</h2>
-    <div class="terminal"><%= preview %></div>
+    <div class="response-head">
+      <h2>Preview renderizado</h2>
+      <span class="status-pill">pre-publish</span>
+    </div>
+    <div class="terminal preview-box"><%= preview %></div>
   <% } %>
 </section>
 

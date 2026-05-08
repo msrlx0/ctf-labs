@@ -3,6 +3,7 @@
 <section class="panel narrow">
   <p class="eyebrow">Downloader legado</p>
   <h1>Download</h1>
+  <p class="muted">Leitor de exports antigos usado pelo time de identidade durante migracoes.</p>
   <% if (error) { %>
     <div class="alert"><%= error %></div>
   <% } %>
@@ -17,6 +18,10 @@
     <% files.forEach((file) => { %>
       <a href="/download?file=<%= encodeURIComponent(file) %>"><%= file %></a>
     <% }) %>
+  </div>
+  <div class="terminal mini-terminal">
+    <p>&gt; mode: legacy-read</p>
+    <p>&gt; audit trail: externalized</p>
   </div>
 </section>
 

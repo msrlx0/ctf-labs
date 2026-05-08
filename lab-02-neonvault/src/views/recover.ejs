@@ -3,6 +3,7 @@
 <section class="panel narrow">
   <p class="eyebrow">Fluxo de recuperacao</p>
   <h1>Recover</h1>
+  <p class="muted">Canal de contingencia usado por identidades antigas quando o gateway principal falha.</p>
   <% if (error) { %>
     <div class="alert"><%= error %></div>
   <% } %>
@@ -20,7 +21,10 @@
     </label>
     <button type="submit">Validar codigo</button>
   </form>
-  <p class="muted">A API auxiliar de verificacao fica em <code>/api/check-user</code>.</p>
+  <div class="terminal mini-terminal">
+    <p>&gt; auxiliary identity check: /api/check-user</p>
+    <p>&gt; recovery archive mode: legacy</p>
+  </div>
 </section>
 
 <%- include('partials/footer') %>

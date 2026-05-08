@@ -11,7 +11,7 @@
     <div class="success"><%= flag %></div>
   <% } %>
   <% if (upload) { %>
-    <div class="terminal">
+    <div class="terminal upload-result">
       <p>Arquivo aceito: <%= upload.originalName %></p>
       <p>Cache: <a href="<%= upload.url %>"><%= upload.storedName %></a></p>
     </div>
@@ -23,6 +23,10 @@
     </label>
     <button type="submit">Enviar asset</button>
   </form>
+  <div class="terminal mini-terminal">
+    <p>&gt; accepted pipeline: avatar assets</p>
+    <p>&gt; validator profile: filename-first</p>
+  </div>
 </section>
 
 <%- include('partials/footer') %>

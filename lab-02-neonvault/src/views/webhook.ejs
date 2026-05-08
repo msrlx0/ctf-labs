@@ -15,8 +15,11 @@
     <div class="alert"><%= error %></div>
   <% } %>
   <% if (response) { %>
-    <h2>Resposta</h2>
-    <pre><code><%= response %></code></pre>
+    <div class="response-head">
+      <h2>Resposta</h2>
+      <span class="status-pill">server-side probe</span>
+    </div>
+    <pre class="trace"><code><%= response %></code></pre>
   <% } %>
 </section>
 

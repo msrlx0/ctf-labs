@@ -3,7 +3,7 @@
 <section class="page-head">
   <p class="eyebrow">Painel de identidade</p>
   <h1>Dashboard</h1>
-  <p>Telemetria sintetica do vault corporativo NeonCore.</p>
+  <p>Hub operacional para correlacionar sinais fracos, modulos legados e objetos internos.</p>
 </section>
 
 <section class="grid cards">
@@ -15,12 +15,51 @@
   <% }) %>
 </section>
 
+<section class="grid cards investigation-grid">
+  <article class="card">
+    <p class="eyebrow">Recover</p>
+    <h2>Codigos antigos</h2>
+    <p>Recuperacao legada ainda consulta codigos de identidade fora do fluxo principal de login.</p>
+    <a class="button small" href="/recover">Abrir recover</a>
+  </article>
+  <article class="card">
+    <p class="eyebrow">Session</p>
+    <h2>Claims operacionais</h2>
+    <p>Tokens de sessao carregam claims usados pelo nucleo para decidir privilegios.</p>
+    <a class="button small" href="/admin/core">Testar core</a>
+  </article>
+  <article class="card">
+    <p class="eyebrow">Internal bus</p>
+    <h2>Adaptadores fechados</h2>
+    <p>Alguns servicos respondem apenas quando chamados de dentro do proprio vault.</p>
+    <a class="button small" href="/tools/webhook">Abrir webhook</a>
+  </article>
+  <article class="card">
+    <p class="eyebrow">Templates</p>
+    <h2>Preview antes da publicacao</h2>
+    <p>Mensagens de operador sao renderizadas em um preview antes de irem ao painel.</p>
+    <a class="button small" href="/messages/preview">Abrir preview</a>
+  </article>
+  <article class="card">
+    <p class="eyebrow">Archive</p>
+    <h2>Rastros de migracao</h2>
+    <p>O downloader legado mantem sinais de arquivos antigos em trilhas operacionais.</p>
+    <a class="button small" href="/files">Abrir files</a>
+  </article>
+  <article class="card">
+    <p class="eyebrow">Tickets</p>
+    <h2>Objetos previsiveis</h2>
+    <p>Tickets internos usam identificadores numericos consumidos pela API do grid.</p>
+    <a class="button small" href="/profile">Ver identidade</a>
+  </article>
+</section>
+
 <section class="panel">
   <h2>Fila operacional</h2>
   <div class="terminal">
     <p>&gt; sync identity-grid --sector neo-sampa</p>
     <p>&gt; warning: legacy adapters still reachable</p>
-    <p>&gt; jwt signer profile: neon legacy preset</p>
+    <p>&gt; session signer profile: legacy preset</p>
     <p>&gt; next: review logs, files, webhook tester and preview renderer</p>
   </div>
 </section>

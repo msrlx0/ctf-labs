@@ -16,15 +16,25 @@
         <small>Identity Grid</small>
       </span>
     </a>
-    <nav class="nav">
-      <a href="/dashboard">Dashboard</a>
-      <a href="/recover">Recover</a>
-      <a href="/logs">Logs</a>
-      <a href="/files">Files</a>
-      <a href="/tools/webhook">Webhook</a>
-      <a href="/messages/preview">Preview</a>
-      <a href="/avatar">Avatar</a>
-      <a href="/admin/core">Core</a>
+    <nav class="nav" aria-label="Modulos NeonVault">
+      <div class="nav-group">
+        <span class="nav-label">Grid</span>
+        <a href="/dashboard" class="<%= currentPath === '/dashboard' ? 'active' : '' %>">Dashboard</a>
+        <a href="/profile" class="<%= currentPath === '/profile' ? 'active' : '' %>">Profile</a>
+        <a href="/recover" class="<%= currentPath === '/recover' ? 'active' : '' %>">Recover</a>
+      </div>
+      <div class="nav-group">
+        <span class="nav-label">Ops</span>
+        <a href="/logs" class="<%= currentPath === '/logs' ? 'active' : '' %>">Logs</a>
+        <a href="/files" class="<%= currentPath === '/files' || currentPath === '/download' ? 'active' : '' %>">Files</a>
+      </div>
+      <div class="nav-group">
+        <span class="nav-label">Tools</span>
+        <a href="/tools/webhook" class="<%= currentPath === '/tools/webhook' ? 'active' : '' %>">Webhook</a>
+        <a href="/messages/preview" class="<%= currentPath === '/messages/preview' ? 'active' : '' %>">Preview</a>
+        <a href="/avatar" class="<%= currentPath === '/avatar' ? 'active' : '' %>">Avatar</a>
+        <a href="/admin/core" class="<%= currentPath === '/admin/core' ? 'active danger' : '' %>">Core</a>
+      </div>
     </nav>
     <div class="session">
       <% if (currentUser) { %>
