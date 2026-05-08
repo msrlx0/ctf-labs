@@ -98,13 +98,24 @@ app.post('/login', asyncRoute(async (req, res) => {
   const username = req.body.username || '';
   const password = req.body.password || '';
 
+  // Intentionally vulnerable for the local CTF: leaks whether a username exists.
+  const userLookupSql = "SELECT id FROM users WHERE username = '" + username + "' LIMIT 1";
+  const [userRows] = await pool.query(userLookupSql);
+
+  if (userRows.length === 0) {
+    return res.status(401).render('login', {
+      error: 'Usuario nao encontrado.',
+      username
+    });
+  }
+
   // Intentionally vulnerable for the local CTF: direct string concatenation enables SQL Injection.
   const sql = "SELECT id, username, role FROM users WHERE username = '" + username + "' AND password = '" + password + "' LIMIT 1";
   const [rows] = await pool.query(sql);
 
   if (rows.length === 0) {
     return res.status(401).render('login', {
-      error: 'Usuario ou senha invalidos.',
+      error: 'Senha invalida.',
       username
     });
   }

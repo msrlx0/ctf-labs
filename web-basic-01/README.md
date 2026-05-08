@@ -4,7 +4,7 @@
 
 `web-basic-01` e um CTF web pequeno e local para treinar novos estagiarios em fundamentos de pentest web autorizado.
 
-A aplicacao alvo se chama **MiniBank Internal Portal** e simula um portal interno antigo, com pistas de enumeracao e quatro vulnerabilidades principais.
+A aplicacao alvo se chama **MiniBank Internal Portal** e simula um portal interno antigo, com pistas de enumeracao, quatro vulnerabilidades principais com flag e uma falha didatica de enumeracao de usuarios no login.
 
 ## Publico-Alvo
 
@@ -53,6 +53,15 @@ Este lab possui exatamente quatro vulnerabilidades principais com flag:
 | Credencial vazada em arquivo publico | `GET /dev.txt` | `FLAG{credencial_exposta_capturada}` |
 | Path Traversal / LFI controlado | `GET /download?file=` | `FLAG{path_traversal_capturada}` |
 
+## Falha Didatica Sem Flag
+
+O `POST /login` tambem ensina enumeracao de usuarios por mensagens de erro diferentes:
+
+- username inexistente: `Usuario nao encontrado.`
+- username existente com senha errada: `Senha invalida.`
+
+Essa falha e intencional e nao possui flag propria.
+
 ## Pistas de Enumeracao
 
 Estas rotas e artefatos existem como pistas, mas nao possuem flag propria:
@@ -64,6 +73,7 @@ Estas rotas e artefatos existem como pistas, mas nao possuem flag propria:
 - `/backup`
 - `/download`
 - `/admin`
+- mensagens de erro do `POST /login`
 
 ## Como Subir
 
@@ -115,6 +125,8 @@ curl -i http://localhost:8088
 curl -i http://localhost:8088/status
 curl -i http://localhost:8088/robots.txt
 curl -i http://localhost:8088/dev.txt
+curl -i -X POST http://localhost:8088/login -d "username=naoexiste" -d "password=teste"
+curl -i -X POST http://localhost:8088/login -d "username=joao" -d "password=errada"
 curl -i "http://localhost:8088/download?file=public-info.txt"
 curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
 ```
@@ -126,6 +138,7 @@ curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
 - [ ] `/status` responde
 - [ ] `/robots.txt` responde
 - [ ] `/dev.txt` mostra credencial e flag
+- [ ] Login diferencia `Usuario nao encontrado.` de `Senha invalida.`
 - [ ] SQL Injection mostra `FLAG{sqli_capturada}`
 - [ ] `/account/2` mostra `FLAG{idor_capturada}`
 - [ ] Path traversal mostra `FLAG{path_traversal_capturada}`
