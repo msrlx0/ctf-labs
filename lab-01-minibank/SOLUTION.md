@@ -231,6 +231,7 @@ http://127.0.0.1:8088/download?file=../config/legacy.conf
 O arquivo deve revelar:
 
 FLAG{path_traversal_capturada}
+
 7. Flags finais
 
 As quatro flags do lab são:
