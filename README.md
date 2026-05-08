@@ -8,7 +8,7 @@ Cada pasta deste repositorio representa um CTF independente, com seu proprio `do
 
 | Lab | Tema | Porta | Status |
 |---|---|---:|---|
-| [web-basic-01](./web-basic-01/) | Fundamentos web: SQLi, IDOR, credencial exposta e path traversal | 8080 | Finalizado |
+| [lab-01-minibank](./lab-01-minibank/) | Fundamentos web: SQLi, IDOR, credencial exposta e path traversal | 8080 | Finalizado |
 
 ## Uso Autorizado
 

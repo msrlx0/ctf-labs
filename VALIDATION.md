@@ -1,14 +1,14 @@
 # Validacao do Release Candidate
 
-Comandos esperados para validar o `web-basic-01`.
+Comandos esperados para validar o `lab-01-minibank`.
 
 ```bash
 cd ~/ctf-labs
-grep -Rho "FLAG{[^}]*}" web-basic-01 | sort -u
+grep -Rho "FLAG{[^}]*}" lab-01-minibank | sort -u
 ```
 
 ```bash
-cd ~/ctf-labs/web-basic-01
+cd ~/ctf-labs/lab-01-minibank
 sudo docker compose up --build
 ```
 

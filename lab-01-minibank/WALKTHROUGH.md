@@ -1,6 +1,6 @@
-# Walkthrough - web-basic-01
+# Walkthrough - lab-01-minibank
 
-Este walkthrough ensina o fluxo esperado para resolver o lab **web-basic-01**, baseado na aplicacao **MiniBank Internal Portal**.
+Este walkthrough ensina o fluxo esperado para resolver o lab **lab-01-minibank**, baseado na aplicacao **MiniBank Internal Portal**.
 
 O objetivo didatico e fazer o aluno descobrir rotas sensiveis por enumeracao logica, seguindo pistas visiveis na aplicacao, no codigo-fonte HTML e no `robots.txt`.
 
@@ -20,7 +20,7 @@ O lab tambem ensina enumeracao de usuarios por mensagens de erro diferentes no l
 Entre na pasta do lab:
 
 ```bash
-cd ~/ctf-labs/web-basic-01
+cd ~/ctf-labs/lab-01-minibank
 ```
 
 Suba os containers:

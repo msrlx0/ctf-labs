@@ -1,6 +1,6 @@
-# Solution - web-basic-01
+# Solution - lab-01-minibank
 
-Gabarito tecnico objetivo do lab **web-basic-01**.
+Gabarito tecnico objetivo do lab **lab-01-minibank**.
 
 Escopo autorizado:
 

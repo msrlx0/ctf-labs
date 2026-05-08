@@ -1,8 +1,8 @@
-# web-basic-01
+# lab-01-minibank
 
 ## Objetivo
 
-`web-basic-01` e um CTF web pequeno e local para treinar novos estagiarios em fundamentos de pentest web autorizado.
+`lab-01-minibank` e um CTF web pequeno e local para treinar novos estagiarios em fundamentos de pentest web autorizado.
 
 A aplicacao alvo se chama **MiniBank Internal Portal** e simula um portal interno antigo, com pistas de enumeracao, quatro vulnerabilidades principais com flag e uma falha didatica de enumeracao de usuarios no login.
 
@@ -77,7 +77,7 @@ Estas rotas e artefatos existem como pistas, mas nao possuem flag propria:
 
 ## Como Subir
 
-Dentro da pasta `web-basic-01`:
+Dentro da pasta `lab-01-minibank`:
 
 ```bash
 sudo docker compose up --build
