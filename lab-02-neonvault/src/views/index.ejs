@@ -1,0 +1,52 @@
+<%- include('partials/header', { title: 'Home' }) %>
+
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">NeonCore identity grid</p>
+    <h1>NeonVault Identity Grid</h1>
+    <p>
+      Acesso operacional ao núcleo de identidades da NeonCore em Neo-Sampa 2099.
+    </p>
+    <div class="hero-badges">
+      <span>local-only</span>
+      <span>legacy adapters</span>
+      <span>operator console</span>
+    </div>
+    <div class="actions">
+      <a class="button" href="/login">Entrar no vault</a>
+      <a class="button ghost" href="/recover">Recuperação de acesso</a>
+    </div>
+  </div>
+  <div class="signal-panel">
+    <div class="signal-header">
+      <span>NeonCore telemetry</span>
+      <strong>LIVE</strong>
+    </div>
+    <div class="signal-row"><span>CORE</span><strong>DEGRADED</strong></div>
+    <div class="meter"><i style="width: 38%"></i></div>
+    <div class="signal-row"><span>SESSION CLAIMS</span><strong>SYNC</strong></div>
+    <div class="meter pink"><i style="width: 68%"></i></div>
+    <div class="signal-row"><span>WEBHOOK BUS</span><strong>OPEN</strong></div>
+    <div class="meter violet"><i style="width: 82%"></i></div>
+    <div class="signal-row"><span>LEGACY LAYER</span><strong>ONLINE</strong></div>
+    <div class="meter green"><i style="width: 91%"></i></div>
+  </div>
+</section>
+
+<section class="grid cards">
+  <article class="card">
+    <h2>Entrada operacional</h2>
+    <p>Credencial de turno liberada para operadores do grid noturno.</p>
+    <code>nova / nova2099</code>
+  </article>
+  <article class="card">
+    <h2>Superfície exposta</h2>
+    <p>Recuperação, integrações, templates e arquivos antigos ainda passam pelo mesmo grid.</p>
+  </article>
+  <article class="card">
+    <h2>Objetivo do operador</h2>
+    <p>Correlacione sinais, artefatos e objetos internos até alcançar o núcleo administrativo.</p>
+  </article>
+</section>
+
+<%- include('partials/footer') %>

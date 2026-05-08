@@ -1,0 +1,32 @@
+<%- include('partials/header', { title: 'Avatar' }) %>
+
+<section class="panel narrow">
+  <p class="eyebrow">Upload de identidade</p>
+  <h1>Avatar</h1>
+  <p class="muted">O filtro legado confere nomes de arquivos antes de sincronizar assets do operador no cache de badges.</p>
+  <% if (error) { %>
+    <div class="alert"><%= error %></div>
+  <% } %>
+  <% if (flag) { %>
+    <div class="success"><%= flag %></div>
+  <% } %>
+  <% if (upload) { %>
+    <div class="terminal upload-result">
+      <p>Arquivo aceito: <%= upload.originalName %></p>
+      <p>Cache: <a href="<%= upload.url %>"><%= upload.storedName %></a></p>
+    </div>
+  <% } %>
+  <form class="form-stack" action="/avatar" method="post" enctype="multipart/form-data">
+    <label>
+      Arquivo de avatar
+      <input type="file" name="avatar" required>
+    </label>
+    <button type="submit">Enviar asset</button>
+  </form>
+  <div class="terminal mini-terminal">
+    <p>&gt; accepted pipeline: avatar assets</p>
+    <p>&gt; validator profile: filename-first badge renderer</p>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

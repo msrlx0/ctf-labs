@@ -1,0 +1,12 @@
+services:
+  neonvault:
+    build: .
+    container_name: neonvault-lab
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 8092
+      INTERNAL_PORT: 5000
+      JWT_SECRET: neon
+    ports:
+      - "127.0.0.1:8092:8092"

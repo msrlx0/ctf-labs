@@ -1,0 +1,28 @@
+<%- include('partials/header', { title: 'Download' }) %>
+
+<section class="panel narrow">
+  <p class="eyebrow">Downloader legado</p>
+  <h1>Download</h1>
+  <p class="muted">Leitor de exports antigos usado pelo time de identidade durante migrações. O modo legado registra acessos de archive workers.</p>
+  <% if (error) { %>
+    <div class="alert"><%= error %></div>
+  <% } %>
+  <form class="form-stack" action="/download" method="get">
+    <label>
+      Arquivo
+      <input name="file" value="report.pdf">
+    </label>
+    <button type="submit">Ler arquivo</button>
+  </form>
+  <div class="file-list">
+    <% files.forEach((file) => { %>
+      <a href="/download?file=<%= encodeURIComponent(file) %>"><%= file %></a>
+    <% }) %>
+  </div>
+  <div class="terminal mini-terminal">
+    <p>&gt; mode: legacy-read</p>
+    <p>&gt; audit trail: externalized</p>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

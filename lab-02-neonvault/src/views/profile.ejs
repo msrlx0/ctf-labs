@@ -1,0 +1,18 @@
+<%- include('partials/header', { title: 'Profile' }) %>
+
+<section class="panel narrow">
+  <p class="eyebrow">Identidade ativa</p>
+  <h1>Profile</h1>
+  <dl class="facts">
+    <div><dt>Usuário</dt><dd><%= user.username %></dd></div>
+    <div><dt>Nome</dt><dd><%= user.displayName %></dd></div>
+    <div><dt>Email</dt><dd><%= user.email %></dd></div>
+    <div><dt>Departamento</dt><dd><%= user.department %></dd></div>
+  </dl>
+  <div class="terminal mini-terminal">
+    <p>&gt; related objects: tickets, badges, identity events</p>
+    <p>&gt; mobile console consumes tickets through numeric object identifiers</p>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

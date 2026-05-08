@@ -1,0 +1,29 @@
+<%- include('partials/header', { title: 'Files' }) %>
+
+<section class="page-head">
+  <p class="eyebrow">Repositório legado</p>
+  <h1>Files</h1>
+  <p>Arquivos publicados pelo downloader antigo. Rastros de archive workers podem sobreviver em logs de migração.</p>
+</section>
+
+<section class="grid cards">
+  <% files.forEach((file) => { %>
+    <article class="card file-card">
+      <p class="eyebrow">Legacy archive</p>
+      <h2><%= file %></h2>
+      <p>Export publicado pelo adaptador de arquivos do vault.</p>
+      <a class="button small" href="/download?file=<%= encodeURIComponent(file) %>">Baixar</a>
+    </article>
+  <% }) %>
+</section>
+
+<section class="panel">
+  <h2>Notas do arquivo</h2>
+  <div class="terminal">
+    <p>&gt; downloader status: compatibility mode</p>
+    <p>&gt; migration logs retained for audit sampling</p>
+    <p>&gt; legacy archive root: monitored</p>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

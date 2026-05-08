@@ -1,0 +1,7 @@
+NeonVault Identity Map
+
+Public aliases:
+- nova -> Threat Desk
+- kai -> Identity Ops
+
+Restricted aliases are not included in this export.

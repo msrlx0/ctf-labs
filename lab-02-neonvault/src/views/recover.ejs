@@ -1,0 +1,30 @@
+<%- include('partials/header', { title: 'Recover' }) %>
+
+<section class="panel narrow">
+  <p class="eyebrow">Fluxo de recuperação</p>
+  <h1>Recover</h1>
+  <p class="muted">Canal de contingência usado por identidades antigas quando o gateway principal falha.</p>
+  <% if (error) { %>
+    <div class="alert"><%= error %></div>
+  <% } %>
+  <% if (result) { %>
+    <div class="success"><%= result %></div>
+  <% } %>
+  <form class="form-stack" action="/recover" method="post">
+    <label>
+      Identidade
+      <input name="username" placeholder="identidade alvo" required>
+    </label>
+    <label>
+      Recovery code
+      <input name="recovery_code" placeholder="4 caracteres" required>
+    </label>
+    <button type="submit">Validar código</button>
+  </form>
+  <div class="terminal mini-terminal">
+    <p>&gt; auxiliary identity check: /api/check-user</p>
+    <p>&gt; recovery archive mode: legacy conditional checks</p>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

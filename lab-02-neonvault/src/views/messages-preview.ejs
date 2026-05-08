@@ -1,0 +1,23 @@
+<%- include('partials/header', { title: 'Message Preview' }) %>
+
+<section class="panel">
+  <p class="eyebrow">Editor de operador</p>
+  <h1>Messages Preview</h1>
+  <p class="muted">Templates de operador são renderizados antes da publicação no painel neon, incluindo variáveis interpoladas pelo renderer legado.</p>
+  <form class="form-stack" action="/messages/preview" method="post">
+    <label>
+      Mensagem
+      <textarea name="template" rows="6"><%= template %></textarea>
+    </label>
+    <button type="submit">Renderizar preview</button>
+  </form>
+  <% if (preview !== null) { %>
+    <div class="response-head">
+      <h2>Preview renderizado</h2>
+      <span class="status-pill">pre-publish</span>
+    </div>
+    <div class="terminal preview-box"><%= preview %></div>
+  <% } %>
+</section>
+
+<%- include('partials/footer') %>
