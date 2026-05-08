@@ -7,4 +7,6 @@ Resumo:
 - Registros antigos podem existir fora da pasta publica de relatorios.
 
 Observacao:
-Planejar limpeza de endpoints legados.
+O downloader legado ainda referencia arquivos fora da pasta publica de relatorios.
+Durante a migracao, a configuracao antiga foi movida para o diretorio config.
+Arquivo revisado pela equipe: legacy.conf

