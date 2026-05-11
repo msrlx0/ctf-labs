@@ -1,0 +1,7 @@
+[system] hostname=netaudit-monitor
+[system] environment=production
+[system] service=asset-monitor
+[system] assets=gateway.local,dns01.local,intranet.local,backup01.local
+[system] monitor_mode=local
+[system] diagnostics_profile=support-readonly
+[system] last_incident=NT-2026-041

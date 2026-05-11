@@ -1,0 +1,14 @@
+[info] NetAudit monitoring service started
+[info] asset check module enabled
+[info] managed assets loaded: gateway.local,dns01.local,intranet.local,backup01.local
+[debug] availability endpoint active for dashboard checks
+[debug] legacy resolver endpoint kept for support troubleshooting
+[debug] support diagnostics moved after incident NT-2026-041
+[debug] support health endpoint moved to /api/internal/health
+[debug] header expected: X-Support-Token
+[debug] support token prefix: netaudit
+[debug] support token middle: debug
+[debug] support token suffix: 2026
+[debug] backup route only exposed by internal healthcheck
+[debug] archived incident evidence moved outside data directory
+[warn] support diagnostics remain enabled for post-incident review

@@ -1,6 +1,6 @@
 # Lab 03 - NetAudit
 
-NetAudit e um painel interno ficticio usado por uma equipe de TI para monitorar disponibilidade de ativos corporativos. O ambiente simula uma aplicacao simples de operacoes: login de analista, lista de ativos, checagem de host e alguns recursos legados deixados para suporte.
+NetAudit e um painel interno ficticio usado por uma equipe de TI para monitorar disponibilidade de ativos corporativos. O ambiente simula uma aplicacao simples de operacoes: login de analista, lista de ativos, checagem de host, historico operacional e alguns recursos legados que ficaram acessiveis apos um incidente interno.
 
 O laboratorio foi desenhado para investigacao manual. A superficie vulneravel principal nao fica toda em botoes visiveis; o aluno precisa observar requisicoes, inspecionar HTML/JavaScript, testar hipoteses e correlacionar pistas em logs.
 
@@ -50,4 +50,4 @@ Nao use os testes ou tecnicas deste lab contra sistemas de terceiros. Todas as v
 
 ## Dica de abordagem
 
-Comece pelo navegador. Use DevTools Network para entender as chamadas da interface, Sources/View Source para procurar referencias discretas e Burp Suite para repetir/modificar requisicoes. O lab foi feito para recompensar reconhecimento, nao clique em menu.
+Comece pelo navegador. Use DevTools Network para entender as chamadas da interface, Sources/View Source para procurar referencias discretas e Burp Suite para repetir/modificar requisicoes. O lab foi feito para recompensar reconhecimento: a tela principal parece uma ferramenta normal de TI e nao lista todas as superficies sensiveis.

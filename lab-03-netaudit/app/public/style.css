@@ -62,6 +62,30 @@ body {
   margin-bottom: 24px;
 }
 
+.nav-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding: 10px;
+  background: rgba(17, 24, 39, 0.72);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.nav-compact a {
+  color: #bfdbfe;
+  text-decoration: none;
+  font-weight: 800;
+  padding: 9px 12px;
+  border-radius: 6px;
+}
+
+.nav-compact a:hover {
+  background: rgba(37, 99, 235, 0.18);
+}
+
 .topbar h1 {
   margin: 0;
   font-size: clamp(32px, 5vw, 54px);
@@ -100,6 +124,16 @@ body {
   border-radius: 999px;
   color: #bae6fd;
   background: rgba(14, 116, 144, 0.16);
+  font-weight: 800;
+}
+
+.metric-pill {
+  flex: none;
+  padding: 8px 12px;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  border-radius: 999px;
+  color: #bbf7d0;
+  background: rgba(22, 101, 52, 0.16);
   font-weight: 800;
 }
 
@@ -315,6 +349,7 @@ pre {
 
 @media (max-width: 680px) {
   .topbar,
+  .nav-compact,
   .welcome {
     align-items: flex-start;
     flex-direction: column;

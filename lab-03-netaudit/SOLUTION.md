@@ -62,7 +62,16 @@ Causa raiz: `child_process.exec` executa uma string montada com input do usuario
 ping -c 2 ${host}
 ```
 
-Correcao: usar `execFile` ou `spawn` com argumentos separados, validar host/IP por allowlist e nunca concatenar input em comando de shell.
+Correcoes recomendadas:
+
+- nao usar `exec` com concatenacao;
+- usar `execFile` ou `spawn` com argumentos separados;
+- validar host/IP por allowlist;
+- nao tentar corrigir apenas bloqueando caracteres;
+- separar permissoes do processo da aplicacao;
+- em ambiente real, nao armazenar flags ou segredos acessiveis pelo processo web.
+
+Observacao de validacao: a resposta de prova com `whoami` deve mostrar execucao de comando, mas nao deve conter `FLAG{}`. A flag so aparece quando o aluno le explicitamente o arquivo.
 
 ## 2. Resolver legado com filtro fraco
 
@@ -131,7 +140,15 @@ FLAG{weak_filter_bypass_lab3}
 
 Causa raiz: o backend bloqueia apenas `;`, mas ainda executa `nslookup ${host}` via shell.
 
-Correcao: blacklist de metacaracteres nao e suficiente. Use `execFile("nslookup", [host])`, valide formato por allowlist e remova qualquer dependencia de shell.
+Correcoes recomendadas:
+
+- blacklist de metacaracteres nao e suficiente;
+- usar `execFile("nslookup", [host])` ou `spawn` com argumentos separados;
+- validar formato por allowlist;
+- remover dependencia de shell para operacoes de rede;
+- executar a aplicacao com privilegios minimos.
+
+Observacao de validacao: `localhost && id` deve provar bypass sem retornar flag automaticamente.
 
 ## 3. Descoberta do support panel
 
@@ -185,7 +202,13 @@ netaudit-debug-2026
 
 Causa raiz: logs operacionais expostos para usuario autenticado comum vazam nomes de endpoint, header e segredo reconstruivel.
 
-Correcao: nao registrar segredos, mascarar dados sensiveis, restringir logs a papeis autorizados e separar logs de suporte da interface comum.
+Correcoes recomendadas:
+
+- nao registrar segredos;
+- mascarar dados sensiveis;
+- restringir logs a papeis autorizados;
+- separar logs de suporte da interface comum;
+- rotacionar qualquer token que tenha aparecido em log.
 
 ## 4. Information Disclosure e Path Traversal
 
@@ -223,7 +246,13 @@ FLAG{path_traversal_log_viewer_lab3}
 
 Causa raiz: o backend usa `path.join("/app/data", file)` sem validar se o caminho final permanece em `/app/data`.
 
-Correcao: usar `path.resolve`, checar prefixo do diretorio base, rejeitar traversal e preferir allowlist de arquivos como `app.log`, `system.log` e `audit.log`.
+Correcoes recomendadas:
+
+- usar allowlist de arquivos;
+- normalizar o caminho com `path.resolve`;
+- verificar se o caminho final permanece dentro do diretorio permitido;
+- nao aceitar caminho arbitrario do usuario;
+- retornar erros genericos sem expor estrutura interna.
 
 ## 5. Internal health com Broken Access Control
 
@@ -265,7 +294,14 @@ Flag5 nao e retornada diretamente aqui. O endpoint apenas revela o arquivo diagn
 
 Causa raiz: rota interna confia em token estatico vazado e nao exige sessao de admin/autorizacao real.
 
-Correcao: remover endpoint debug em producao, exigir autenticacao e autorizacao reais, rotacionar segredos vazados e evitar tokens estaticos.
+Correcoes recomendadas:
+
+- nao usar token estatico de debug;
+- nao vazar token em logs;
+- remover endpoints internos em producao;
+- exigir autenticacao e autorizacao reais;
+- segregar rotas administrativas;
+- rotacionar segredos vazados.
 
 ## 6. Backup command injection
 
@@ -329,7 +365,14 @@ Causa raiz: `archiveName` e concatenado em:
 tar -czf /tmp/${archiveName} /app/data
 ```
 
-Correcao: gerar nome de arquivo no servidor, validar por allowlist, usar `spawn`/`execFile` com argumentos separados e nunca permitir que input controle uma linha de shell.
+Correcoes recomendadas:
+
+- gerar nome de arquivo no servidor;
+- validar por allowlist;
+- usar `spawn` ou `execFile` com argumentos separados;
+- nunca permitir que input controle uma linha de shell;
+- separar permissoes do processo que executa backup;
+- nao manter segredos legiveis pelo processo web em ambiente real.
 
 ## Lista de flags
 

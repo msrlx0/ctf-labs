@@ -22,6 +22,21 @@ function writeText(targetId, value) {
   }
 }
 
+function renderCheckResult(data) {
+  if (typeof data === "string") {
+    return data;
+  }
+
+  return [
+    `status: ${data.status || "unknown"}`,
+    `target: ${data.target || "n/a"}`,
+    `diagnostic: ${data.diagnostic || "n/a"}`,
+    `durationMs: ${data.durationMs || 0}`,
+    "",
+    data.output || ""
+  ].join("\n");
+}
+
 async function parseResponse(response) {
   const contentType = response.headers.get("content-type") || "";
 
@@ -65,13 +80,15 @@ async function logout() {
 async function checkAsset(event) {
   event.preventDefault();
   const host = $("assetHost").value;
+  writeText("checkResult", "status: running\n");
   const data = await postJson("/api/tools/check", { host });
-  writeJson("checkResult", data);
+  writeText("checkResult", renderCheckResult(data));
 }
 
 async function loadSupportLog(event) {
   event.preventDefault();
   const file = $("logFile").value;
+  writeText("supportLogResult", "Loading log stream...");
   const response = await fetch(`/api/support/log?file=${encodeURIComponent(file)}`);
   const data = await response.text();
   writeText("supportLogResult", data);

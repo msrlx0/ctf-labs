@@ -19,7 +19,6 @@ function requireSupportToken(req, res, next) {
 
 router.get("/health", requireSupportToken, (req, res) => {
   return res.json({
-    ok: true,
     status: "healthy",
     service: "NetAudit",
     environment: "production",
@@ -56,6 +55,8 @@ router.post("/backup", requireSupportToken, (req, res) => {
 
     return res.json({
       ok: !error,
+      status: error ? "completed_with_errors" : "queued",
+      archiveName,
       output
     });
   });
