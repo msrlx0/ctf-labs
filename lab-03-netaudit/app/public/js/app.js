@@ -124,7 +124,6 @@ async function loadAssets() {
 
 async function checkAsset(assetId) {
   const asset = monitoredAssets.find(item => item.id === assetId);
-  const checkType = $("checkType") ? $("checkType").value : "icmp";
 
   if (!asset) {
     writeText("checkResult", "Asset not found.");
@@ -135,7 +134,7 @@ async function checkAsset(assetId) {
 
   const data = await postJson("/api/assets/check", {
     assetId: asset.id,
-    checkType,
+    checkType: "icmp",
     target: asset.hostname
   });
 
@@ -175,6 +174,14 @@ function bindActions() {
   const supportLogForm = $("supportLogForm");
   if (supportLogForm) {
     supportLogForm.addEventListener("submit", loadSupportLog);
+  }
+
+  const loginForm = $("loginForm");
+  if (loginForm) {
+    loginForm.addEventListener("submit", event => {
+      event.preventDefault();
+      login();
+    });
   }
 }
 

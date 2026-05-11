@@ -1,6 +1,6 @@
 [info] NetAudit monitoring service started
 [info] asset check module enabled
-[info] managed assets loaded: gateway.local,dns01.local,intranet.local,storage01.local
+[info] managed assets loaded: gateway.local,dns01.local,intranet.local,backup01.local
 [debug] asset availability endpoint active for dashboard cards
 [debug] client-side checks include assetId, checkType and target
 [debug] legacy resolver endpoint kept for support troubleshooting

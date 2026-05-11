@@ -1,141 +1,138 @@
 # Walkthrough - Lab 03 NetAudit
 
-Este guia foi escrito para uma pessoa resolvendo o lab pelo navegador, DevTools e Burp Suite. Ele evita virar uma lista de comandos prontos: a ideia e observar o sistema, montar hipoteses, repetir requisicoes manualmente e confirmar impacto com cuidado.
+Este guia acompanha uma resolucao manual pelo navegador, DevTools e Burp Suite. O objetivo e treinar investigacao: observar o comportamento normal, modificar requisicoes com cuidado, correlacionar pistas e so entao confirmar impacto.
 
-## 1. Login
+## 1. Acessar o lab
 
-Abra o lab no navegador:
+Abra o alvo local no navegador:
 
 ```text
 http://127.0.0.1:8090
 ```
 
-Entre com a credencial de laboratorio indicada na tela. Depois do login, confirme que voce chegou ao dashboard de ativos.
+Observe a pagina inicial como se fosse um sistema interno comum.
 
-## 2. Observar dashboard de ativos
+## 2. Fazer login
 
-Leia a tela como uma ferramenta interna de monitoramento. O fluxo principal gira em torno de ativos com status, hostname e um botao de verificacao.
+Use a credencial de laboratorio indicada na tela. Depois do login, confirme que voce chegou ao dashboard.
 
-Repare que nao existe um campo livre para digitar host ou IP. Isso e importante: a interface parece controlar os alvos, mas o navegador ainda precisa enviar dados para o backend.
+## 3. Observar dashboard de ativos
 
-## 3. Clicar em Verificar
+O dashboard mostra ativos, status e historico recente. Nao ha campo livre de host ou IP, nem atalhos visiveis para areas internas.
 
-Escolha um ativo, por exemplo o gateway, e clique em "Verificar". Observe o resultado tecnico renderizado na tela.
+## 4. Clicar em Verificar
 
-Nesta etapa, nao tente explorar nada. Entenda primeiro qual e o comportamento normal e que tipo de retorno a aplicacao mostra.
+Clique em "Verificar" em um ativo. A tela deve mostrar uma saida tecnica em formato de diagnostico.
 
-## 4. Interceptar a requisicao
+## 5. Abrir DevTools Network ou Burp Proxy
 
-Abra DevTools Network ou configure o Burp Proxy e repita a verificacao.
+Repita a verificacao com DevTools Network aberto ou com o Burp Proxy interceptando o navegador.
 
-No DevTools, filtre por chamadas `fetch` ou `XHR`. No Burp, capture a chamada e envie para o Repeater para conseguir modificar e reenviar a mesma requisicao.
+## 6. Observar a requisicao POST enviada
 
-## 5. Identificar assetId, checkType e target
+Procure a chamada enviada pela acao do botao. Anote metodo, caminho, headers e corpo JSON.
 
-Na requisicao de verificacao, observe o corpo JSON. Ele deve conter tres valores relevantes:
+## 7. Identificar assetId, checkType e target
 
-- `assetId`: o ativo selecionado;
-- `checkType`: o tipo de verificacao;
-- `target`: o hostname enviado pelo frontend.
+No corpo da requisicao, identifique `assetId`, `checkType` e `target`. Esses campos descrevem o ativo, o tipo de rotina e o alvo enviado pelo frontend.
 
-O detalhe mais interessante e o `target`: ele existe na requisicao, embora nao seja editavel diretamente pela tela.
+## 8. Perceber que target nao e editavel na UI, mas esta no JSON
 
-## 6. Entender que target nao e editavel na tela, mas e confiado pelo backend
+A tela nao oferece um input para o alvo. Mesmo assim, o alvo viaja no JSON, o que permite testar se o backend confia no cliente.
 
-A pergunta de investigacao e simples: o servidor recalcula o alvo a partir do `assetId`, ou confia no `target` recebido do cliente?
+## 9. Enviar requisicao para Burp Repeater
 
-Se o backend confiar no campo enviado pelo navegador, alterar esse valor no Repeater pode mudar o comando executado no container.
+Envie a requisicao para o Repeater. Mantenha a versao original por perto para comparar comportamento normal e comportamento alterado.
 
-## 7. Alterar target no Repeater com comando inofensivo
+## 10. Alterar target para um teste inofensivo
 
-No Burp Repeater, mantenha `assetId` e `checkType` como estavam e altere apenas `target`.
+Modifique somente `target` e use um comando de prova que nao altera o sistema. A ideia e verificar execucao, nao buscar dados sensiveis de primeira.
 
-Use primeiro uma prova inofensiva, como anexar um comando que apenas identifique o usuario do processo. Esse tipo de teste confirma execucao sem modificar o sistema e sem buscar flag automaticamente.
+## 11. Confirmar execucao de comando
 
-## 8. Confirmar command injection
+Compare a resposta. Se a saida do comando de prova aparecer no retorno tecnico, voce confirmou que o servidor executou algo alem da rotina esperada.
 
-Compare a resposta normal com a resposta modificada. Se a saida do comando adicional aparecer no campo de resultado, voce confirmou que o backend concatena o valor de `target` em um comando de sistema.
+## 12. Usar a falha para ler a primeira flag
 
-Anote o ponto de entrada, o parametro afetado e o operador que funcionou. Essa confirmacao deve vir antes de qualquer leitura de arquivo.
+Depois da prova inofensiva, use o mesmo ponto de entrada para ler o arquivo da primeira etapa. A flag nao aparece automaticamente durante a prova; ela depende de leitura explicita.
 
-## 9. Usar a falha para ler a primeira flag
+## 13. Inspecionar JS
 
-Com o impacto confirmado, use o mesmo ponto para ler o arquivo de flag correspondente a primeira falha.
+Abra DevTools Sources e leia o JavaScript carregado pelo dashboard. Procure constantes, comentarios e referencias que nao estejam expostas como botoes.
 
-A aplicacao nao entrega a flag quando voce usa `whoami`, `id` ou qualquer outra prova de execucao. Ela so aparece se a requisicao modificada ler explicitamente o arquivo correto no container.
+## 14. Descobrir resolver legado
 
-## 10. Inspecionar JS e comentarios HTML
+Uma pista discreta aponta para um resolver legado. Como ele nao aparece na interface, a proxima requisicao precisa ser montada manualmente.
 
-Volte ao navegador e use View Source ou DevTools Sources. Leia o HTML do dashboard e o JavaScript carregado pela pagina.
+## 15. Montar requisicao manual para resolver no Burp Repeater
 
-Procure pistas discretas: comentarios de manutencao, constantes nao usadas pela interface e referencias a fluxos legados.
+No Repeater, crie uma requisicao com JSON simples e mantenha o cookie de sessao do login. Comece com uma entrada normal para entender a resposta.
 
-## 11. Descobrir resolver legado
+## 16. Testar filtro fraco
 
-O JavaScript deixa uma referencia discreta a um resolver legado de ativos. Ele nao aparece como botao na UI, entao a requisicao precisa ser montada manualmente no Burp Repeater.
+Teste um operador que deve ser bloqueado e compare com outros operadores de shell. O objetivo e perceber que bloquear um caractere nao elimina a classe de problema.
 
-Comece enviando uma entrada normal, como um hostname local, para entender o formato da resposta.
+## 17. Usar bypass para capturar flag2
 
-## 12. Descobrir support.html
+Com o bypass confirmado por um comando inofensivo, use a mesma falha para capturar a segunda flag.
 
-Continue a leitura do HTML e do JavaScript. Ha uma pista de que diagnosticos de suporte foram movidos apos um incidente.
+## 18. Inspecionar HTML/JS para descobrir support.html
 
-Acesse a pagina indicada manualmente pelo navegador. Ela deve parecer uma ferramenta interna simples, nao uma pagina de CTF.
+Volte ao HTML do dashboard e ao JavaScript. Comentarios de manutencao podem revelar uma pagina movida apos incidente.
 
-## 13. Ler app.log
+## 19. Acessar support.html
 
-Na pagina de suporte, carregue `app.log` e trate o conteudo como log operacional.
+Acesse manualmente a pagina descoberta no navegador. Ela deve parecer uma ferramenta interna simples de diagnostico.
 
-Procure referencias a health interno, nome de header esperado, partes de token, backup exposto apenas por healthcheck e evidencia arquivada fora do diretorio de dados.
+## 20. Ler app.log
 
-## 14. Montar token por partes
+Use o campo `Log file` com o valor padrao e clique em `View`. Leia o retorno como log operacional, nao como texto de tutorial.
 
-O log nao deve entregar uma chave pronta em uma unica linha. Monte o token juntando prefixo, meio e sufixo na ordem indicada.
+## 21. Correlacionar pistas
 
-Guarde tambem o nome exato do header esperado; ele sera necessario para consultar o health interno.
+Procure uma rota interna de health, o nome do header esperado, partes de token, mencao a healthcheck interno e evidencia arquivada fora do diretorio de dados.
 
-## 15. Explorar path traversal
+## 22. Montar token por partes
 
-O viewer de logs aceita um nome de arquivo. Teste primeiro arquivos esperados, como logs existentes, e observe que o retorno e texto puro.
+Junte prefixo, meio e sufixo na ordem indicada pelos logs. Guarde tambem o nome exato do header.
 
-Depois avalie se o parametro permite sair do diretorio de dados com `../`. Essa falha permite acessar evidencias arquivadas fora da pasta de logs.
+## 23. Explorar traversal no campo de log file
 
-## 16. Chamar health interno com header
+Teste se o campo aceita sair do diretorio padrao usando caminhos relativos. O retorno deve continuar como texto puro.
 
-No Burp Repeater, monte uma requisicao para o health interno indicado nos logs. Primeiro confirme que, sem token, o endpoint responde `403`.
+## 24. Obter flag3 e flag4
 
-Em seguida, adicione o header de suporte com o token montado na etapa anterior. A resposta deve trazer metadados operacionais, mas nao deve retornar flag diretamente.
+Use a falha de traversal para acessar os dois arquivos de evidencia indicados pelo lab.
 
-## 17. Descobrir backup
+## 25. Chamar endpoint interno com header
 
-Leia a resposta do health como uma pista de operacao interna. Ela informa o endpoint de backup, o metodo HTTP e o parametro esperado.
+No Burp Repeater, chame o health interno. Primeiro confirme o `403` sem header; depois repita com o header e token montados.
 
-Esse fluxo nao existe na interface. A proxima requisicao precisa ser criada manualmente no Burp Repeater.
+## 26. Descobrir backup interno
 
-## 18. Explorar archiveName no backup
+Leia os metadados retornados pelo health. Eles indicam o endpoint, metodo e parametro esperado para uma rotina interna.
 
-Monte a requisicao de backup com um valor normal primeiro e veja como o backend responde.
+## 27. Montar requisicao POST manual para backup
 
-Depois altere `archiveName` para provar command injection de forma controlada. Quando o impacto estiver claro, use a mesma falha para ler o arquivo diagnostico indicado pelo health e, por fim, a flag final.
+Crie manualmente a requisicao no Repeater com JSON e o header de suporte correto. Teste primeiro um valor normal.
 
-## 19. Conclusao e mitigacao
+## 28. Explorar archiveName
 
-O lab encadeia confianca indevida em parametros do cliente, uso de shell com concatenacao, filtro fraco, vazamento de informacoes em logs, path traversal e endpoints internos protegidos por token estatico.
+Altere `archiveName` para confirmar se o parametro e concatenado em um comando. Prove impacto antes de buscar as flags finais.
 
-Mitigacoes principais:
+## 29. Capturar flag5 e root
 
-- recalcular alvos sensiveis no servidor a partir de IDs confiaveis;
-- substituir `exec` com strings por `execFile` ou `spawn` com argumentos separados;
-- validar hostnames e nomes de arquivo por allowlist;
-- evitar tokens estaticos e segredos em logs;
-- separar endpoints internos de verdade, com autenticacao e autorizacao adequadas;
-- retornar o minimo necessario em diagnosticos operacionais.
+Use a falha no parametro de archive para ler o arquivo diagnostico informado pelo health e, depois, o arquivo final.
+
+## 30. Fechar com mitigacao
+
+As correcoes passam por nao confiar em parametros tecnicos vindos do cliente, evitar shell com concatenacao, validar entradas por allowlist, nao vazar segredos em logs, restringir endpoints internos e retornar somente metadados necessarios.
 
 ## Dicas progressivas
 
-1. Se a tela nao deixa editar um campo, olhe a requisicao que ela envia.
-2. Se um parametro parece tecnico demais para vir do cliente, teste se o backend confia nele.
+1. Se a tela nao deixa editar um valor, olhe a requisicao que ela envia.
+2. Se o backend recebe um alvo tecnico do cliente, teste se ele recalcula ou confia.
 3. Prove execucao com comandos inofensivos antes de ler arquivos.
-4. Comentarios HTML e constantes JS podem revelar fluxos que nao aparecem no menu.
-5. Logs podem vazar contexto suficiente para montar a proxima requisicao.
-6. Um filtro que bloqueia um unico caractere raramente bloqueia a classe inteira de ataque.
+4. Comentarios HTML e constantes JS podem ser pistas, mesmo sem link visivel.
+5. Logs operacionais podem revelar contexto suficiente para montar a proxima requisicao.
+6. Filtros baseados em bloquear um unico caractere costumam deixar outros operadores disponiveis.

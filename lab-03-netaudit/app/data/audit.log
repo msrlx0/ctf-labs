@@ -2,4 +2,4 @@
 [audit] 2026-05-11T08:11:45Z user=analyst action=asset_check target=gateway.local result=degraded
 [audit] 2026-05-11T08:12:02Z user=analyst action=asset_check target=dns01.local result=warning
 [audit] 2026-05-11T08:13:41Z user=support action=diagnostics_review incident=NT-2026-041 result=followup_required
-[audit] 2026-05-11T08:14:03Z user=system action=archive_rotation target=storage01.local result=queued
+[audit] 2026-05-11T08:14:03Z user=system action=archive_rotation target=backup01.local result=queued
