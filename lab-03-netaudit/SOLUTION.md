@@ -12,7 +12,6 @@ Credenciais:
 
 ```text
 analyst:analyst123
-admin:netaudit_admin_2026
 ```
 
 Exemplo:
@@ -223,6 +222,13 @@ Mitigacao:
 ## 4. Path Traversal
 
 O endpoint vulneravel usa `path.join("/app/data", file)` sem validar o caminho final.
+
+Payloads:
+
+```text
+file=../flags/flag3.txt
+file=../flags/flag4.txt
+```
 
 Flag3:
 

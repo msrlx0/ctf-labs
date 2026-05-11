@@ -8,12 +8,6 @@ const users = [
     username: "analyst",
     password: "analyst123",
     role: "analyst"
-  },
-  {
-    id: 2,
-    username: "admin",
-    password: "netaudit_admin_2026",
-    role: "admin"
   }
 ];
 

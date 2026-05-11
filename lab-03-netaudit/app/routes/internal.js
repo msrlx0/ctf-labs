@@ -22,7 +22,6 @@ router.get("/health", requireSupportToken, (req, res) => {
     status: "healthy",
     service: "NetAudit",
     environment: "production",
-    profile: "support-internal",
     backupEndpoint: "/api/internal/backup",
     method: "POST",
     requiredParameter: "archiveName",

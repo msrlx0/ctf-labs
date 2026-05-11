@@ -25,9 +25,8 @@ function requireLogin(req, res, next) {
 
 router.get("/log", requireLogin, (req, res) => {
   const file = String(req.query.file || "app.log");
-  const basePath = path.join("/app", "data");
   // Intentional lab vulnerability: traversal is possible because the final path is not validated.
-  const requestedPath = path.join(basePath, file);
+  const requestedPath = path.join("/app/data", file);
 
   try {
     const content = fs.readFileSync(requestedPath, "utf8");
