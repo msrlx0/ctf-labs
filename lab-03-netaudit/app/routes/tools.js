@@ -65,7 +65,7 @@ function checkHost(req, res) {
 }
 
 function resolveHost(req, res) {
-  const { host } = req.body;
+  const host = req.body.host || req.body.target;
 
   if (!host) {
     return res.status(400).json({

@@ -137,6 +137,10 @@ body {
   font-weight: 800;
 }
 
+.check-mode {
+  width: min(260px, 100%);
+}
+
 .asset-grid,
 .workspace-grid {
   display: grid;
@@ -159,11 +163,12 @@ body {
 }
 
 .asset-card {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
   gap: 14px;
   padding: 16px;
-  min-height: 104px;
+  min-height: 172px;
 }
 
 .asset-card h3,
@@ -175,6 +180,24 @@ body {
   margin-top: 4px;
   color: var(--muted);
   font-size: 14px;
+}
+
+.asset-card em {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--muted);
+  font-style: normal;
+  font-size: 13px;
+}
+
+.asset-copy {
+  min-width: 0;
+}
+
+.asset-action {
+  grid-column: 1 / -1;
+  align-self: end;
+  margin-top: 12px;
 }
 
 .asset-status {
@@ -189,6 +212,11 @@ body {
 }
 
 .asset-status.warning {
+  background: var(--yellow);
+}
+
+.asset-status.degraded,
+.asset-status.maintenance {
   background: var(--yellow);
 }
 
@@ -223,6 +251,7 @@ label {
 }
 
 input,
+select,
 button,
 .button {
   width: 100%;
@@ -233,13 +262,15 @@ button,
   font: inherit;
 }
 
-input {
+input,
+select {
   background: #070b16;
   color: var(--text);
   outline: none;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: var(--cyan);
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
 }

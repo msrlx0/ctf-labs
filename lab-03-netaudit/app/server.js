@@ -3,6 +3,7 @@ const cookieParser = require("cookie-parser");
 const path = require("path");
 
 const authRoutes = require("./routes/auth");
+const assetsRoutes = require("./routes/assets");
 const toolsRoutes = require("./routes/tools");
 const supportRoutes = require("./routes/support");
 const internalRoutes = require("./routes/internal");
@@ -24,6 +25,7 @@ app.use("/api", (req, res, next) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/assets", assetsRoutes);
 app.use("/api/tools", toolsRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/internal", internalRoutes);

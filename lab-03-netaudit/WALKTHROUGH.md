@@ -1,8 +1,8 @@
 # Walkthrough - Lab 03 NetAudit
 
-Este guia e investigativo. Ele mostra a ordem de raciocinio e oferece dicas progressivas, sem transformar o lab em uma lista de flags. Priorize navegador, DevTools e Burp Suite; deixe `curl` para o gabarito.
+Este guia e pensado para uma pessoa usando navegador, DevTools e Burp Suite. A ideia nao e copiar comandos prontos, e sim treinar investigacao: observar comportamento normal, levantar hipoteses, modificar requisicoes e confirmar impacto.
 
-## 1. Acessar aplicacao e fazer login
+## 1. Acessar o lab no navegador
 
 Abra:
 
@@ -10,182 +10,151 @@ Abra:
 http://127.0.0.1:8090
 ```
 
+Leia a pagina inicial como se fosse um sistema interno real de monitoramento.
+
+## 2. Fazer login
+
 Entre com:
 
 ```text
 analyst:analyst123
 ```
 
-Depois do login, note o contexto: a aplicacao parece um painel normal de monitoramento de ativos, sem menu de Admin, Logs ou Flags.
+Depois do login, confirme que voce esta no dashboard de ativos.
 
-## 2. Entender funcionalidades visiveis
+## 3. Observar o dashboard de ativos
 
-No dashboard, observe a lista de ativos:
+O painel mostra ativos como Gateway Edge, DNS Resolver, Intranet Portal e Backup Node. Cada ativo tem hostname visivel, status e botao "Verificar".
 
-- gateway.local;
-- dns01.local;
-- intranet.local;
-- backup01.local.
+Nao ha campo livre de host, nem menu de Logs/Admin.
 
-Tambem ha um formulario chamado "Verificar disponibilidade de ativo", um campo "Host ou IP", um botao "Verificar" e um historico recente. Trate isso como uma ferramenta real de TI: primeiro entenda o comportamento normal.
+## 4. Clicar em "Verificar" em um ativo normal
 
-## 3. Observar a requisicao no DevTools Network
+Escolha um ativo e clique em "Verificar". Observe a saida tecnica no `<pre>`.
 
-Abra DevTools Network ou Burp Proxy. Envie uma verificacao para `127.0.0.1`.
+Nesta etapa, apenas entenda o fluxo normal.
 
-Observe:
+## 5. Abrir DevTools Network ou Burp Proxy
 
-- metodo HTTP;
-- URL chamada;
-- corpo JSON;
-- cookie de sessao;
-- formato da resposta.
+Com DevTools Network aberto, repita a verificacao. Com Burp, deixe o proxy ligado e capture a chamada.
 
-A interface usa a rota de checagem de host para alimentar o `<pre>` tecnico no dashboard.
+Procure o metodo, a rota, os headers e o corpo JSON.
 
-## 4. Testar comportamento normal
+## 6. Observar a requisicao de verificacao
 
-Teste entradas esperadas:
+A verificacao envia uma requisicao `POST` para a API de ativos. O corpo inclui campos como:
 
-- um IP local;
-- um ativo listado no painel;
-- um nome que talvez nao resolva.
+- `assetId`;
+- `checkType`;
+- `target`.
 
-O objetivo e construir uma linha de base. Se uma entrada normal falha por DNS, isso nao e necessariamente vulnerabilidade; pode ser apenas comportamento esperado do lab.
+O ponto importante e que o `target` esta na requisicao mesmo nao sendo editavel pela UI.
 
-## 5. Levantar hipotese de ping no backend
+## 7. Entender o risco do target controlado pelo cliente
 
-Uma checagem de disponibilidade costuma chamar `ping` no servidor. A pergunta de seguranca e: o backend passa o host como argumento isolado ou concatena a entrada em uma linha de shell?
+O dashboard mostra hostnames fixos, mas o backend recebe o `target` enviado pelo navegador. Isso cria uma pergunta: o servidor confia nesse valor ou recalcula o alvo a partir do `assetId`?
+
+Se o servidor confiar no `target`, alterar a requisicao pode mudar o comando executado no backend.
+
+## 8. Enviar para Repeater
+
+No Burp, envie a requisicao de verificacao para o Repeater. Mantenha `assetId` e `checkType` como estavam e altere apenas `target`.
+
+Comece com um alvo controlado e inofensivo para entender a resposta.
+
+## 9. Confirmar execucao com comando inofensivo
+
+Teste uma alteracao pequena no `target` para confirmar se operadores de shell sao interpretados. Comandos como `whoami` ou `id` sao bons para prova, porque nao alteram o sistema.
+
+Se o resultado da resposta incluir a saida desse comando, voce confirmou Command Injection.
+
+## 10. Ler a primeira flag pelo impacto confirmado
+
+Depois de provar a falha, use o mesmo ponto vulneravel para ler arquivos locais dentro do container. A flag nao aparece automaticamente quando voce prova execucao; ela so aparece se a exploracao ler o arquivo correto.
+
+## 11. Inspecionar JavaScript
+
+Abra DevTools Sources e leia o JavaScript carregado pelo dashboard. Procure constantes ou comentarios que indiquem funcionalidade legada.
+
+Ha uma pista discreta sobre um resolver de ativos que nao aparece como botao na interface.
+
+## 12. Montar a requisicao do resolver no Burp
+
+No Burp Repeater, monte uma requisicao manual para o resolver legado descoberto no JS. Use JSON e mantenha o cookie de sessao.
+
+Comece com entrada normal, como `localhost`, para entender a resposta.
+
+## 13. Testar filtro fraco
+
+Teste operadores de shell de forma controlada. Um caractere pode ser bloqueado, mas outros podem continuar aceitos.
 
 Dicas:
 
-- respostas com formato de ping sao pistas;
-- mensagens de erro de resolucao tambem ajudam;
-- se a entrada for concatenada, operadores de shell podem alterar a execucao.
+- observe se `;` e rejeitado;
+- compare com operadores como `&&` e `|`;
+- use `id` para provar execucao sem buscar flag ainda.
 
-## 6. Provar command injection com comando inofensivo
+Depois de confirmar o bypass, use a falha para capturar a segunda flag.
 
-Teste com cuidado. Use comandos que apenas identificam o processo, como `whoami` ou `id`.
+## 14. Descobrir support.html
 
-Se o output da verificacao incluir resultado de um comando que voce adicionou, a vulnerabilidade principal foi confirmada. A partir dai, o raciocinio natural e descobrir que arquivos locais o processo consegue ler.
+Inspecione o HTML do dashboard e o JavaScript. Ha uma pista discreta sobre uma pagina de diagnostico de suporte movida apos um incidente.
 
-## 7. Procurar arquivos e pistas sem brute force agressivo
+Acesse essa pagina manualmente pelo navegador.
 
-Evite varredura pesada. Trabalhe com evidencias:
+## 15. Ler app.log
 
-- nomes de diretorios comuns em apps Docker;
-- mensagens retornadas pelo backend;
-- arquivos referenciados pela propria aplicacao;
-- comportamento de comandos inofensivos.
-
-O objetivo e chegar as flags por investigacao, nao por tentativa cega.
-
-## 8. Inspecionar JS e comentarios HTML
-
-Abra DevTools Sources e tambem View Page Source do dashboard.
-
-Procure por:
-
-- comentarios HTML esquecidos;
-- constantes JavaScript nao usadas pela interface;
-- referencias a suporte, diagnostico ou recurso legado.
-
-O lab deixa pistas discretas para dois pontos: um resolver legado e uma pagina de diagnostico de suporte.
-
-## 9. Testar endpoint resolver manualmente no Burp
-
-Use Burp Repeater para montar a chamada ao resolver legado descoberto no JavaScript. Reaproveite o cookie de sessao do navegador e mantenha o corpo em JSON, como na requisicao observada no dashboard.
-
-Primeiro teste uma entrada normal, como `localhost`. Depois avalie o filtro:
-
-- um operador pode ser bloqueado;
-- outros operadores de shell podem continuar aceitos;
-- `&&` e `|` sao boas hipoteses de bypass.
-
-Quando provar execucao com `id`, aplique a mesma ideia usada no check de host para ler a segunda flag.
-
-## 10. Acessar support.html
-
-Com a pista do HTML/JS, acesse a pagina escondida de suporte. Ela nao esta no menu principal e nao tem atalhos para Admin ou Backup.
-
-Visualmente, ela parece uma ferramenta interna simples de diagnostico. O campo padrao e `app.log`, e o botao chama um endpoint de leitura de logs.
-
-## 11. Ler logs
-
-Carregue `app.log` e leia como um analista de incidentes.
+Na pagina de suporte, carregue `app.log`. Leia como se fosse log operacional real.
 
 Procure:
 
-- endpoint interno de health;
+- rota de health interno;
 - nome do header esperado;
-- partes de token;
-- mencao a backup;
-- indicio de evidencia fora do diretorio de dados;
-- mencao ao resolver legado.
+- partes de um token;
+- indicio de backup exposto apenas via health;
+- evidencia arquivada fora do diretorio de dados.
 
-Os logs entregam pistas, nao flags diretamente.
+Os logs nao devem entregar flags diretamente.
 
-## 12. Juntar token por partes
+## 16. Usar traversal no campo Log file
 
-O token nao aparece inteiro em uma linha. Ele e dividido em prefixo, meio e sufixo.
+O viewer recebe um nome de arquivo. Teste primeiro logs esperados, como `system.log` e `audit.log`.
 
-Junte as partes na ordem indicada e use o nome do header encontrado no log. Essa e a falha de controle de acesso: uma rota interna depende de um segredo estatico que vazou por logs.
+Depois teste a hipotese de sair do diretorio de logs com `../`. Esse bug permite obter as flags de disclosure/traversal.
 
-## 13. Usar path traversal fora de /app/data
+## 17. Montar o token de suporte
 
-O log viewer recebe um nome de arquivo. Teste primeiro arquivos esperados, como `system.log` e `audit.log`.
+O token aparece dividido em partes nos logs. Junte prefixo, meio e sufixo na ordem indicada.
 
-Depois teste a hipotese de traversal com `../`, tentando sair de `/app/data`. O retorno deve ser somente o conteudo do arquivo, sem mensagem extra.
+Use esse valor no header indicado pelo proprio log.
 
-Esse mesmo ponto cobre Information Disclosure e Path Traversal.
+## 18. Chamar o health interno pelo Burp
 
-## 14. Chamar /api/internal/health com header correto
+No Burp Repeater, monte uma requisicao `GET` para o health interno e adicione o header correto.
 
-Com o token reconstruido, chame:
+Sem o token, a rota deve responder `403`. Com o token certo, ela retorna metadados internos, mas nao retorna flag.
 
-```text
-GET /api/internal/health
-```
+## 19. Descobrir o backup interno
 
-Inclua o header indicado nos logs. Sem o token correto, a resposta deve ser `403`.
+Na resposta do health, observe o endpoint de backup, metodo e parametro esperado.
 
-Com o token certo, a resposta revela metadados internos, mas nao retorna flag diretamente.
+Esse endpoint nao existe na UI. A proxima etapa precisa ser montada manualmente.
 
-## 15. Descobrir /api/internal/backup
+## 20. Explorar o backup
 
-Na resposta do health, observe:
+Crie uma requisicao `POST` no Burp para o endpoint de backup, com JSON contendo o nome do arquivo de archive.
 
-- endpoint de backup;
-- metodo HTTP;
-- parametro exigido;
-- arquivo diagnostico relacionado.
+Teste primeiro um valor normal. Depois altere o parametro para provar Command Injection e ler o arquivo diagnostico apontado pelo health. Em seguida, busque a flag final.
 
-Essas informacoes indicam como montar a proxima requisicao manualmente.
+## 21. Mitigacao
 
-## 16. Explorar backup command injection
+Pontos de correcao:
 
-O endpoint de backup recebe um nome de arquivo. A hipotese agora deve soar familiar: se esse nome for concatenado em um comando `tar`, metacaracteres podem encadear outro comando.
-
-Comece com o valor normal para entender a resposta. Depois prove execucao com comando inofensivo e use as pistas do health para ler o arquivo diagnostico. Em seguida, procure a flag final.
-
-## 17. Conclusao e mitigacao
-
-O lab encadeia vulnerabilidades comuns em um fluxo realista:
-
-- input concatenado em shell;
-- filtro fraco por blacklist;
-- comentario/JS expondo superficie escondida;
-- logs vazando rotas e partes de token;
-- path traversal por validacao incompleta;
-- rota interna protegida por token estatico;
-- backup administrativo vulneravel a command injection.
-
-Mitigacoes:
-
+- nao confiar em `target` vindo do cliente;
+- recalcular dados sensiveis no servidor a partir do `assetId`;
 - usar `execFile` ou `spawn` com argumentos separados;
-- validar host/IP por allowlist;
-- nao tentar corrigir command injection apenas bloqueando caracteres;
-- nao vazar tokens em logs;
-- validar caminho final dentro do diretorio permitido;
-- exigir autenticacao e autorizacao reais em rotas internas;
-- remover endpoints debug/suporte de producao.
+- validar allowlist de host/IP;
+- nao tentar corrigir Command Injection apenas bloqueando caracteres;
+- nao vazar tokens ou rotas sensiveis em logs;
+- usar allowlist e validacao de path para log viewer;
+- exigir autenticacao e autorizacao reais em endpoints internos.

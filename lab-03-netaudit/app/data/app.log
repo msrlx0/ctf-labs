@@ -1,7 +1,8 @@
 [info] NetAudit monitoring service started
 [info] asset check module enabled
 [info] managed assets loaded: gateway.local,dns01.local,intranet.local,backup01.local
-[debug] availability endpoint active for dashboard checks
+[debug] asset availability endpoint active for dashboard cards
+[debug] client-side checks include assetId, checkType and target
 [debug] legacy resolver endpoint kept for support troubleshooting
 [debug] support diagnostics moved after incident NT-2026-041
 [debug] support health endpoint moved to /api/internal/health

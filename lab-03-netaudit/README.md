@@ -1,16 +1,17 @@
 # Lab 03 - NetAudit
 
-NetAudit e um painel interno ficticio usado por uma equipe de TI para monitorar disponibilidade de ativos corporativos. O ambiente simula uma aplicacao simples de operacoes: login de analista, lista de ativos, checagem de host, historico operacional e alguns recursos legados que ficaram acessiveis apos um incidente interno.
+NetAudit e um painel interno ficticio usado por uma equipe de TI para acompanhar disponibilidade de ativos corporativos. A interface comum mostra ativos, status operacional, historico recente e botoes de verificacao, como uma ferramenta interna de monitoramento.
 
-O laboratorio foi desenhado para investigacao manual. A superficie vulneravel principal nao fica toda em botoes visiveis; o aluno precisa observar requisicoes, inspecionar HTML/JavaScript, testar hipoteses e correlacionar pistas em logs.
+O laboratorio foi desenhado para investigacao manual. As superficies interessantes nao aparecem em um menu de CTF; o aluno precisa observar requisicoes, inspecionar HTML/JavaScript, testar hipoteses e correlacionar pistas.
 
 ## Objetivo
 
-Praticar exploracao controlada de vulnerabilidades web/infra em um alvo local, com foco em Command Injection e descoberta progressiva de endpoints internos.
+Praticar exploracao controlada de vulnerabilidades web/infra em um alvo local, com foco em Command Injection e descoberta progressiva de funcionalidades internas.
 
 Temas praticados:
 
 - command injection;
+- request tampering;
 - weak filtering;
 - information disclosure;
 - path traversal;
@@ -48,6 +49,6 @@ http://127.0.0.1:8090
 
 Nao use os testes ou tecnicas deste lab contra sistemas de terceiros. Todas as vulnerabilidades sao intencionais e restritas ao container Docker.
 
-## Dica de abordagem
+## Abordagem sugerida
 
-Comece pelo navegador. Use DevTools Network para entender as chamadas da interface, Sources/View Source para procurar referencias discretas e Burp Suite para repetir/modificar requisicoes. O lab foi feito para recompensar reconhecimento: a tela principal parece uma ferramenta normal de TI e nao lista todas as superficies sensiveis.
+Comece pelo navegador. Use DevTools Network para entender as chamadas da interface, Sources/View Source para procurar referencias discretas e Burp Suite para repetir/modificar requisicoes. A tela principal foi feita para parecer uma ferramenta normal de TI, nao um painel de flags.

@@ -1,6 +1,8 @@
 // legacy resolver kept for support troubleshooting
-const legacyResolverEndpoint = "/api/tools/resolve";
+const legacyAssetResolver = "/api/assets/resolve";
 const supportDiagnostics = "/support.html";
+
+let monitoredAssets = [];
 
 function $(id) {
   return document.getElementById(id);
@@ -22,6 +24,11 @@ function writeText(targetId, value) {
   }
 }
 
+function statusClass(status) {
+  const allowed = ["online", "degraded", "maintenance", "offline", "warning"];
+  return allowed.includes(status) ? status : "warning";
+}
+
 function renderCheckResult(data) {
   if (typeof data === "string") {
     return data;
@@ -29,8 +36,10 @@ function renderCheckResult(data) {
 
   return [
     `status: ${data.status || "unknown"}`,
+    `assetId: ${data.assetId || "n/a"}`,
+    `asset: ${data.assetName || "n/a"}`,
+    `type: ${data.checkType || "n/a"}`,
     `target: ${data.target || "n/a"}`,
-    `diagnostic: ${data.diagnostic || "n/a"}`,
     `durationMs: ${data.durationMs || 0}`,
     "",
     data.output || ""
@@ -77,11 +86,59 @@ async function logout() {
   window.location.href = "/login.html";
 }
 
-async function checkAsset(event) {
-  event.preventDefault();
-  const host = $("assetHost").value;
+function renderAssets() {
+  const grid = $("assetGrid");
+
+  if (!grid) {
+    return;
+  }
+
+  grid.innerHTML = monitoredAssets.map(asset => {
+    return `
+      <article class="asset-card">
+        <span class="asset-status ${statusClass(asset.status)}"></span>
+        <div class="asset-copy">
+          <h3>${asset.name}</h3>
+          <p>${asset.hostname}</p>
+          <em>${asset.status}</em>
+        </div>
+        <button class="asset-action" data-action="check-asset" data-asset-id="${asset.id}">Verificar</button>
+      </article>
+    `;
+  }).join("");
+}
+
+async function loadAssets() {
+  const grid = $("assetGrid");
+
+  if (!grid) {
+    return;
+  }
+
+  const response = await fetch("/api/assets");
+  const data = await parseResponse(response);
+
+  monitoredAssets = data.assets || [];
+  renderAssets();
+}
+
+async function checkAsset(assetId) {
+  const asset = monitoredAssets.find(item => item.id === assetId);
+  const checkType = $("checkType") ? $("checkType").value : "icmp";
+
+  if (!asset) {
+    writeText("checkResult", "Asset not found.");
+    return;
+  }
+
   writeText("checkResult", "status: running\n");
-  const data = await postJson("/api/tools/check", { host });
+
+  const data = await postJson("/api/assets/check", {
+    assetId: asset.id,
+    checkType,
+    target: asset.hostname
+  });
+
   writeText("checkResult", renderCheckResult(data));
 }
 
@@ -102,20 +159,18 @@ function bindActions() {
       return;
     }
 
-    const handlers = {
-      login,
-      logout
-    };
+    if (action === "login") {
+      login();
+    }
 
-    if (handlers[action]) {
-      handlers[action]();
+    if (action === "logout") {
+      logout();
+    }
+
+    if (action === "check-asset") {
+      checkAsset(event.target.dataset.assetId);
     }
   });
-
-  const assetCheckForm = $("assetCheckForm");
-  if (assetCheckForm) {
-    assetCheckForm.addEventListener("submit", checkAsset);
-  }
 
   const supportLogForm = $("supportLogForm");
   if (supportLogForm) {
@@ -124,3 +179,4 @@ function bindActions() {
 }
 
 bindActions();
+loadAssets();

@@ -25,60 +25,32 @@
     <section class="welcome">
       <div>
         <h2>Bem-vindo, analyst</h2>
-        <p>Verifique disponibilidade dos ativos internos e acompanhe o historico recente de checagens.</p>
+        <p>Selecione o tipo de verificacao e execute diagnosticos de disponibilidade dos ativos internos.</p>
       </div>
-      <span class="metric-pill">4 ativos monitorados</span>
+      <div class="check-mode">
+        <label for="checkType">Tipo de verificacao</label>
+        <select id="checkType">
+          <option value="icmp">ICMP</option>
+          <option value="tcp">TCP</option>
+        </select>
+      </div>
     </section>
 
-    <section class="asset-grid" aria-label="Ativos monitorados">
-      <article class="asset-card">
-        <span class="asset-status online"></span>
-        <div>
-          <h3>gateway.local</h3>
-          <p>Gateway principal</p>
-        </div>
-      </article>
-      <article class="asset-card">
-        <span class="asset-status warning"></span>
-        <div>
-          <h3>dns01.local</h3>
-          <p>Resolver interno</p>
-        </div>
-      </article>
-      <article class="asset-card">
-        <span class="asset-status online"></span>
-        <div>
-          <h3>intranet.local</h3>
-          <p>Portal corporativo</p>
-        </div>
-      </article>
-      <article class="asset-card">
-        <span class="asset-status offline"></span>
-        <div>
-          <h3>backup01.local</h3>
-          <p>No de backup</p>
-        </div>
-      </article>
-    </section>
+    <section id="assetGrid" class="asset-grid" aria-label="Ativos monitorados"></section>
 
     <section class="workspace-grid">
       <article class="card">
-        <h2>Verificar disponibilidade de ativo</h2>
-        <form id="assetCheckForm">
-          <label for="assetHost">Host ou IP</label>
-          <input id="assetHost" value="127.0.0.1" autocomplete="off">
-          <button type="submit">Verificar</button>
-        </form>
-        <pre id="checkResult"></pre>
+        <h2>Resultado da verificacao</h2>
+        <pre id="checkResult">Nenhuma verificacao executada.</pre>
       </article>
 
       <article class="card">
         <h2>Historico recente</h2>
         <ul class="history-list">
-          <li><span>08:42</span><strong>gateway.local</strong><em>degraded</em></li>
-          <li><span>08:31</span><strong>dns01.local</strong><em>warning</em></li>
-          <li><span>08:19</span><strong>intranet.local</strong><em>online</em></li>
-          <li><span>08:05</span><strong>backup01.local</strong><em>timeout</em></li>
+          <li><span>08:42</span><strong>Gateway Edge</strong><em>degraded</em></li>
+          <li><span>08:31</span><strong>DNS Resolver</strong><em>warning</em></li>
+          <li><span>08:19</span><strong>Intranet Portal</strong><em>online</em></li>
+          <li><span>08:05</span><strong>Backup Node</strong><em>maintenance</em></li>
         </ul>
       </article>
     </section>

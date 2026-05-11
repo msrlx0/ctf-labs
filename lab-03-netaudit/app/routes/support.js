@@ -31,7 +31,11 @@ router.get("/log", requireLogin, (req, res) => {
 
   try {
     const content = fs.readFileSync(requestedPath, "utf8");
-    return res.set("X-NetAudit-Viewer", "support-diagnostics").type("text/plain").send(content);
+    return res
+      .set("X-NetAudit-Viewer", "support-diagnostics")
+      .set("X-NetAudit-Incident", "NT-2026-041")
+      .type("text/plain")
+      .send(content);
   } catch {
     return res.status(404).type("text/plain").send("File not found");
   }
