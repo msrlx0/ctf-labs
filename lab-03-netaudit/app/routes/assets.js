@@ -24,8 +24,8 @@ const assets = [
   },
   {
     id: "bkp-01",
-    name: "Backup Node",
-    hostname: "backup01.local",
+    name: "Storage Node",
+    hostname: "storage01.local",
     status: "maintenance"
   }
 ];
