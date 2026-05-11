@@ -1,6 +1,7 @@
 // legacy resolver kept for support troubleshooting
 const legacyAssetResolver = "/api/assets/resolve";
 const supportDiagnostics = "/support.html";
+const supportedCheckTypes = ["icmp", "tcp"];
 
 let monitoredAssets = [];
 

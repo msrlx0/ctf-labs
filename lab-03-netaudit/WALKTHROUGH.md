@@ -56,6 +56,18 @@ Compare a resposta. Se a saida do comando de prova aparecer no retorno tecnico, 
 
 Depois da prova inofensiva, use o mesmo ponto de entrada para ler o arquivo da primeira etapa. A flag nao aparece automaticamente durante a prova; ela depende de leitura explicita.
 
+## Opcional. Blind/Time-Based Command Injection
+
+Antes de seguir para o resolver legado, investigue se a mesma rota de verificacao aceita outros tipos de rotina. A requisicao capturada tem `checkType`, e isso e um bom convite para testar hipoteses no Repeater.
+
+Procure pistas discretas no JavaScript e, mais tarde, nos logs operacionais. Elas indicam que agentes legados ainda podem enviar verificacoes TCP com metadados vindos do cliente.
+
+No Burp Repeater, duplique a requisicao de verificacao. Troque `checkType` para `tcp`, mantenha um `target` normal e adicione um campo `port`, por exemplo uma porta comum. Envie e observe que a resposta nao mostra stdout/stderr; ela retorna metadados e `durationMs`.
+
+Agora altere somente `target` para incluir uma pausa controlada, como `sleep 5`, preservando o restante do JSON. Compare o tempo da resposta normal com a resposta alterada. Se `durationMs` crescer de forma consistente, voce confirmou execucao de comando sem depender de output visivel.
+
+Essa etapa e uma confirmacao blind/time-based: o impacto aparece no tempo, nao no corpo da resposta. Depois, volte ao fluxo com output visivel ou a outras pistas do lab para capturar flags.
+
 ## 13. Inspecionar JS
 
 Abra DevTools Sources e leia o JavaScript carregado pelo dashboard. Procure constantes, comentarios e referencias que nao estejam expostas como botoes.
@@ -136,3 +148,4 @@ As correcoes passam por nao confiar em parametros tecnicos vindos do cliente, ev
 4. Comentarios HTML e constantes JS podem ser pistas, mesmo sem link visivel.
 5. Logs operacionais podem revelar contexto suficiente para montar a proxima requisicao.
 6. Filtros baseados em bloquear um unico caractere costumam deixar outros operadores disponiveis.
+7. Quando nao houver output, compare tempos de resposta entre uma requisicao normal e uma requisicao com atraso controlado.

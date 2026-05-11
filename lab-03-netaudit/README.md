@@ -13,6 +13,7 @@ Praticar exploracao controlada de vulnerabilidades web/infra em um alvo local, c
 Temas praticados:
 
 - command injection;
+- blind/time-based command injection;
 - weak input filtering;
 - information disclosure;
 - path traversal;
