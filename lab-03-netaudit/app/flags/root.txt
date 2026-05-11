@@ -1,0 +1,1 @@
+FLAG{admin_backup_command_injection_lab3}

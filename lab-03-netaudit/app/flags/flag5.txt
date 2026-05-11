@@ -1,0 +1,1 @@
+FLAG{admin_route_exposed_by_debug_token}

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support Diagnostics - NetAudit</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="container">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">NetAudit Support</p>
+        <h1>Support Diagnostics</h1>
+      </div>
+      <a class="button secondary-link" href="/dashboard.html">Dashboard</a>
+    </header>
+
+    <section class="card narrow-left">
+      <h2>Log viewer</h2>
+      <form id="supportLogForm">
+        <label for="logFile">Log file</label>
+        <input id="logFile" value="app.log" autocomplete="off">
+        <button type="submit">Visualizar</button>
+      </form>
+      <pre id="supportLogResult"></pre>
+    </section>
+  </main>
+  <script src="/js/app.js"></script>
+</body>
+</html>

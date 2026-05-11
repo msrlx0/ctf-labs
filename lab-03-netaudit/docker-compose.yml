@@ -1,0 +1,9 @@
+services:
+  netaudit:
+    build: ./app
+    container_name: lab-03-netaudit
+    ports:
+      - "8090:3000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped

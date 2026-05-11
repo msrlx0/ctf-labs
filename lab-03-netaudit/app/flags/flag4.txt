@@ -1,0 +1,1 @@
+FLAG{path_traversal_log_viewer_lab3}
