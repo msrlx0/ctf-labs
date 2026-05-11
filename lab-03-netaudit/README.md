@@ -12,6 +12,7 @@ Praticar exploracao controlada de vulnerabilidades web/infra em um alvo local, c
 
 Temas praticados:
 
+- request tampering;
 - command injection;
 - blind/time-based command injection;
 - weak input filtering;
@@ -53,4 +54,4 @@ Nao use os testes ou tecnicas deste lab contra sistemas de terceiros. Todas as v
 
 ## Abordagem sugerida
 
-Comece pelo navegador. Use DevTools Network para entender as chamadas da interface, Sources/View Source para procurar referencias discretas e Burp Suite para repetir/modificar requisicoes. A tela principal foi feita para parecer uma ferramenta normal de TI, nao um painel de flags.
+Comece pelo navegador. Use DevTools Network para entender as chamadas da interface, Sources/View Source para procurar referencias discretas e Burp Suite para repetir/modificar requisicoes. A tela principal foi feita para parecer uma ferramenta normal de TI.
