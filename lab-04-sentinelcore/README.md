@@ -7,7 +7,7 @@ O lab foi criado para treinar correlacao de pistas entre frontend, APIs, tokens,
 ## Escopo
 
 ```text
-http://127.0.0.1:8090
+http://127.0.0.1:8094
 ```
 
 Somente a aplicacao principal fica publicada no host. Redis, internal-admin e worker ficam acessiveis apenas na rede Docker interna.
@@ -42,7 +42,7 @@ docker compose down -v
 
 | Servico | Funcao | Exposicao |
 |---|---|---|
-| sentinel-app | Aplicacao web e API principal | `127.0.0.1:8090` |
+| sentinel-app | Aplicacao web e API principal | `127.0.0.1:8094` |
 | internal-admin | Servico administrativo interno | Somente rede Docker |
 | worker | Consumidor de jobs assincronos | Sem porta |
 | redis | Fila `sentinel:jobs` | Somente rede Docker |

@@ -5,7 +5,7 @@ Solucao completa para instrutores do **Lab 04 - SentinelCore**.
 Escopo autorizado:
 
 ```text
-http://127.0.0.1:8090
+http://127.0.0.1:8094
 ```
 
 Este walkthrough foca exploracao manual. Os comandos `curl` servem como alternativa de validacao e para reproduzir requests capturadas no Burp.
@@ -22,7 +22,7 @@ docker compose up --build
 Em outro terminal:
 
 ```bash
-BASE=http://127.0.0.1:8090
+BASE=http://127.0.0.1:8094
 COOKIE=/tmp/lab04-sentinel.cookies
 ```
 
@@ -31,7 +31,7 @@ COOKIE=/tmp/lab04-sentinel.cookies
 Acesse o navegador:
 
 ```text
-http://127.0.0.1:8090
+http://127.0.0.1:8094
 ```
 
 Entre com:
@@ -55,14 +55,14 @@ Valide a sessao:
 curl -s -b "$COOKIE" "$BASE/api/v2/me"
 ```
 
-O usuario inicial tem role `intern`.
+O usuario inicial tem role `viewer`.
 
 ## 2. Inspecao do JavaScript
 
 No dashboard, abra DevTools ou acesse diretamente:
 
 ```text
-http://127.0.0.1:8090/static/js/sentinel.bundle.js
+http://127.0.0.1:8094/static/js/sentinel.bundle.js
 ```
 
 O bundle revela nomes de endpoints e formatos esperados:

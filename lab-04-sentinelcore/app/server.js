@@ -21,7 +21,7 @@ const users = [
     id: 1,
     username: "intern",
     password: "intern2026",
-    role: "intern",
+    role: "viewer",
     displayName: "SOC Intern"
   },
   {

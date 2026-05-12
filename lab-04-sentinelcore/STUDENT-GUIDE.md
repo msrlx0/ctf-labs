@@ -74,7 +74,7 @@ A area admin indica que a flag final esta em disco. Procure uma primitiva de lei
 Mantenha tudo dentro do ambiente local:
 
 ```text
-http://127.0.0.1:8090
+http://127.0.0.1:8094
 ```
 
 Nao use ataques destrutivos, reverse shell ou qualquer alvo fora do lab.

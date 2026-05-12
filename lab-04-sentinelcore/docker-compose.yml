@@ -3,7 +3,7 @@ services:
     build: ./app
     container_name: lab04-sentinel-app
     ports:
-      - "8090:3000"
+      - "8094:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000

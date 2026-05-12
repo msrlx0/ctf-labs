@@ -32,7 +32,7 @@ app.get("/internal/users", requireInternalToken, (req, res) => {
   return res.json({
     service: "internal-admin",
     users: [
-      { id: 1, username: "intern", role: "intern", tenant: "training" },
+      { id: 1, username: "intern", role: "viewer", tenant: "training" },
       { id: 2, username: "analyst", role: "analyst", tenant: "soc" },
       { id: 3, username: "admin", role: "admin", tenant: "platform" }
     ],

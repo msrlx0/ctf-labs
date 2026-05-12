@@ -9,7 +9,7 @@ Cada pasta deste repositorio representa um CTF independente, com seu proprio `do
 | Lab | Tema | Porta | Status |
 |---|---|---:|---|
 | [lab-01-minibank](./lab-01-minibank/) | Fundamentos web: enumeracao, SQLi, IDOR, acesso indevido, XSS e path traversal | 8088 | Finalizado |
-| [lab-04-sentinelcore](./lab-04-sentinelcore/) | Cadeia hard de SOC: BOLA, mass assignment, JWT, SSRF, fila e file read | 8090 | Finalizado |
+| [lab-04-sentinelcore](./lab-04-sentinelcore/) | Cadeia hard de SOC: BOLA, mass assignment, JWT, SSRF, fila e file read | 8094 | Finalizado |
 
 ## Uso Autorizado
 
