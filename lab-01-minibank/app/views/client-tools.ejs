@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ferramentas do cliente - <%= appName %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <strong>MiniBank</strong>
+      <span>Internal Portal</span>
+    </div>
+    <nav>
+      <% if (currentUser) { %>
+        <a href="/dashboard">Dashboard</a>
+        <form action="/logout" method="post" class="inline-form">
+          <button type="submit">Sair</button>
+        </form>
+      <% } else { %>
+        <a href="/login">Login</a>
+      <% } %>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="panel">
+      <p class="eyebrow">Atendimento</p>
+      <h1>Ferramentas do cliente</h1>
+      <p>Use o preview de mensagem para validar comunicados curtos antes do envio.</p>
+      <div id="message-preview" class="notice">Nenhuma mensagem carregada.</div>
+      <div id="dom-xss-proof" class="flag-box" hidden></div>
+    </section>
+  </main>
+
+  <script>
+    const hashParameters = new URLSearchParams(window.location.hash.slice(1));
+    const hashMessageParam = hashParameters.get('msg');
+    const unsafePreviewElement = document.getElementById('message-preview');
+    const domXssProofElement = document.getElementById('dom-xss-proof');
+
+    if (hashMessageParam) {
+      unsafePreviewElement.innerHTML = hashMessageParam;
+
+      if (/[<]|onerror\s*=|onload\s*=|script|javascript:/i.test(hashMessageParam)) {
+        domXssProofElement.hidden = false;
+        domXssProofElement.textContent = ['FLAG', '{dom_', 'xss_', 'capturado', '}'].join('');
+      }
+    }
+  </script>
+</body>
+</html>

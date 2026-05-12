@@ -83,8 +83,23 @@ app.get('/status', (req, res) => {
     version: appVersion,
     env: 'development',
     internal_path: '/usr/src/app',
-    database: 'mysql://minibank-db:3306/minibank'
+    database: 'mysql://minibank-db:3306/minibank',
+    proxy_compatibility: 'legacy reverse proxy compatibility mode enabled'
   });
+});
+
+app.get('/search', (req, res) => {
+  const q = req.query.q || '';
+  const xssCaptured = /<\s*script|on\w+\s*=|javascript:/i.test(q);
+
+  res.render('search', {
+    q,
+    xssCaptured
+  });
+});
+
+app.get('/client-tools', (req, res) => {
+  res.render('client-tools');
 });
 
 app.get('/login', (req, res) => {
@@ -234,6 +249,53 @@ app.get('/admin', requireAdmin, asyncRoute(async (req, res) => {
     accountCount: accountCountRows[0].total
   });
 }));
+
+app.get('/admin/reports', (req, res) => {
+  const originalUrl = req.get('X-Original-URL') || '';
+  const rewriteUrl = req.get('X-Rewrite-URL') || '';
+  const legacyBypass = originalUrl === '/admin/reports' || rewriteUrl === '/admin/reports';
+
+  if (!legacyBypass) {
+    return res.status(403).send(`<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acesso negado - ${appName}</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="shell narrow">
+    <section class="panel">
+      <p class="eyebrow">403 Forbidden</p>
+      <h1>Acesso negado</h1>
+      <p>Voce nao possui permissao para acessar este relatorio administrativo.</p>
+    </section>
+  </main>
+</body>
+</html>`);
+  }
+
+  return res.send(`<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relatorios administrativos - ${appName}</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="shell narrow">
+    <section class="panel">
+      <p class="eyebrow">Relatorio administrativo</p>
+      <h1>Compatibilidade legado ativa</h1>
+      <p>Relatorio liberado pelo modo de compatibilidade do proxy reverso legado.</p>
+      <div class="flag-box">FLAG{403_bypass_capturado}</div>
+    </section>
+  </main>
+</body>
+</html>`);
+});
 
 app.use((req, res) => {
   res.status(404).render('error', {

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Busca de clientes - <%= appName %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <strong>MiniBank</strong>
+      <span>Internal Portal</span>
+    </div>
+    <nav>
+      <% if (currentUser) { %>
+        <a href="/dashboard">Dashboard</a>
+        <form action="/logout" method="post" class="inline-form">
+          <button type="submit">Sair</button>
+        </form>
+      <% } else { %>
+        <a href="/login">Login</a>
+      <% } %>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="panel">
+      <p class="eyebrow">Consulta legado</p>
+      <h1>Busca de clientes</h1>
+      <form class="form-stack" action="/search" method="get">
+        <label>
+          Termo de busca
+          <input name="q" value="<%= q %>" autocomplete="off" placeholder="nome, documento ou anotacao">
+        </label>
+        <button type="submit">Buscar</button>
+      </form>
+    </section>
+
+    <% if (q) { %>
+      <section class="panel">
+        <h2>Resultado da busca</h2>
+        <p>Resultado para: <span class="search-result"><%- q %></span></p>
+        <p class="muted">Nenhum cadastro correspondente foi encontrado no indice legado.</p>
+        <% if (xssCaptured) { %>
+          <div class="flag-box">FLAG{xss_basico_capturado}</div>
+        <% } %>
+      </section>
+    <% } %>
+  </main>
+</body>
+</html>
