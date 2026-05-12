@@ -6,16 +6,30 @@ Gabarito tecnico completo. Use apenas no ambiente local autorizado:
 http://127.0.0.1:8090
 ```
 
-## 0. Descoberta pre-login
+## 0. Descoberta pre-login por debug disclosure
 
 Fluxo tecnico:
 
-1. `GET /robots.txt`
-2. `GET /old/deployment-notes.txt`
-3. Usuario encontrado: `analyst`
-4. Senha antiga incorreta: `analyst2022`
-5. `GET /backup/readme.txt`
-6. `GET /backup/password-candidates.txt`
+1. Capture um `POST /api/auth/login`.
+2. Modifique `returnUrl` para `"'"`.
+3. Receba `HTTP 500` com erro controlado de redirect/parser.
+4. O stack trace expoe `/old/deployment-notes.txt` e `/backup/readme.txt`.
+5. `GET /old/deployment-notes.txt`.
+6. Usuario encontrado: `analyst`.
+7. Senha antiga incorreta: `analyst2022`.
+8. `GET /backup/readme.txt`.
+9. `GET /backup/password-candidates.txt`.
+
+Payload de erro:
+
+```json
+{
+  "username": "x",
+  "password": "x",
+  "client": "web",
+  "returnUrl": "'"
+}
+```
 
 Burp Intruder:
 
@@ -33,22 +47,22 @@ analyst:analyst123
 
 Causa raiz:
 
-- information disclosure pre-auth;
+- debug error em producao;
+- stack trace/path disclosure;
+- parametro client-side nao validado adequadamente;
 - arquivos legados publicados no webroot;
 - backup publico com lista de senhas candidatas;
-- `robots.txt` nao e controle de acesso;
-- notas antigas mantidas em producao;
-- falta de rotacao adequada.
+- falta de rotacao/remocao de credenciais.
 
 Mitigacao:
 
+- respostas de erro genericas;
+- desabilitar debug em producao;
+- validar `returnUrl` com allowlist;
+- nao expor caminhos internos;
 - remover arquivos sensiveis do webroot;
 - nunca publicar listas de senhas;
-- usar secrets manager;
 - rotacionar credenciais expostas;
-- revisar artefatos publicos antes de deploy;
-- monitorar arquivos estaticos expostos;
-- nao confiar em `robots.txt` como protecao;
 - implementar rate limiting e lockout em login real.
 
 ## Payloads principais

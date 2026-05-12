@@ -38,8 +38,8 @@ Dentro do container, a aplicacao escuta na porta `3000`.
 
 ## Acesso inicial
 
-A aplicacao simula um painel interno com artefatos legados publicados por engano.
-Comece pelo reconhecimento das paginas e arquivos publicos para descobrir como acessar o painel.
+A aplicacao simula um painel interno com artefatos legados expostos por erro de configuracao.
+Comece pelo reconhecimento da aplicacao e pela observacao das requisicoes para descobrir como acessar o painel.
 
 ## Escopo autorizado
 

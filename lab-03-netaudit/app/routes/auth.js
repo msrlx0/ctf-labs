@@ -11,8 +11,45 @@ const users = [
   }
 ];
 
+function isMalformedReturnUrl(returnUrl) {
+  if (returnUrl === undefined || returnUrl === "/dashboard.html") {
+    return false;
+  }
+
+  return typeof returnUrl !== "string" || returnUrl.includes("'") || !returnUrl.startsWith("/");
+}
+
+function buildRedirectDebugError(returnUrl) {
+  const token = JSON.stringify(returnUrl);
+
+  return [
+    "NetAudit Login Redirect Error",
+    "",
+    `Error: malformed returnUrl token ${token}`,
+    "",
+    "    at RedirectParser.parse (/app/server/redirect-parser.js:27:11)",
+    "    at AuthController.login (/app/routes/auth.js:42:9)",
+    "    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)",
+    "",
+    "Debug context:",
+    "legacy notes root: /app/public/old/",
+    "backup export root: /app/public/backup/",
+    "last migration note: /old/deployment-notes.txt",
+    "candidate export note: /backup/readme.txt",
+    "",
+    "Environment:",
+    "NODE_ENV=production",
+    "debug_login_redirects=true"
+  ].join("\n");
+}
+
 router.post("/login", (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, returnUrl } = req.body;
+
+  if (isMalformedReturnUrl(returnUrl)) {
+    return res.status(500).type("text/plain").send(buildRedirectDebugError(returnUrl));
+  }
+
   const user = users.find(item => item.username === username && item.password === password);
 
   if (!user) {

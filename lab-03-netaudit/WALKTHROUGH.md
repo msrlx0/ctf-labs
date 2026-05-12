@@ -2,7 +2,7 @@
 
 Este guia acompanha uma resolucao manual pelo navegador, DevTools e Burp Suite. Ele segue o raciocinio de um analista: observar a aplicacao, capturar requisicoes, alterar poucos campos por vez, correlacionar pistas e confirmar impacto.
 
-## 1. Reconhecimento pre-auth
+## 1. Reconhecimento pre-auth e debug disclosure
 
 Abra o navegador em:
 
@@ -10,11 +10,29 @@ Abra o navegador em:
 http://127.0.0.1:8090
 ```
 
-A tela de login nao fornece credenciais. Antes de testar login aleatoriamente, faca reconhecimento das paginas e arquivos publicos.
+A tela de login nao mostra credenciais. Faca uma tentativa de login qualquer e capture o `POST /api/auth/login` no Burp Proxy ou pelo DevTools Network.
 
-Verifique arquivos publicos comuns, como `robots.txt`. Ele lista diretorios que nao deveriam ter sido publicados como pista operacional, nao como controle de acesso.
+Observe que a requisicao envia campos alem de `username` e `password`. Envie a requisicao para o Burp Repeater e altere o campo `returnUrl` para um valor malformado, como uma aspas simples:
 
-Acesse:
+```json
+{
+  "username": "teste",
+  "password": "teste",
+  "client": "web",
+  "returnUrl": "'"
+}
+```
+
+A resposta deve ser um `HTTP 500` com um erro de debug do parser de redirect. Esse erro nao e SQL Injection; ele simula um vazamento de stack trace e metadados legados por validacao fraca de parametro client-side.
+
+No erro, identifique os caminhos expostos:
+
+```text
+/old/deployment-notes.txt
+/backup/readme.txt
+```
+
+Acesse o arquivo de notas legado:
 
 ```text
 /old/deployment-notes.txt
@@ -34,13 +52,13 @@ analyst2022
 
 Teste `analyst2022` no login e confirme que falha. O aviso da propria nota diz que ela esta desatualizada e aponta para uma lista candidata arquivada.
 
-Acesse:
+Acesse a nota do backup:
 
 ```text
 /backup/readme.txt
 ```
 
-Esse arquivo indica a lista pequena de candidatos:
+Esse arquivo indica uma lista pequena de candidatos:
 
 ```text
 password-candidates.txt
@@ -48,7 +66,7 @@ password-candidates.txt
 
 Abra ou baixe a lista. Ela foi criada para validacao controlada dentro do lab local, com poucas senhas candidatas. Nao use wordlists grandes, ataques agressivos ou alvos fora do escopo.
 
-No Burp Suite:
+Use o Burp Intruder:
 
 1. Use o Proxy para capturar uma tentativa de login com `username` fixo como `analyst`.
 2. Envie o `POST /api/auth/login` para o Intruder.

@@ -73,7 +73,12 @@ async function postJson(url, body, headers = {}) {
 async function login() {
   const username = $("username").value;
   const password = $("password").value;
-  const data = await postJson("/api/auth/login", { username, password });
+  const data = await postJson("/api/auth/login", {
+    username,
+    password,
+    client: "web",
+    returnUrl: "/dashboard.html"
+  });
 
   writeJson("result", data);
 
