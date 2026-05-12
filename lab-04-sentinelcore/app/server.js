@@ -44,7 +44,7 @@ const profileExtras = new Map();
 
 const alerts = [
   {
-    id: 4101,
+    id: 1001,
     owner_id: 1,
     title: "VPN login from new ASN",
     severity: "medium",
@@ -53,7 +53,7 @@ const alerts = [
     analyst_note: "Compare list responses with direct object reads."
   },
   {
-    id: 4102,
+    id: 1004,
     owner_id: 1,
     title: "EDR quarantine summary",
     severity: "low",
@@ -62,7 +62,7 @@ const alerts = [
     analyst_note: "Dashboard links intentionally show only common APIs."
   },
   {
-    id: 4201,
+    id: 1002,
     owner_id: 2,
     title: "Legacy diagnostic secret fragment observed",
     severity: "high",
@@ -71,7 +71,7 @@ const alerts = [
     analyst_note: "Old debug health checks referenced auth material as sentinelcore-dev-****."
   },
   {
-    id: 4301,
+    id: 1003,
     owner_id: 3,
     title: "Internal admin dependency reachable from API network",
     severity: "critical",

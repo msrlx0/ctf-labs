@@ -49,15 +49,19 @@ docker compose down -v
 
 ## Temas Abordados
 
+- JavaScript source disclosure
+- hidden endpoints
 - BOLA / IDOR em APIs
 - Mass Assignment
-- JWT forgery com segredo vazado
 - Debug disclosure
 - Build artifact leak
+- JWT forgery com segredo vazado
 - SSRF para servico interno
+- Internal admin abuse
 - Proxy interno com headers controlados
 - Template context disclosure
-- Queue poisoning
+- Redis/queue poisoning
+- Worker abuse
 - Leitura de output de worker
 - Arbitrary File Read com bypass de filtro por encoding
 

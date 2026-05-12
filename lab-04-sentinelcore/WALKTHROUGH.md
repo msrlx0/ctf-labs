@@ -92,7 +92,7 @@ curl -s -b "$COOKIE" "$BASE/api/v2/alerts"
 O endpoint lista apenas alertas do `owner_id` do usuario. Agora teste leitura direta de objetos por ID:
 
 ```bash
-curl -s -b "$COOKIE" "$BASE/api/v2/alerts/4201"
+curl -s -b "$COOKIE" "$BASE/api/v2/alerts/1002"
 ```
 
 O detalhe nao valida o `owner_id`, permitindo ler alerta de outro tenant.
@@ -344,13 +344,13 @@ Valide o tipo `report.export`:
 ```bash
 curl -s -H "Cookie: $ADMIN_COOKIE" \
   -H "Content-Type: application/json" \
-  -d '{"type":"report.export","source":"case-4201","output":"case-4201.txt"}' \
+  -d '{"type":"report.export","source":"case-1002","output":"case-1002.txt"}' \
   "$BASE/api/v2/jobs"
 
 sleep 2
 
 curl -s -H "Cookie: $ADMIN_COOKIE" \
-  "$BASE/api/v2/jobs/output?file=case-4201.txt"
+  "$BASE/api/v2/jobs/output?file=case-1002.txt"
 ```
 
 Valide tambem a primitiva insegura do worker `file.read`, limitada ao container do worker:
