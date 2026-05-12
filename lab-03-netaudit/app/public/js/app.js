@@ -57,7 +57,7 @@ async function parseResponse(response) {
   return response.text();
 }
 
-async function postJson(url, body, headers = {}) {
+async function postJsonWithResponse(url, body, headers = {}) {
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -67,24 +67,45 @@ async function postJson(url, body, headers = {}) {
     body: JSON.stringify(body)
   });
 
-  return parseResponse(response);
+  const data = await parseResponse(response);
+  return { response, data };
+}
+
+async function postJson(url, body, headers = {}) {
+  const { data } = await postJsonWithResponse(url, body, headers);
+  return data;
 }
 
 async function login() {
   const username = $("username").value;
   const password = $("password").value;
-  const data = await postJson("/api/auth/login", {
-    username,
-    password,
-    client: "web",
-    returnUrl: "/dashboard.html"
-  });
+  let result;
 
-  writeJson("result", data);
-
-  if (data.success) {
-    window.location.href = "/dashboard.html";
+  try {
+    result = await postJsonWithResponse("/api/auth/login", {
+      username,
+      password,
+      client: "web",
+      returnUrl: "/dashboard.html"
+    });
+  } catch {
+    writeText("result", "Erro interno ao processar login.");
+    return;
   }
+
+  const { response, data } = result;
+
+  if (response.ok && data.success) {
+    window.location.href = "/dashboard.html";
+    return;
+  }
+
+  if (response.status === 401) {
+    writeText("result", "Usuário ou senha inválidos.");
+    return;
+  }
+
+  writeText("result", "Erro interno ao processar login.");
 }
 
 async function logout() {
