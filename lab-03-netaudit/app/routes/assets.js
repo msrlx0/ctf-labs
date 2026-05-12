@@ -25,10 +25,29 @@ const assets = [
   {
     id: "bkp-01",
     name: "Storage Node",
-    hostname: "storage01.local",
+    hostname: "backup01.local",
     status: "maintenance"
   }
 ];
+
+const resolverMetadata = {
+  "gateway.local": {
+    resolved: "10.10.0.1",
+    owner: "netops"
+  },
+  "dns01.local": {
+    resolved: "10.10.0.53",
+    owner: "netops"
+  },
+  "intranet.local": {
+    resolved: "10.10.0.20",
+    owner: "webops"
+  },
+  "backup01.local": {
+    resolved: "10.10.0.41",
+    owner: "backup"
+  }
+};
 
 function getSession(req) {
   try {
@@ -72,21 +91,6 @@ function runCommand(command, metadata, res) {
   });
 }
 
-function runBlindCommand(command, metadata, res) {
-  const startedAt = Date.now();
-
-  exec(command, { timeout: 8000 }, error => {
-    const timedOut = Boolean(error && (error.killed || error.signal === "SIGTERM"));
-
-    return res.json({
-      ok: !error,
-      status: timedOut ? "completed_with_timeout" : "completed",
-      ...metadata,
-      durationMs: Date.now() - startedAt
-    });
-  });
-}
-
 router.get("/", requireLogin, (req, res) => {
   return res.json({
     ok: true,
@@ -95,7 +99,7 @@ router.get("/", requireLogin, (req, res) => {
 });
 
 router.post("/check", requireLogin, (req, res) => {
-  const { assetId, checkType, target, port } = req.body;
+  const { assetId, checkType, target } = req.body;
   const asset = assets.find(item => item.id === assetId);
 
   if (!assetId || !checkType || !target) {
@@ -112,30 +116,11 @@ router.post("/check", requireLogin, (req, res) => {
     });
   }
 
-  if (checkType !== "icmp" && checkType !== "tcp") {
+  if (checkType !== "icmp") {
     return res.status(400).json({
       ok: false,
       error: "unsupported check type"
     });
-  }
-
-  if (checkType === "tcp") {
-    if (!port) {
-      return res.status(400).json({
-        ok: false,
-        error: "port is required for tcp checks"
-      });
-    }
-
-    // Intentional lab vulnerability: target and port are trusted from the request body.
-    const command = `nc -zvw2 ${target} ${port}`;
-    return runBlindCommand(command, {
-      assetId,
-      assetName: asset.name,
-      checkType,
-      target,
-      port
-    }, res);
   }
 
   // Intentional lab vulnerability: target is trusted from the request body.
@@ -149,7 +134,7 @@ router.post("/check", requireLogin, (req, res) => {
 });
 
 router.post("/resolve", requireLogin, (req, res) => {
-  const { target } = req.body;
+  const target = String(req.body.target || "");
 
   if (!target) {
     return res.status(400).json({
@@ -158,21 +143,36 @@ router.post("/resolve", requireLogin, (req, res) => {
     });
   }
 
-  if (target.includes(";")) {
-    return res.status(400).json({
-      ok: false,
-      error: "Invalid character detected"
+  if (target === "metadata" || target === "internal-metadata") {
+    return res.json({
+      ok: true,
+      target,
+      metadata: {
+        note: "legacy resolver metadata should not be exposed",
+        flag: "FLAG{hidden_resolver_metadata_disclosure_lab3}"
+      }
     });
   }
 
-  // Intentional weak filter: only ";" is blocked.
-  const command = `nslookup ${target}`;
-  return runCommand(command, {
-    assetId: "legacy-resolver",
-    assetName: "Legacy Resolver",
-    checkType: "resolve",
-    target
-  }, res);
+  const entry = resolverMetadata[target];
+
+  if (!entry) {
+    return res.status(404).json({
+      ok: false,
+      error: "target metadata not found"
+    });
+  }
+
+  return res.json({
+    ok: true,
+    target,
+    resolved: entry.resolved,
+    metadata: {
+      owner: entry.owner,
+      environment: "internal",
+      resolver: "legacy"
+    }
+  });
 });
 
 module.exports = router;

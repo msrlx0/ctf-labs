@@ -18,13 +18,13 @@ Praticar exploracao controlada de vulnerabilidades web/infra em um alvo local, c
 - Request tampering
 - Command Injection com output
 - Blind/Time-Based Command Injection
-- Weak input filtering
 - Hidden endpoint discovery
+- Metadata disclosure
 - Information disclosure em logs
 - Path Traversal
 - Broken Access Control
 - Internal endpoint abuse
-- Administrative Command Injection
+- Arbitrary File Read em funcao administrativa
 
 O lab possui 7 flags principais.
 

@@ -1,5 +1,6 @@
 const express = require("express");
-const { exec } = require("child_process");
+const fs = require("fs");
+const path = require("path");
 
 const router = express.Router();
 const SUPPORT_TOKEN = "netaudit-debug-2026";
@@ -24,49 +25,46 @@ router.get("/health", requireSupportToken, (req, res) => {
     environment: "production",
     diagnosticEndpoint: "/api/internal/diagnostics",
     backupEndpoint: "/api/internal/backup",
-    method: "POST",
-    requiredParameter: "archiveName"
+    backupMethod: "POST",
+    requiredParameter: "includeFile"
   });
 });
 
 router.get("/diagnostics", requireSupportToken, (req, res) => {
   return res.json({
     status: "diagnostics_ready",
-    flag: "FLAG{internal_diagnostics_token_abuse_lab3}"
+    flag: "FLAG{internal_diagnostics_token_abuse_lab3}",
+    backupManifest: "/app/data/backup-manifest.log"
   });
 });
 
 router.post("/backup", requireSupportToken, (req, res) => {
-  const { archiveName } = req.body;
+  const includeFile = String(req.body.includeFile || "");
 
-  if (!archiveName) {
+  if (!includeFile) {
     return res.status(400).json({
       ok: false,
-      error: "archiveName is required"
+      error: "includeFile is required"
     });
   }
 
-  // Intentional lab vulnerability: archiveName is concatenated into a shell command.
-  const command = `tar -czf /tmp/${archiveName} /app/data`;
+  // Intentional lab vulnerability: includeFile is joined under /app without an allowlist.
+  const requestedPath = path.join("/app", includeFile);
 
-  exec(command, { timeout: 5000 }, (error, stdout, stderr) => {
-    let output = `${stdout || ""}${stderr || ""}`;
-
-    if (!output && error) {
-      output = error.message;
-    }
-
-    if (!output) {
-      output = "Backup queued successfully";
-    }
-
+  try {
+    const content = fs.readFileSync(requestedPath, "utf8");
     return res.json({
-      ok: !error,
-      status: error ? "completed_with_errors" : "queued",
-      archiveName,
-      output
+      ok: true,
+      status: "export_ready",
+      includeFile,
+      content
     });
-  });
+  } catch {
+    return res.status(404).json({
+      ok: false,
+      error: "Requested export file not found"
+    });
+  }
 });
 
 module.exports = router;

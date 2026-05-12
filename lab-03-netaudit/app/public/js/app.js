@@ -1,7 +1,9 @@
-// legacy resolver kept for support troubleshooting
-const legacyAssetResolver = "/api/assets/resolve";
+// legacy endpoints kept for support troubleshooting
+const legacyResolverEndpoint = "/api/assets/resolve";
+const legacyResolverPayloadShape = { target: "hostname" };
+const legacyAgentTcpProbeEndpoint = "/api/agents/tcp-probe";
 const supportDiagnostics = "/support.html";
-const supportedCheckTypes = ["icmp", "tcp"];
+const supportedCheckTypes = ["icmp"];
 
 let monitoredAssets = [];
 

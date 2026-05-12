@@ -1,1 +1,1 @@
-FLAG{admin_backup_command_injection_lab3}
+FLAG{admin_backup_arbitrary_file_read_lab3}

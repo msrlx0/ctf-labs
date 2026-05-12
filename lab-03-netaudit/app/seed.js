@@ -5,8 +5,8 @@ const requiredFiles = [
   "data/app.log",
   "data/system.log",
   "data/audit.log",
+  "data/backup-manifest.log",
   "flags/flag1.txt",
-  "flags/flag2.txt",
   "flags/flag4.txt",
   "flags/flag_time.txt",
   "flags/root.txt"

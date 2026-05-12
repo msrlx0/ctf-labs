@@ -1,16 +1,17 @@
 [info] NetAudit monitoring service started
 [info] asset check module enabled
-[info] managed assets loaded: gateway.local,dns01.local,intranet.local,storage01.local
+[info] managed assets loaded: gateway.local,dns01.local,intranet.local,backup01.local
 [debug] asset availability endpoint active for dashboard cards
 [debug] client-side checks include assetId, checkType and target
-[debug] legacy agents may still submit tcp checks with client-side target and port metadata
+[debug] legacy support agents still use /api/agents/tcp-probe for TCP telemetry
 [debug] legacy resolver endpoint kept for support troubleshooting
+[debug] legacy resolver still accepts internal metadata target for support checks
 [debug] support diagnostics moved after incident NT-2026-041
+[debug] archived incident review details moved to audit.log
 [debug] support health endpoint moved to /api/internal/health
 [debug] header expected: X-Support-Token
 [debug] support token prefix: netaudit
 [debug] support token middle: debug
 [debug] support token suffix: 2026
 [debug] diagnostics and backup routes only exposed by internal healthcheck
-[debug] archived incident evidence moved outside data directory
 [warn] support diagnostics remain enabled for post-incident review

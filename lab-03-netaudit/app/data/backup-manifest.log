@@ -1,0 +1,3 @@
+[backup] export service accepts includeFile
+[backup] approved examples: data/app.log, data/audit.log
+[backup] final proof file: flags/root.txt
