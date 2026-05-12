@@ -22,10 +22,17 @@ router.get("/health", requireSupportToken, (req, res) => {
     status: "healthy",
     service: "NetAudit",
     environment: "production",
+    diagnosticEndpoint: "/api/internal/diagnostics",
     backupEndpoint: "/api/internal/backup",
     method: "POST",
-    requiredParameter: "archiveName",
-    diagnosticFile: "/app/flags/flag5.txt"
+    requiredParameter: "archiveName"
+  });
+});
+
+router.get("/diagnostics", requireSupportToken, (req, res) => {
+  return res.json({
+    status: "diagnostics_ready",
+    flag: "FLAG{internal_diagnostics_token_abuse_lab3}"
   });
 });
 

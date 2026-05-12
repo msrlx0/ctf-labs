@@ -26,6 +26,8 @@ Praticar exploracao controlada de vulnerabilidades web/infra em um alvo local, c
 - Internal endpoint abuse
 - Administrative Command Injection
 
+O lab possui 7 flags principais.
+
 ## Como executar
 
 ```bash

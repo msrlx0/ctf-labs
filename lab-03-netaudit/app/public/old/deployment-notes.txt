@@ -11,3 +11,4 @@ temporary password: analyst2022
 Status:
 This note is outdated. The temporary password above was rejected during the last access review.
 Do not rely on this note without checking the archived candidate list.
+The access review summary was retained separately as access-review.txt.

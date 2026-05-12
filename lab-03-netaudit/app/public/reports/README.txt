@@ -1,0 +1,1 @@
+NetAudit temporary reports directory.

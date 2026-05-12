@@ -11,6 +11,6 @@
 [debug] support token prefix: netaudit
 [debug] support token middle: debug
 [debug] support token suffix: 2026
-[debug] backup route only exposed by internal healthcheck
+[debug] diagnostics and backup routes only exposed by internal healthcheck
 [debug] archived incident evidence moved outside data directory
 [warn] support diagnostics remain enabled for post-incident review

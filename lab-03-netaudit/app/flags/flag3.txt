@@ -1,1 +1,0 @@
-FLAG{logs_leaking_sensitive_info_lab3}
