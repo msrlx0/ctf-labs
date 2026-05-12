@@ -36,11 +36,10 @@ http://127.0.0.1:8090
 
 Dentro do container, a aplicacao escuta na porta `3000`.
 
-## Credencial
+## Acesso inicial
 
-```text
-analyst:analyst123
-```
+A aplicacao simula um painel interno com artefatos legados publicados por engano.
+Comece pelo reconhecimento das paginas e arquivos publicos para descobrir como acessar o painel.
 
 ## Escopo autorizado
 
@@ -51,6 +50,7 @@ http://127.0.0.1:8090
 ```
 
 Nao use os testes ou tecnicas deste lab contra sistemas de terceiros. Todas as vulnerabilidades sao intencionais e restritas ao container Docker.
+Mantenha a validacao manual dentro do escopo local e evite testes agressivos ou automatizados fora do objetivo do laboratorio.
 
 ## Abordagem sugerida
 

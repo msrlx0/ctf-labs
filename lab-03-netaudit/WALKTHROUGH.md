@@ -2,7 +2,7 @@
 
 Este guia acompanha uma resolucao manual pelo navegador, DevTools e Burp Suite. Ele segue o raciocinio de um analista: observar a aplicacao, capturar requisicoes, alterar poucos campos por vez, correlacionar pistas e confirmar impacto.
 
-## 1. Acesso inicial
+## 1. Reconhecimento pre-auth
 
 Abra o navegador em:
 
@@ -10,9 +10,68 @@ Abra o navegador em:
 http://127.0.0.1:8090
 ```
 
-Faca login com a credencial fornecida no README. O login nao e a vulnerabilidade; ele apenas coloca voce dentro do painel interno. O lab comeca de fato depois que voce entra no dashboard.
+A tela de login nao fornece credenciais. Antes de testar login aleatoriamente, faca reconhecimento das paginas e arquivos publicos.
 
-## 2. Reconhecimento da aplicacao
+Verifique arquivos publicos comuns, como `robots.txt`. Ele lista diretorios que nao deveriam ter sido publicados como pista operacional, nao como controle de acesso.
+
+Acesse:
+
+```text
+/old/deployment-notes.txt
+```
+
+Identifique o usuario:
+
+```text
+username: analyst
+```
+
+A nota tambem mostra uma senha temporaria antiga:
+
+```text
+analyst2022
+```
+
+Teste `analyst2022` no login e confirme que falha. O aviso da propria nota diz que ela esta desatualizada e aponta para uma lista candidata arquivada.
+
+Acesse:
+
+```text
+/backup/readme.txt
+```
+
+Esse arquivo indica a lista pequena de candidatos:
+
+```text
+password-candidates.txt
+```
+
+Abra ou baixe a lista. Ela foi criada para validacao controlada dentro do lab local, com poucas senhas candidatas. Nao use wordlists grandes, ataques agressivos ou alvos fora do escopo.
+
+No Burp Suite:
+
+1. Use o Proxy para capturar uma tentativa de login com `username` fixo como `analyst`.
+2. Envie o `POST /api/auth/login` para o Intruder.
+3. Marque somente o valor do campo `password` como posicao.
+4. Carregue as senhas candidatas da lista pequena.
+5. Inicie o ataque apenas contra o ambiente local.
+6. Compare status code, tamanho da resposta e mensagem.
+
+A tentativa correta retorna `200` e a mensagem:
+
+```text
+Login successful
+```
+
+Use a credencial encontrada para entrar:
+
+```text
+analyst:analyst123
+```
+
+O login nao e SQL Injection e nao depende de brute force pesado. Esta etapa e uma fase inicial de information disclosure com validacao manual controlada.
+
+## 2. Dashboard e reconhecimento da aplicacao
 
 Observe os cards de ativos, os hostnames, os status e o historico recente. Clique em `Verificar` em um ativo e veja o resultado tecnico mostrado na tela.
 

@@ -1,0 +1,13 @@
+NetAudit deployment notes
+Incident reference: NT-2026-041
+Last reviewed: 2026-01-18
+
+Initial analyst access was created during the early monitoring rollout.
+
+Legacy access record:
+username: analyst
+temporary password: analyst2022
+
+Status:
+This note is outdated. The temporary password above was rejected during the last access review.
+Do not rely on this note without checking the archived candidate list.

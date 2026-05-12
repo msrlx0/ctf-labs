@@ -34,7 +34,7 @@ router.post("/login", (req, res) => {
     sameSite: "lax"
   });
 
-  return res.json({
+  return res.status(200).json({
     ok: true,
     success: true,
     message: "Login successful",
