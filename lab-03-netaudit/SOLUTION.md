@@ -140,6 +140,13 @@ Body normal enviado pela UI:
 }
 ```
 
+Esse endpoint possui dois modos vulneraveis:
+
+- `checkType: "icmp"` usa ping, retorna output e permite demonstrar Command Injection com retorno visivel.
+- `checkType: "tcp"` usa uma verificacao TCP, retorna apenas metadados com `durationMs` e serve para Blind/Time-Based Command Injection.
+
+A falha esta no backend confiar em `target` e, no modo TCP, tambem em `port`, enviados pelo cliente. Nao e uma vulnerabilidade de um card especifico do dashboard; qualquer card que use a mesma feature de check pode ser explorado apos alteracao da request no Burp.
+
 Prova de execucao:
 
 ```json
@@ -228,7 +235,7 @@ Mitigacao:
 
 ## 1.1. Blind/Time-Based Command Injection no TCP Check
 
-O mesmo endpoint aceita um modo TCP legado. Ele deve ser montado manualmente no Burp Repeater, porque a UI continua enviando apenas o check visivel.
+O mesmo endpoint aceita um modo TCP legado. Ele deve ser montado manualmente no Burp Repeater, porque a UI continua enviando apenas o check visivel. Diferente do modo `icmp`, esse fluxo nao retorna stdout/stderr: o sinal de exploracao fica nos metadados e no aumento de `durationMs`.
 
 Rota:
 
@@ -299,7 +306,13 @@ Rota:
 POST /api/assets/resolve
 ```
 
-No Burp Repeater, monte uma requisicao manual usando o mesmo cookie `session` recebido no login.
+No Burp Repeater, monte uma requisicao manual usando o mesmo cookie `session` recebido no login. Esse endpoint nao reaproveita o body de `/api/assets/check`; ele espera uma requisicao minima propria:
+
+```http
+POST /api/assets/resolve
+Content-Type: application/json
+Cookie: session=...
+```
 
 Entrada normal:
 
@@ -400,6 +413,16 @@ Token:
 netaudit-debug-2026
 ```
 
+Cadeia de montagem:
+
+```text
+support token prefix: netaudit
+support token middle: debug
+support token suffix: 2026
+```
+
+Essas tres partes formam `netaudit-debug-2026`, que deve ser enviado no header `X-Support-Token`.
+
 Causa raiz: logs operacionais expostos vazam rotas internas, header e partes de segredo.
 
 Mitigacao:
@@ -411,7 +434,13 @@ Mitigacao:
 
 ## 4. Path Traversal
 
-O endpoint vulneravel usa `path.join("/app/data", file)` sem validar o caminho final.
+O campo `Log file` dispara:
+
+```text
+GET /api/support/log?file=app.log
+```
+
+O endpoint vulneravel usa `path.join("/app/data", file)` sem validar o caminho final. Como o `app.log` informa que a evidencia foi movida para fora do data directory, usar `../flags/flag3.txt` produz `/app/data/../flags/flag3.txt`, que resolve para `/app/flags/flag3.txt`.
 
 Payloads:
 
@@ -441,6 +470,8 @@ curl -s -b cookies.txt \
 ```text
 FLAG{path_traversal_log_viewer_lab3}
 ```
+
+`flag3` e `flag4` sao duas evidencias diferentes obtidas pela mesma falha de path traversal.
 
 Mitigacao:
 
@@ -485,7 +516,7 @@ Resposta revela:
 }
 ```
 
-Nao retorna flag diretamente.
+Nao retorna flag diretamente. O ponto importante e que o JSON revela `backupEndpoint`, `method: "POST"` e `requiredParameter: "archiveName"`.
 
 Mitigacao:
 
@@ -507,6 +538,8 @@ Header:
 ```text
 X-Support-Token: netaudit-debug-2026
 ```
+
+Como o health interno informa `method: "POST"`, acessar `/api/internal/backup` via `GET` deve falhar e isso e esperado. A requisicao correta precisa ser `POST` com JSON.
 
 Body normal:
 

