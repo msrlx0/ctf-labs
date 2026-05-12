@@ -1,0 +1,12 @@
+{
+  "name": "sentinelcore-worker",
+  "version": "1.0.0",
+  "description": "Worker service for Lab 04",
+  "main": "worker.js",
+  "scripts": {
+    "start": "node worker.js"
+  },
+  "dependencies": {
+    "redis": "^4.6.13"
+  }
+}

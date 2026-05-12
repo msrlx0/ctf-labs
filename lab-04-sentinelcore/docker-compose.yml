@@ -1,0 +1,58 @@
+services:
+  sentinel-app:
+    build: ./app
+    container_name: lab04-sentinel-app
+    ports:
+      - "8090:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=sentinelcore-dev-2026
+      - INTERNAL_ADMIN_URL=http://internal-admin:8081
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+      - internal-admin
+    networks:
+      - sentinel-net
+    volumes:
+      - shared-output:/shared
+
+  internal-admin:
+    build: ./internal-admin
+    container_name: lab04-internal-admin
+    expose:
+      - "8081"
+    environment:
+      - PORT=8081
+      - INTERNAL_ADMIN_TOKEN=internal-admin-token-7f3a9c21
+    networks:
+      - sentinel-net
+
+  worker:
+    build: ./worker
+    container_name: lab04-worker
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - WORKER_TOKEN=worker-secret-41b8d0aa
+    depends_on:
+      - redis
+    networks:
+      - sentinel-net
+    volumes:
+      - shared-output:/shared
+
+  redis:
+    image: redis:7-alpine
+    container_name: lab04-redis
+    expose:
+      - "6379"
+    networks:
+      - sentinel-net
+
+networks:
+  sentinel-net:
+    driver: bridge
+
+volumes:
+  shared-output:

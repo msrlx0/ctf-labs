@@ -1,0 +1,14 @@
+{
+  "build": "legacy-2026-04",
+  "service": "sentinelcore-api",
+  "note": "Old build artifact accidentally preserved during the production image cleanup.",
+  "removed_env": {
+    "NODE_ENV": "production",
+    "JWT_SECRET": "sentinelcore-dev-2026",
+    "INTERNAL_ADMIN_URL": "http://internal-admin:8081",
+    "INTERNAL_ADMIN_TOKEN": "internal-admin-token-7f3a9c21",
+    "REDIS_URL": "redis://redis:6379"
+  },
+  "queue": "sentinel:jobs",
+  "flag": "flag{old_build_manifest_leaked_secrets}"
+}
