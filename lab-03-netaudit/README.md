@@ -10,16 +10,21 @@ O laboratorio foi desenhado para investigacao manual. As superficies interessant
 
 Praticar exploracao controlada de vulnerabilidades web/infra em um alvo local, com foco em descoberta progressiva e alteracao manual de requisicoes.
 
-Temas praticados:
+## Temas abordados
 
-- request tampering;
-- command injection;
-- blind/time-based command injection;
-- weak input filtering;
-- information disclosure;
-- path traversal;
-- broken access control;
-- hidden internal endpoint abuse.
+- Pre-auth information disclosure
+- Debug/stack trace disclosure
+- Credential discovery com Burp Intruder
+- Request tampering
+- Command Injection com output
+- Blind/Time-Based Command Injection
+- Weak input filtering
+- Hidden endpoint discovery
+- Information disclosure em logs
+- Path Traversal
+- Broken Access Control
+- Internal endpoint abuse
+- Administrative Command Injection
 
 ## Como executar
 

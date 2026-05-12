@@ -1,0 +1,10 @@
+admin
+operator
+monitor
+support
+netops
+analyst
+auditor
+guest
+svc-monitor
+backup

