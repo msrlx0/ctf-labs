@@ -77,6 +77,24 @@ Somente `sentinel-app` e exposto no host. `internal-admin`, `redis` e `worker` f
 - Leitura de output de worker
 - Arbitrary file read com bypass por encoding
 
+## Vulnerabilidades Presentes
+
+| Categoria | Vulnerabilidade | Onde aparece | Impacto didatico |
+|---|---|---|---|
+| Reconhecimento | JavaScript source disclosure | Bundle publico do frontend | Descoberta de endpoints, formatos de request e nomes operacionais |
+| Reconhecimento | Hidden endpoint discovery | Metadados e pistas fora do menu principal | Mapeamento de funcionalidades internas sem depender de scanners |
+| API Security | BOLA / IDOR | Detalhes de alertas por ID | Acesso indevido a objetos fora do escopo esperado do usuario |
+| Access Control | Mass Assignment | Atualizacao de perfil | Elevacao controlada de privilegio dentro da aplicacao |
+| Information Disclosure | Debug disclosure | Endpoint de diagnostico para perfis mais altos | Vazamento parcial de informacoes sensiveis e correlacao com outras etapas |
+| Build Artifact Leak | Artefato antigo preservado | Manifesto de build legado | Exposicao de configuracoes que deveriam ter sido removidas da imagem |
+| Auth | JWT forgery | Token de sessao assinado | Entendimento do impacto de segredos de assinatura vazados |
+| SSRF | Server-Side Request Forgery | Checagem de integracoes | Acesso indireto a servicos internos a partir da aplicacao |
+| Trust Boundary | Internal header abuse | Proxy interno com headers controlados | Quebra de fronteira de confianca entre aplicacao publica e servico interno |
+| Template Security | Template context disclosure | Renderizacao de relatorios | Vazamento de contexto sensivel sem execucao de codigo |
+| Queue/Worker | Queue poisoning | Enfileiramento de jobs assincronos | Abuso de contratos implicitos entre API, fila e worker |
+| Worker abuse | Leitura de output do worker | Volume compartilhado de resultados | Recuperacao de artefatos gerados por processos internos |
+| File Access | Arbitrary file read com bypass por encoding | Leitor administrativo de diagnostico | Demonstra ordem perigosa entre validacao, decode e resolucao de caminho |
+
 ## Materiais
 
 - [STUDENT-GUIDE.md](./STUDENT-GUIDE.md): dicas graduais para estudantes, sem flags e sem payloads finais.
