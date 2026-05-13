@@ -58,6 +58,8 @@ Acesse no navegador:
 http://127.0.0.1:8094
 ```
 
+A tela inicial deve aparecer como uma **Threat Operations Console** do SentinelCore, com visual de SOC/Incident Response e credencial inicial do lab. A interface e responsiva para telas menores, mas o exercicio continua sendo web/API.
+
 Entre com:
 
 ```text
@@ -78,6 +80,8 @@ Valide a sessao:
 ```bash
 curl -s -b "$COOKIE" "$BASE/api/v2/me" | jq
 ```
+
+O dashboard redesenhado mostra cards operacionais para fluxo de alertas, claims de identidade e telemetria do frontend. Ele deve exibir `user: intern`, `role: viewer`, links basicos e a nota de que nem todo fluxo interno aparece no menu.
 
 O usuario inicial tem role `viewer`.
 
@@ -437,6 +441,31 @@ flag{template_context_leaked}
 flag{worker_queue_poisoned}
 flag{sentinelcore_full_chain_compromised}
 ```
+
+## 16. Validacao manual final
+
+Use esta checagem no fim da aula ou antes de publicar o lab:
+
+```bash
+cd ~/ctf-labs/lab-04-sentinelcore
+docker compose down --remove-orphans
+docker compose up --build
+```
+
+Acesse:
+
+```text
+http://127.0.0.1:8094
+```
+
+Valide manualmente:
+
+- tela de login com identidade de Threat Operations Console
+- dashboard com `user`, `role`, cards operacionais e nota de investigacao
+- links basicos para `/api/v2/alerts`, `/api/v2/me` e `sentinel.bundle.js`
+- bundle JS disponivel e com pistas de investigacao
+- fluxo de login `intern / intern2026`
+- responsividade basica da interface em largura menor
 
 ## Troubleshooting
 

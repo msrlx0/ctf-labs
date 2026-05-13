@@ -4,7 +4,7 @@ Este guia orienta a investigacao sem listar flags, sem expor segredos e sem entr
 
 ## Objetivo
 
-Entender como uma cadeia web hard nasce da correlacao entre frontend, APIs, roles, cookies, JWT, servicos internos e processamento assincrono. O lab nao foi feito para cair por uma unica URL escondida.
+Entender como uma cadeia web hard nasce da correlacao entre frontend, APIs, roles, cookies, JWT, servicos internos e processamento assincrono. O lab usa uma interface de SOC/Incident Response com cards operacionais e pistas indiretas; ele nao foi feito para cair por uma unica URL escondida.
 
 ## Escopo
 
@@ -14,7 +14,7 @@ O unico alvo autorizado no host local e:
 http://127.0.0.1:8094
 ```
 
-Servicos internos fazem parte do cenario, mas nao devem ser acessados diretamente pelo host.
+Servicos internos fazem parte do cenario, mas nao devem ser acessados diretamente pelo host. A interface e responsiva e utilizavel em telas menores, mas o exercicio continua sendo um lab web/API, nao mobile.
 
 ## Ferramentas Recomendadas
 
@@ -26,7 +26,7 @@ Servicos internos fazem parte do cenario, mas nao devem ser acessados diretament
 
 ## Metodologia Sugerida
 
-Trate o SentinelCore como um painel interno real. Faca login, navegue pelo fluxo normal, capture requisicoes, compare respostas e anote cada pista. Quando uma etapa mudar sua permissao, valide a identidade atual antes de seguir.
+Trate o SentinelCore como um painel interno real. Faca login, navegue pelo fluxo normal, observe os cards do dashboard, capture requisicoes, compare respostas e anote cada pista. Quando uma etapa mudar sua permissao, valide a identidade atual antes de seguir.
 
 Boas perguntas durante o lab:
 
@@ -40,11 +40,11 @@ Boas perguntas durante o lab:
 
 ### 1. DevTools
 
-Comece pelo navegador. Abra Network, Application/Storage e Sources. Observe cookies, chamadas de API, codigos de status e diferencas entre o que a interface mostra e o que a API retorna.
+Comece pelo navegador. O dashboard mostra cards operacionais para alertas, claims de identidade e telemetria do frontend. Abra Network, Application/Storage e Sources. Observe cookies, chamadas de API, codigos de status e diferencas entre o que a interface mostra e o que a API retorna.
 
 ### 2. JS publico
 
-Procure o bundle JavaScript servido pela aplicacao. Ele pode revelar rotas, parametros esperados e nomes de funcionalidades que nao aparecem diretamente no dashboard.
+Procure o bundle JavaScript servido pela aplicacao. A nota operacional do dashboard lembra que nem todo fluxo interno aparece no menu. O bundle pode revelar rotas, parametros esperados e nomes de funcionalidades que nao aparecem diretamente na navegacao.
 
 Perguntas uteis:
 
