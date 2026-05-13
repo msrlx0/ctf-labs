@@ -1,6 +1,6 @@
 # Walkthrough - Lab 04 SentinelCore
 
-Gabarito completo para instrutores do **Lab 04 - SentinelCore**.
+Gabarito completo para instrutores do **Lab 04 - SentinelCore**. Use o fluxo manual como narrativa principal em aula e os comandos `curl` como validacao alternativa ou reproducao de requests capturadas no Burp.
 
 ## Escopo autorizado
 
@@ -9,6 +9,8 @@ http://127.0.0.1:8094
 ```
 
 Nao use este walkthrough contra qualquer alvo fora do ambiente local autorizado.
+
+Somente a aplicacao principal publica porta no host. `internal-admin`, `redis` e `worker` ficam na rede Docker interna e aparecem na cadeia porque a propria aplicacao consegue conversar com eles.
 
 ## Como subir o lab
 
@@ -34,7 +36,7 @@ intern / intern2026
 
 ## Visao geral da cadeia
 
-A cadeia esperada combina varias falhas pequenas:
+A cadeia esperada combina varias falhas pequenas. Nenhuma delas entrega o lab inteiro sozinha; o ponto didatico e correlacionar pistas de objetos, roles, artefatos, rede interna e processamento assincrono.
 
 1. Login inicial como `intern`.
 2. Inspecao do JavaScript publico para mapear endpoints.
@@ -101,7 +103,7 @@ O bundle revela endpoints e formatos uteis:
 - `/api/v2/jobs/output?file={name}`
 - `/api/v2/admin/diagnostics/read?file=app.log`
 
-Tambem aparecem pistas sobre `internal-admin`, `sentinel:jobs` e `/shared`.
+Tambem aparecem pistas sobre `internal-admin` e `sentinel:jobs`; o caminho de output compartilhado aparece depois, ao consultar a configuracao interna.
 
 ## 3. BOLA/IDOR
 
@@ -111,7 +113,7 @@ Liste os alertas visiveis para o usuario:
 curl -s -b "$COOKIE" "$BASE/api/v2/alerts" | jq
 ```
 
-A listagem filtra por `owner_id`. Em seguida, leia diretamente um alerta de outro contexto:
+A listagem filtra por `owner_id`. No navegador ou no Burp, abra um detalhe de alerta e altere o ID. Em seguida, leia diretamente um alerta de outro contexto:
 
 ```bash
 curl -s -b "$COOKIE" "$BASE/api/v2/alerts/1002" | jq
@@ -442,7 +444,8 @@ flag{sentinelcore_full_chain_compromised}
 - Nao usar literalmente `COLE_AQUI_O_TOKEN`.
 - Conferir com `echo "$ADMIN_TOKEN"`.
 - Gerar novamente o token com `docker exec` usando o comando da etapa de JWT forgery.
-- Se aparecer 403, o JWT pode ser valido, mas a role nao e admin.
+- Diferenca pratica: 401 com "authentication required" indica ausencia ou falha de autenticacao; 403 indica que o JWT foi aceito, mas a role ou permissao nao e suficiente.
+- Se aparecer 403 em rota admin, o JWT pode ser valido, mas a role nao e admin.
 - Para problema no worker, usar:
 
 ```bash

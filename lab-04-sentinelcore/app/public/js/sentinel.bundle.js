@@ -2,8 +2,8 @@
   SentinelCore frontend bundle
   Build: 2026.05.lab04
 
-  The SOC team kept this route map in the client bundle so analysts could
-  replay requests from DevTools and Burp while debugging integrations.
+  Support metadata left in the client bundle during an incident-response
+  sprint. Analysts use these notes to replay requests from DevTools.
 */
 
 const SentinelCore = {
@@ -71,7 +71,8 @@ const SentinelCore = {
       method: "POST",
       path: "/api/v2/jobs",
       queue: "sentinel:jobs",
-      supportedTypes: ["report.export", "token.debug", "file.read"],
+      knownTypes: ["report.export", "token.debug"],
+      legacyHandlers: "see internal config",
       expectedBody: {
         type: "report.export",
         source: "daily-summary",
@@ -92,8 +93,8 @@ const SentinelCore = {
   internalServices: {
     adminBaseUrl: "http://internal-admin:8081",
     health: "http://internal-admin:8081/status",
-    users: "http://internal-admin:8081/internal/users",
-    config: "http://internal-admin:8081/internal/config"
+    protectedPrefix: "/internal/",
+    protectedResources: ["/internal/users", "/internal/config"]
   }
 };
 

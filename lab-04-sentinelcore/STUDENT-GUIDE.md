@@ -2,19 +2,41 @@
 
 Este guia orienta a investigacao sem listar flags, sem expor segredos e sem entregar o payload final. Use-o como uma trilha de dicas graduais: avance uma secao por vez e tente validar cada hipotese antes de abrir a proxima.
 
-## Postura Recomendada
+## Objetivo
 
-Trate o SentinelCore como um painel interno real. Faca login, navegue pelo fluxo normal, capture requisicoes, compare respostas JSON e anote cada pista. A cadeia depende de correlacao entre frontend, APIs, tokens, servicos internos e worker.
+Entender como uma cadeia web hard nasce da correlacao entre frontend, APIs, roles, cookies, JWT, servicos internos e processamento assincrono. O lab nao foi feito para cair por uma unica URL escondida.
 
-Ferramentas uteis:
+## Escopo
 
-- DevTools do navegador
+O unico alvo autorizado no host local e:
+
+```text
+http://127.0.0.1:8094
+```
+
+Servicos internos fazem parte do cenario, mas nao devem ser acessados diretamente pelo host.
+
+## Ferramentas Recomendadas
+
+- Navegador com DevTools
 - Burp Proxy e Repeater
 - Inspector de JWT
 - `curl`
 - Comparador de respostas JSON
 
-## Dicas Graduais
+## Metodologia Sugerida
+
+Trate o SentinelCore como um painel interno real. Faca login, navegue pelo fluxo normal, capture requisicoes, compare respostas e anote cada pista. Quando uma etapa mudar sua permissao, valide a identidade atual antes de seguir.
+
+Boas perguntas durante o lab:
+
+- O que a interface mostra e o que a API realmente retorna?
+- O que muda entre lista e detalhe?
+- Qual role parece necessaria para cada acao?
+- O cookie mudou depois de uma operacao sensivel?
+- Uma resposta de debug ou artefato antigo explica outra etapa?
+
+## Dicas Graduais por Fase
 
 ### 1. DevTools
 
@@ -58,7 +80,7 @@ Inspecione o cookie de sessao. Entenda header, payload, algoritmo e claims. Se a
 
 ### 8. Vazamentos em debug/artefatos
 
-Rotas de diagnostico e artefatos antigos costumam ser feitas para suporte interno, mas podem expor configuracoes sensiveis. Compare o que muda antes e depois de obter uma role mais forte.
+Rotas de diagnostico e artefatos antigos costumam ser feitas para suporte interno, mas podem expor configuracoes sensiveis. Compare o que muda antes e depois de obter uma role mais forte, e pense em como uma pista parcial pode completar outra.
 
 ### 9. SSRF
 
@@ -80,6 +102,17 @@ Mapeie a fila, os tipos de job, os campos aceitos e onde o worker escreve os res
 
 A area administrativa indica onde procurar a etapa final. Se encontrar uma leitura de arquivo com filtro de traversal, raciocine sobre a ordem entre validacao, decode e resolucao do caminho.
 
+## Quando Pedir Ajuda
+
+Peca uma dica se voce ja comparou as respostas principais, inspecionou o JavaScript publico, testou variacoes de ID, revisou o cookie atual e ainda nao sabe qual permissao falta. Uma boa pergunta e "qual artefato eu deveria correlacionar agora?", sem pedir o payload pronto.
+
+## O Que Evitar
+
+- Nao pule direto para brute force ou scanners barulhentos.
+- Nao use ataques destrutivos, reverse shell ou qualquer alvo fora do lab.
+- Nao trate cada etapa como isolada; quase todas dependem de uma pista anterior.
+- Nao assuma que uma resposta 403 significa a mesma coisa que uma resposta de autenticacao ausente.
+
 ## Regras de Seguranca
 
 Mantenha tudo dentro do ambiente local autorizado:
@@ -87,5 +120,3 @@ Mantenha tudo dentro do ambiente local autorizado:
 ```text
 http://127.0.0.1:8094
 ```
-
-Nao use ataques destrutivos, reverse shell ou qualquer alvo fora do lab.

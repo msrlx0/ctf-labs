@@ -1,10 +1,10 @@
 # Lab 04 - SentinelCore
 
-**SentinelCore** e um laboratorio CTF web local sobre um painel interno de SOC. A historia simula uma equipe investigando alertas, evidencias, integracoes administrativas, relatorios e jobs assincronos de uma plataforma corporativa.
+**SentinelCore** e um laboratorio CTF web local sobre um painel interno de SOC. A historia coloca o aluno no papel de um estagiario com acesso limitado que precisa entender como alertas, evidencias, integracoes administrativas, relatorios e jobs assincronos se conectam em uma plataforma corporativa.
 
 Nivel: **Hard**.
 
-O objetivo didatico e correlacionar pistas pequenas entre frontend, APIs, tokens, servicos internos e worker. Este README apresenta o ambiente e o escopo; ele nao entrega a solucao completa.
+O objetivo didatico e correlacionar pistas pequenas entre frontend, APIs, tokens, servicos internos e worker. O lab recompensa exploracao manual, comparacao de respostas e leitura cuidadosa de artefatos. Este README apresenta o ambiente e o escopo; ele nao entrega a solucao completa.
 
 ## Escopo Autorizado
 
@@ -75,6 +75,8 @@ intern / intern2026
 
 - [STUDENT-GUIDE.md](./STUDENT-GUIDE.md): dicas graduais para estudantes, sem flags e sem payloads finais.
 - [WALKTHROUGH.md](./WALKTHROUGH.md): gabarito completo para instrutores.
+
+Evite abrir o walkthrough durante a primeira tentativa. A experiencia foi desenhada para ser resolvida por correlacao progressiva, nao por uma unica URL escondida.
 
 ## Aviso de Uso Local
 
