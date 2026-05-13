@@ -190,6 +190,15 @@ ${body}
 </html>`;
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 app.get("/", (req, res) => {
   const user = getCurrentUser(req);
 
@@ -198,15 +207,27 @@ app.get("/", (req, res) => {
   }
 
   return res.send(htmlPage("SentinelCore", `
-  <main class="shell narrow">
-    <section class="hero">
+  <main class="auth-shell">
+    <section class="auth-brief">
       <p class="eyebrow">Lab 04 - SentinelCore</p>
-      <h1>SentinelCore SOC</h1>
-      <p>Painel interno ficticio para alertas, evidencias, integracoes, relatorios e jobs assincronos.</p>
+      <h1>SentinelCore</h1>
+      <p class="lede">Threat Operations Console</p>
+      <p class="muted">Internal SOC console for alerts, evidence, integrations and asynchronous jobs.</p>
+      <div class="signal-row" aria-label="Operational status">
+        <span class="chip cyan">session: gated</span>
+        <span class="chip amber">tenant: ACME-SOC</span>
+        <span class="chip violet">pipeline: monitored</span>
+      </div>
     </section>
 
-    <section class="panel">
-      <h2>Login</h2>
+    <section class="login-card">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Secure access</p>
+          <h2>Console login</h2>
+        </div>
+        <span class="status-dot" aria-hidden="true"></span>
+      </div>
       <form method="post" action="/login" class="form-stack">
         <label>
           Usuario
@@ -216,9 +237,9 @@ app.get("/", (req, res) => {
           Senha
           <input name="password" type="password" autocomplete="off" required>
         </label>
-        <button type="submit">Entrar</button>
+        <button type="submit">Entrar na console</button>
       </form>
-      <p class="hint">Credencial inicial do lab: intern / intern2026</p>
+      <p class="credential-note">Credencial inicial do lab: <code>intern / intern2026</code></p>
     </section>
   </main>`));
 });
@@ -250,42 +271,80 @@ app.get("/logout", (req, res) => {
 });
 
 app.get("/dashboard", requireDashboardAuth, (req, res) => {
+  const username = escapeHtml(req.user.username);
+  const role = escapeHtml(req.user.role);
   const roleNote = req.user.role === "admin"
-    ? "Acesso administrativo detectado. Algumas rotas continuam fora do menu."
-    : "Analise DevTools, Burp e o bundle estatico para descobrir APIs nao listadas.";
+    ? "Acesso administrativo detectado. Alguns workflows internos continuam fora da navegacao."
+    : "Nem todo fluxo interno aparece no menu. Analise bundle, requisicoes e respostas da API.";
 
   return res.send(htmlPage("SentinelCore Dashboard", `
-  <main class="shell">
-    <header class="topline">
-      <div>
-        <p class="eyebrow">Sessao ativa</p>
-        <h1>SentinelCore Dashboard</h1>
-        <p class="muted">Usuario: <strong>${req.user.username}</strong> | Role: <strong>${req.user.role}</strong></p>
+  <main class="ops-shell">
+    <header class="ops-header">
+      <div class="brand-lockup">
+        <p class="eyebrow">Threat Operations Console</p>
+        <h1>SentinelCore</h1>
+        <p class="muted">Central de triagem para alertas, evidencias e workflows assincronos.</p>
       </div>
-      <a class="button secondary" href="/logout">Sair</a>
+      <div class="session-panel">
+        <span class="chip cyan">session: active</span>
+        <span class="chip violet">user: ${username}</span>
+        <span class="chip amber">role: ${role}</span>
+        <a class="button secondary" href="/logout">Sair</a>
+      </div>
     </header>
 
-    <section class="grid">
-      <article class="panel">
-        <h2>Alertas</h2>
-        <p>Consulte alertas visiveis do seu tenant e compare objetos individuais.</p>
-        <a href="/api/v2/alerts">/api/v2/alerts</a>
+    <section class="status-grid" aria-label="Operational telemetry">
+      <div class="status-cell">
+        <span>tenant</span>
+        <strong>ACME-SOC</strong>
+      </div>
+      <div class="status-cell">
+        <span>pipeline</span>
+        <strong>nominal</strong>
+      </div>
+      <div class="status-cell">
+        <span>queue</span>
+        <strong>internal</strong>
+      </div>
+      <div class="status-cell">
+        <span>scope</span>
+        <strong>local</strong>
+      </div>
+    </section>
+
+    <section class="ops-grid">
+      <article class="ops-card">
+        <div class="card-kicker">Detection</div>
+        <h2>Fluxo de alertas</h2>
+        <p>Revise o stream visivel do tenant e compare respostas em nivel de objeto.</p>
+        <a class="card-link" href="/api/v2/alerts">/api/v2/alerts</a>
       </article>
-      <article class="panel">
-        <h2>Identidade</h2>
-        <p>Confira claims, role e escopo emitidos no token atual.</p>
-        <a href="/api/v2/me">/api/v2/me</a>
+      <article class="ops-card">
+        <div class="card-kicker">Access</div>
+        <h2>Claims de identidade</h2>
+        <p>Inspecione claims, role efetiva e limites de permissao da sessao atual.</p>
+        <a class="card-link" href="/api/v2/me">/api/v2/me</a>
       </article>
-      <article class="panel">
-        <h2>Frontend</h2>
-        <p>O bundle mantem nomes internos para facilitar troubleshooting do SOC.</p>
-        <a href="/static/js/sentinel.bundle.js">sentinel.bundle.js</a>
+      <article class="ops-card">
+        <div class="card-kicker">Telemetry</div>
+        <h2>Telemetria do frontend</h2>
+        <p>O bundle estatico guarda metadados operacionais usados em troubleshooting.</p>
+        <a class="card-link" href="/static/js/sentinel.bundle.js">sentinel.bundle.js</a>
       </article>
     </section>
 
-    <section class="panel">
-      <h2>Nota operacional</h2>
+    <section class="ops-note">
+      <div>
+        <p class="eyebrow">Operational notes</p>
+        <h2>Mapa de sinais</h2>
+      </div>
       <p>${roleNote}</p>
+      <div class="signal-row">
+        <span class="chip">DevTools</span>
+        <span class="chip">Burp</span>
+        <span class="chip">API diff</span>
+        <span class="chip">Bundle review</span>
+      </div>
     </section>
   </main>`));
 });
