@@ -17,7 +17,12 @@ const SentinelCore = {
     alerts: {
       method: "GET",
       path: "/api/v2/alerts",
-      detailShape: "/api/v2/alerts/{id}"
+      detailShape: "/api/v2/alerts/{incidentId}",
+      incidentIdPattern: "7xxx",
+      detailHeaders: {
+        "X-Sentinel-Client": "web-console",
+        "X-Tenant-Scope": "ACME-SOC"
+      }
     },
     profile: {
       method: "PATCH",
@@ -26,6 +31,9 @@ const SentinelCore = {
         displayName: "Analyst Name",
         preferences: {
           density: "compact"
+        },
+        access: {
+          requestedRole: "viewer"
         }
       }
     },
