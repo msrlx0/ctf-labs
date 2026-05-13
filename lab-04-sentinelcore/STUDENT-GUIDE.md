@@ -31,6 +31,7 @@ Trate o SentinelCore como um painel interno real. Faca login, navegue pelo fluxo
 Boas perguntas durante o lab:
 
 - O que a interface mostra e o que a API realmente retorna?
+- Uma request feita direto pela barra do navegador tem os mesmos headers de uma request feita pela console?
 - O que muda entre lista e detalhe?
 - Qual role parece necessaria para cada acao?
 - O cookie mudou depois de uma operacao sensivel?
@@ -49,6 +50,7 @@ Procure o bundle JavaScript servido pela aplicacao. A nota operacional do dashbo
 Perguntas uteis:
 
 - Quais endpoints aparecem no JavaScript?
+- O bundle sugere headers ou metadados operacionais usados pela console?
 - Algum endpoint parece exigir uma role diferente?
 - Existem referencias a integracoes, jobs ou diagnosticos?
 
@@ -58,17 +60,20 @@ Liste os alertas visiveis e depois abra detalhes individuais. Compare a regra da
 
 O que observar:
 
-- IDs sequenciais ou previsiveis
+- IDs com padroes de incidente, nao necessariamente sequenciais simples
 - Campos omitidos na lista e presentes no detalhe
 - Alertas que parecem pertencer a outro contexto
+- Diferencas de status, tamanho e campos quando voce ajusta headers no Burp
 
 ### 4. Alteracao de IDs
 
-Quando uma rota usa um ID na URL, teste variacoes com cuidado. A pergunta central e: a API valida apenas se o objeto existe ou tambem valida se o usuario pode acessa-lo?
+Quando uma rota usa um ID na URL, teste variacoes com cuidado. Nem toda request funciona igual quando acessada direto pela barra do navegador. Compare headers e contexto de chamadas feitas pela interface, e use Burp Repeater ou Intruder para comparar padroes de resposta.
+
+A pergunta central e: a API valida apenas se o objeto existe ou tambem valida se o usuario pode acessa-lo?
 
 ### 5. Campos extras em JSON
 
-O endpoint de perfil recebe JSON. Envie primeiro campos esperados, depois campos extras controlados. Observe quais chaves sao ignoradas, rejeitadas ou persistidas.
+O endpoint de perfil recebe JSON. Envie primeiro campos esperados, depois campos extras controlados. Campos sensiveis podem existir de forma aninhada, nao apenas no topo do objeto. Observe quais chaves sao ignoradas, rejeitadas ou persistidas.
 
 ### 6. Mudanca de role
 

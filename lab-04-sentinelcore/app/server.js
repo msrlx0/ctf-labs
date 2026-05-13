@@ -44,7 +44,7 @@ const profileExtras = new Map();
 
 const alerts = [
   {
-    id: 1001,
+    id: 7412,
     owner_id: 1,
     title: "VPN login from new ASN",
     severity: "medium",
@@ -53,7 +53,7 @@ const alerts = [
     analyst_note: "Compare list responses with direct object reads."
   },
   {
-    id: 1004,
+    id: 7468,
     owner_id: 1,
     title: "EDR quarantine summary",
     severity: "low",
@@ -62,7 +62,7 @@ const alerts = [
     analyst_note: "Dashboard links intentionally show only common APIs."
   },
   {
-    id: 1002,
+    id: 7391,
     owner_id: 2,
     title: "Legacy diagnostic secret fragment observed",
     severity: "high",
@@ -71,7 +71,7 @@ const alerts = [
     analyst_note: "Old debug health checks referenced auth material as sentinelcore-dev-****."
   },
   {
-    id: 1003,
+    id: 7524,
     owner_id: 3,
     title: "Internal admin dependency reachable from API network",
     severity: "critical",
@@ -375,10 +375,17 @@ app.get("/api/v2/alerts", requireAuth, (req, res) => {
 });
 
 app.get("/api/v2/alerts/:id", requireAuth, (req, res) => {
+  const hasConsoleContext = req.headers["x-sentinel-client"] === "web-console"
+    && req.headers["x-tenant-scope"] === "ACME-SOC";
+
+  if (!hasConsoleContext) {
+    return res.status(404).json({ ok: false, error: "alert unavailable" });
+  }
+
   const alert = alerts.find((item) => item.id === Number(req.params.id));
 
   if (!alert) {
-    return res.status(404).json({ ok: false, error: "alert not found" });
+    return res.status(404).json({ ok: false, error: "alert unavailable" });
   }
 
   return res.json({ ok: true, alert });
@@ -388,9 +395,20 @@ app.patch("/api/v2/me/profile", requireAuth, (req, res) => {
   const blocked = new Set(["id", "username", "password"]);
   const profile = profileExtras.get(req.user.id) || {};
   const ignored = [];
+  const directRole = Object.prototype.hasOwnProperty.call(req.body || {}, "role")
+    ? String(req.body.role)
+    : "";
+
+  if (directRole === "admin") {
+    return res.status(403).json({
+      ok: false,
+      error: "direct admin role assignment is blocked",
+      ignored
+    });
+  }
 
   for (const [key, value] of Object.entries(req.body || {})) {
-    if (blocked.has(key)) {
+    if (blocked.has(key) || key === "role") {
       ignored.push(key);
       continue;
     }
@@ -400,15 +418,21 @@ app.patch("/api/v2/me/profile", requireAuth, (req, res) => {
 
   profileExtras.set(req.user.id, profile);
 
-  if (profile.role === "admin") {
+  const requestedRole = req.body
+    && req.body.access
+    && typeof req.body.access === "object"
+    ? String(req.body.access.requestedRole || "")
+    : "";
+
+  if (requestedRole === "admin") {
     return res.status(403).json({
       ok: false,
-      error: "direct admin role assignment is blocked",
+      error: "admin role request requires approval",
       ignored
     });
   }
 
-  if (profile.role === "analyst") {
+  if (requestedRole === "analyst") {
     const promotedUser = {
       id: req.user.id,
       username: req.user.username,

