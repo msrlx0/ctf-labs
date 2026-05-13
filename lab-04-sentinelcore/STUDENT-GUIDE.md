@@ -1,77 +1,88 @@
 # Student Guide - Lab 04 SentinelCore
 
-Este guia ajuda a conduzir a investigacao sem entregar a solucao completa.
+Este guia orienta a investigacao sem listar flags, sem expor segredos e sem entregar o payload final. Use-o como uma trilha de dicas graduais: avance uma secao por vez e tente validar cada hipotese antes de abrir a proxima.
 
 ## Postura Recomendada
 
-Trate o SentinelCore como um painel interno real: observe o fluxo normal, capture requisicoes, compare respostas e anote cada pista. O lab nao foi desenhado para cair por uma unica URL escondida.
+Trate o SentinelCore como um painel interno real. Faca login, navegue pelo fluxo normal, capture requisicoes, compare respostas JSON e anote cada pista. A cadeia depende de correlacao entre frontend, APIs, tokens, servicos internos e worker.
 
 Ferramentas uteis:
 
 - DevTools do navegador
 - Burp Proxy e Repeater
-- Decodificador/inspector de JWT
-- `curl` para repetir requests
-- Comparacao de respostas JSON
+- Inspector de JWT
+- `curl`
+- Comparador de respostas JSON
 
 ## Dicas Graduais
 
-### 1. Primeiro Acesso
+### 1. DevTools
 
-Entre com a credencial inicial e visite o dashboard. Veja quais APIs aparecem na tela e quais aparecem no JavaScript estatico.
+Comece pelo navegador. Abra Network, Application/Storage e Sources. Observe cookies, chamadas de API, codigos de status e diferencas entre o que a interface mostra e o que a API retorna.
+
+### 2. JS publico
+
+Procure o bundle JavaScript servido pela aplicacao. Ele pode revelar rotas, parametros esperados e nomes de funcionalidades que nao aparecem diretamente no dashboard.
 
 Perguntas uteis:
 
-- O que `/api/v2/me` revela?
-- O que muda entre uma lista e um objeto individual?
-- O bundle JavaScript cita endpoints que nao aparecem no menu?
+- Quais endpoints aparecem no JavaScript?
+- Algum endpoint parece exigir uma role diferente?
+- Existem referencias a integracoes, jobs ou diagnosticos?
 
-### 2. Alertas
+### 3. Comparacao de alertas
 
-Liste os alertas visiveis e observe os IDs. Depois teste acesso direto a detalhes por ID. Compare a regra de listagem com a regra de leitura individual.
+Liste os alertas visiveis e depois abra detalhes individuais. Compare a regra da listagem com a regra da leitura por objeto.
 
-### 3. Perfil e Role
+O que observar:
 
-O endpoint de perfil recebe JSON. Teste campos esperados e campos extras. Observe quais campos sao bloqueados e quais sao aceitos.
+- IDs sequenciais ou previsiveis
+- Campos omitidos na lista e presentes no detalhe
+- Alertas que parecem pertencer a outro contexto
 
-Se algo alterar sua role efetiva, confira novamente `/api/v2/me`.
+### 4. Alteracao de IDs
 
-### 4. Rotas de Analyst
+Quando uma rota usa um ID na URL, teste variacoes com cuidado. A pergunta central e: a API valida apenas se o objeto existe ou tambem valida se o usuario pode acessa-lo?
 
-Depois de obter uma role mais forte, procure endpoints de diagnostico e artefatos antigos. Vazamentos pequenos podem ser suficientes para outra etapa.
+### 5. Campos extras em JSON
 
-### 5. JWT
+O endpoint de perfil recebe JSON. Envie primeiro campos esperados, depois campos extras controlados. Observe quais chaves sao ignoradas, rejeitadas ou persistidas.
 
-Inspecione o cookie `token`. Ele e um JWT assinado. Se algum segredo de assinatura aparecer em artefatos ou logs, pense no impacto.
+### 6. Mudanca de role
 
-### 6. Integracoes
+Se uma resposta indicar mudanca de permissao, confira novamente sua identidade pela API. Verifique tambem se o navegador ou o `curl` guardaram o cookie novo depois da alteracao.
 
-O endpoint de integracao aceita URLs. Teste URLs externas simples primeiro e depois pense na rede Docker interna. O filtro bloqueia alguns nomes obvios, mas nao conhece todos os servicos internos.
+### 7. JWT
 
-### 7. Proxy Interno
+Inspecione o cookie de sessao. Entenda header, payload, algoritmo e claims. Se algum artefato revelar material de assinatura, pense no impacto sobre roles e escopos.
 
-Um endpoint de proxy aceita headers customizados. Correlacione isso com qualquer token interno descoberto em artefatos ou contextos de template.
+### 8. Vazamentos em debug/artefatos
 
-### 8. Templates
+Rotas de diagnostico e artefatos antigos costumam ser feitas para suporte interno, mas podem expor configuracoes sensiveis. Compare o que muda antes e depois de obter uma role mais forte.
 
-O renderizador de relatorios usa placeholders. Nao e RCE, mas contexto demais em template tambem pode vazar segredo.
+### 9. SSRF
 
-### 9. Jobs e Worker
+Se uma integracao aceita uma URL, teste primeiro um destino simples e controlado. Depois pense na diferenca entre o que seu navegador acessa e o que a aplicacao consegue acessar a partir da rede Docker.
 
-Jobs vao para uma fila Redis e sao processados por um worker separado. Entenda:
+### 10. Servico interno
 
-- nome da fila
-- tipos de job suportados
-- onde o worker escreve outputs
-- como ler esses outputs pela API principal
+Servicos sem porta publicada ainda podem ser alcancaveis por outros containers. Procure nomes, portas e caminhos sugeridos por mensagens, JavaScript publico, artefatos ou respostas de debug.
 
-### 10. Flag Final
+### 11. Proxy com headers
 
-A area admin indica que a flag final esta em disco. Procure uma primitiva de leitura no app principal. Se encontrar um filtro de path traversal, pense na ordem entre filtragem e decode.
+Um proxy interno com headers controlaveis muda bastante o impacto de um SSRF. Correlacione qualquer token interno descoberto com endpoints que aceitam cabecalhos enviados pelo usuario.
 
-## Regras de Segurança
+### 12. Jobs/worker
 
-Mantenha tudo dentro do ambiente local:
+Mapeie a fila, os tipos de job, os campos aceitos e onde o worker escreve os resultados. A aplicacao principal pode ter um endpoint para recuperar esses outputs.
+
+### 13. Primitiva de leitura final
+
+A area administrativa indica onde procurar a etapa final. Se encontrar uma leitura de arquivo com filtro de traversal, raciocine sobre a ordem entre validacao, decode e resolucao do caminho.
+
+## Regras de Seguranca
+
+Mantenha tudo dentro do ambiente local autorizado:
 
 ```text
 http://127.0.0.1:8094

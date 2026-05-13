@@ -1,77 +1,83 @@
 # Lab 04 - SentinelCore
 
-SentinelCore e um laboratorio CTF web local que simula um painel interno de SOC usado para acompanhar alertas, evidencias, integracoes, relatorios e jobs assincronos.
+**SentinelCore** e um laboratorio CTF web local sobre um painel interno de SOC. A historia simula uma equipe investigando alertas, evidencias, integracoes administrativas, relatorios e jobs assincronos de uma plataforma corporativa.
 
-O lab foi criado para treinar correlacao de pistas entre frontend, APIs, tokens, servicos internos e worker assincromo. Ele e **Hard**, mas didatico e resolvivel com exploracao manual cuidadosa.
+Nivel: **Hard**.
 
-## Escopo
+O objetivo didatico e correlacionar pistas pequenas entre frontend, APIs, tokens, servicos internos e worker. Este README apresenta o ambiente e o escopo; ele nao entrega a solucao completa.
+
+## Escopo Autorizado
 
 ```text
 http://127.0.0.1:8094
 ```
 
-Somente a aplicacao principal fica publicada no host. Redis, internal-admin e worker ficam acessiveis apenas na rede Docker interna.
-
-## Credencial Inicial
-
-```text
-intern / intern2026
-```
+Somente esse alvo faz parte do escopo autorizado no host local.
 
 ## Como Executar
 
-Dentro desta pasta:
+Dentro de `lab-04-sentinelcore`:
 
 ```bash
 docker compose up --build
 ```
 
-Para parar:
+Depois acesse:
+
+```text
+http://127.0.0.1:8094
+```
+
+Para parar o ambiente:
 
 ```bash
 docker compose down
 ```
 
-Para resetar containers e volume compartilhado:
+Para resetar containers e o volume compartilhado:
 
 ```bash
 docker compose down -v
 ```
 
-## Servicos
+## Credenciais Iniciais
+
+```text
+intern / intern2026
+```
+
+## Servicos Internos
 
 | Servico | Funcao | Exposicao |
 |---|---|---|
 | sentinel-app | Aplicacao web e API principal | `127.0.0.1:8094` |
-| internal-admin | Servico administrativo interno | Somente rede Docker |
-| worker | Consumidor de jobs assincronos | Sem porta |
-| redis | Fila `sentinel:jobs` | Somente rede Docker |
+| internal-admin | Servico administrativo usado pela aplicacao | Somente rede Docker |
+| worker | Processador de jobs assincronos | Sem porta publicada |
+| redis | Fila usada pelos jobs | Somente rede Docker |
 
 ## Temas Abordados
 
-- JavaScript source disclosure
-- hidden endpoints
+- Reconhecimento com DevTools e JavaScript publico
+- Descoberta de endpoints internos da aplicacao
 - BOLA / IDOR em APIs
 - Mass Assignment
 - Debug disclosure
 - Build artifact leak
-- JWT forgery com segredo vazado
+- JWT forgery a partir de segredo vazado
 - SSRF para servico interno
-- Internal admin abuse
-- Proxy interno com headers controlados
+- Abuso de proxy com headers controlados
 - Template context disclosure
-- Redis/queue poisoning
-- Worker abuse
+- Queue poisoning e worker abuse
 - Leitura de output de worker
-- Arbitrary File Read com bypass de filtro por encoding
+- Arbitrary file read com bypass por encoding
 
 ## Materiais
 
-- [STUDENT-GUIDE.md](./STUDENT-GUIDE.md): dicas graduais sem spoiler direto.
-- [WALKTHROUGH.md](./WALKTHROUGH.md): solucao completa para instrutores.
+- [STUDENT-GUIDE.md](./STUDENT-GUIDE.md): dicas graduais para estudantes, sem flags e sem payloads finais.
+- [WALKTHROUGH.md](./WALKTHROUGH.md): gabarito completo para instrutores.
 
 ## Aviso de Uso Local
 
-Este laboratorio contem vulnerabilidades intencionais e deve ser executado apenas em ambiente local ou explicitamente autorizado.
+Este laboratorio contem vulnerabilidades intencionais e deve ser executado apenas localmente ou em ambiente explicitamente autorizado.
 
-Nao reutilize payloads, tecnicas ou fluxos contra sistemas reais, terceiros ou ambientes fora do escopo permitido.
+Nao reutilize payloads, tecnicas ou fluxos contra sistemas reais, terceiros ou qualquer alvo fora de `http://127.0.0.1:8094`.

