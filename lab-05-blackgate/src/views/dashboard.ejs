@@ -1,0 +1,91 @@
+<!-- legacy routes will be migrated soon; keep migration notes in the operations backlog -->
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Security Operations</p>
+    <h1>Dashboard operacional</h1>
+    <p>Bem-vindo, <strong><%= currentUser.displayName %></strong>. Sua sessão está ativa como <strong><%= currentUser.role %></strong>.</p>
+  </div>
+  <div class="header-badge">
+    <span>Team</span>
+    <strong><%= currentUser.team %></strong>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card">
+    <span>Total de tickets</span>
+    <strong><%= metrics.totalTickets %></strong>
+    <small>Fila de revisão ativa</small>
+  </article>
+  <article class="metric-card">
+    <span>Ativos monitorados</span>
+    <strong><%= metrics.monitoredAssets %></strong>
+    <small>Inventário visível nesta fase</small>
+  </article>
+  <article class="metric-card warning">
+    <span>Alertas pendentes</span>
+    <strong><%= metrics.pendingAlerts %></strong>
+    <small>Triagem manual recomendada</small>
+  </article>
+  <article class="metric-card danger">
+    <span>Operações bloqueadas</span>
+    <strong><%= metrics.blockedOperations %></strong>
+    <small>Aguardando aprovação</small>
+  </article>
+</section>
+
+<section class="dashboard-grid">
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Últimos tickets</h2>
+      <a href="/tickets">Ver todos</a>
+    </div>
+    <div class="compact-list">
+      <% recentTickets.forEach((ticket) => { %>
+        <div class="list-row">
+          <div>
+            <strong><%= ticket.id %></strong>
+            <span><%= ticket.title %></span>
+          </div>
+          <span class="badge severity-<%= ticket.severity %>"><%= ticket.severity %></span>
+        </div>
+      <% }) %>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Ativos críticos</h2>
+      <a href="/assets">Inventário</a>
+    </div>
+    <div class="compact-list">
+      <% criticalAssets.forEach((asset) => { %>
+        <div class="list-row">
+          <div>
+            <strong><%= asset.hostname %></strong>
+            <span><%= asset.note %></span>
+          </div>
+          <span class="badge status-<%= asset.status %>"><%= asset.status %></span>
+        </div>
+      <% }) %>
+    </div>
+  </article>
+
+  <article class="panel wide">
+    <div class="panel-head">
+      <h2>Eventos recentes</h2>
+      <span class="subtle">BlackGate telemetry</span>
+    </div>
+    <div class="timeline">
+      <% events.forEach((event) => { %>
+        <div class="timeline-item">
+          <time><%= event.time %></time>
+          <div>
+            <strong><%= event.label %></strong>
+            <span><%= event.detail %></span>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </article>
+</section>

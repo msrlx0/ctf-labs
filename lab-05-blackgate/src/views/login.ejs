@@ -1,0 +1,41 @@
+<section class="login-grid">
+  <div class="login-copy">
+    <p class="eyebrow">Access Control</p>
+    <h1>BlackGate Operations Console</h1>
+    <p>BlackGate controls access to restricted operational systems, tickets, assets and internal operations reviews.</p>
+    <div class="status-strip">
+      <span>External gateway active</span>
+      <span>Token audit pending</span>
+      <span>Phase 1</span>
+    </div>
+  </div>
+
+  <form class="login-card" method="post" action="/login">
+    <div class="card-head">
+      <span class="brand-mark large">BG</span>
+      <div>
+        <h2>Console login</h2>
+        <p>Use uma conta comum do ambiente de treinamento.</p>
+      </div>
+    </div>
+
+    <% if (error) { %>
+      <div class="alert error"><%= error %></div>
+    <% } %>
+
+    <label for="username">Usuário</label>
+    <input id="username" name="username" type="text" autocomplete="username" placeholder="operator" required>
+
+    <label for="password">Senha</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" placeholder="operator123" required>
+
+    <button type="submit">Entrar no BlackGate</button>
+
+    <div class="training-accounts">
+      <strong>Contas comuns</strong>
+      <span>operator / operator123</span>
+      <span>analyst / analyst123</span>
+      <span>guest / guest123</span>
+    </div>
+  </form>
+</section>

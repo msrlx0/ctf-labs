@@ -1,0 +1,10 @@
+<section class="error-page">
+  <div class="error-code"><%= statusCode %></div>
+  <h1><%= title %></h1>
+  <p><%= message %></p>
+  <% if (currentUser) { %>
+    <a class="button-link" href="/dashboard">Voltar ao dashboard</a>
+  <% } else { %>
+    <a class="button-link" href="/login">Voltar ao login</a>
+  <% } %>
+</section>

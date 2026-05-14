@@ -1,0 +1,45 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Asset Intelligence</p>
+    <h1>Ativos monitorados</h1>
+    <p>Inventário visível de serviços corporativos, gateways e componentes internos.</p>
+  </div>
+  <div class="header-badge">
+    <span>Scope</span>
+    <strong>Local lab</strong>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Inventário BlackGate</h2>
+    <span class="subtle">Some internal services are visible only through trusted paths.</span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Hostname</th>
+          <th>Tipo</th>
+          <th>Ambiente</th>
+          <th>Status</th>
+          <th>Exposição</th>
+          <th>Observação</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% assets.forEach((asset) => { %>
+          <tr>
+            <td><strong><%= asset.hostname %></strong></td>
+            <td><%= asset.type %></td>
+            <td><%= asset.environment %></td>
+            <td><span class="badge status-<%= asset.status %>"><%= asset.status %></span></td>
+            <td><%= asset.exposure %></td>
+            <td><%= asset.note %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>

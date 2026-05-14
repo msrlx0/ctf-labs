@@ -1,0 +1,97 @@
+const path = require("path");
+const express = require("express");
+const session = require("express-session");
+const cookieParser = require("cookie-parser");
+
+const authRoutes = require("./routes/auth");
+const dashboardRoutes = require("./routes/dashboard");
+const ticketRoutes = require("./routes/tickets");
+const assetRoutes = require("./routes/assets");
+const healthRoutes = require("./routes/health");
+
+const app = express();
+const port = Number(process.env.PORT || 3000);
+
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+app.use("/static", express.static(path.join(__dirname, "public")));
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: "64kb" }));
+
+app.use(session({
+  name: "blackgate.sid",
+  secret: process.env.SESSION_SECRET || "blackgate-phase1-local-session",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 1000 * 60 * 60 * 4
+  }
+}));
+
+app.use((req, res, next) => {
+  res.locals.currentUser = req.session.user || null;
+  res.locals.currentPath = req.path;
+  res.locals.appName = "BlackGate Operations Console";
+
+  res.renderPage = (view, options = {}) => {
+    const data = {
+      ...res.locals,
+      ...options
+    };
+
+    app.render(view, data, (viewError, body) => {
+      if (viewError) {
+        return next(viewError);
+      }
+
+      return res.render("layout", {
+        ...data,
+        body
+      });
+    });
+  };
+
+  next();
+});
+
+app.get("/", (req, res) => {
+  if (req.session.user) {
+    return res.redirect("/dashboard");
+  }
+
+  return res.redirect("/login");
+});
+
+app.use(authRoutes);
+app.use(dashboardRoutes);
+app.use(ticketRoutes);
+app.use(assetRoutes);
+app.use(healthRoutes);
+
+app.use((req, res) => {
+  return res.status(404).renderPage("error", {
+    title: "Not found",
+    statusCode: 404,
+    message: "The requested BlackGate route was not found."
+  });
+});
+
+app.use((err, req, res, next) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  return res.status(500).renderPage("error", {
+    title: "Internal error",
+    statusCode: 500,
+    message: "BlackGate could not complete the request."
+  });
+});
+
+app.listen(port, () => {
+  console.log(`BlackGate listening on port ${port}`);
+});

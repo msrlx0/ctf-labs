@@ -1,0 +1,10 @@
+services:
+  blackgate:
+    build: .
+    container_name: lab05-blackgate
+    ports:
+      - "8096:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - SESSION_SECRET=blackgate-phase1-local-session

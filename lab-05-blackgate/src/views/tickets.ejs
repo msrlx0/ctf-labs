@@ -1,0 +1,45 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Access Review</p>
+    <h1>Tickets de segurança</h1>
+    <p>Fila operacional com solicitações, alertas e revisões internas do BlackGate.</p>
+  </div>
+  <div class="header-badge">
+    <span>Queue</span>
+    <strong>BG-OPS</strong>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Fila atual</h2>
+    <span class="subtle">Leitura de Fase 1</span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Título</th>
+          <th>Severidade</th>
+          <th>Status</th>
+          <th>Owner</th>
+          <th>Descrição</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% tickets.forEach((ticket) => { %>
+          <tr>
+            <td><strong><%= ticket.id %></strong></td>
+            <td><%= ticket.title %></td>
+            <td><span class="badge severity-<%= ticket.severity %>"><%= ticket.severity %></span></td>
+            <td><span class="badge status-<%= ticket.status %>"><%= ticket.status %></span></td>
+            <td><%= ticket.owner %></td>
+            <td><%= ticket.description %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
