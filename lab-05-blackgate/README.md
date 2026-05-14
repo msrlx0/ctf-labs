@@ -1,10 +1,12 @@
-# Lab 05 - BlackGate
+# Lab 5 - BlackGate
+
+Nome: **Lab 5 - BlackGate**.
 
 **BlackGate** e um laboratorio CTF local sobre uma plataforma corporativa de acesso, auditoria e operacoes internas. A aplicacao simula uma console moderna usada para controlar tickets de seguranca, ativos internos, alertas operacionais e revisoes de acesso.
 
-Dificuldade: **Boss Final**.
+Dificuldade: **Boss Final / Hard**.
 
-Status: **Fase 9 - Final Admin Approval / Boss Flag**.
+Status: **Completo - Fase 9 / Final Admin Approval / Boss Flag**.
 
 Porta publica:
 
@@ -121,3 +123,9 @@ A conta administrativa existe no cenario, mas nao e documentada nem liberada com
 ## Observacoes
 
 A Fase 9 introduz a etapa final de aprovacao administrativa simulada. Ela nao implementa command injection real, upload, Redis, worker separado, shell, endpoint admin real, pivot real, banco externo, leitura de filesystem real ou chamadas externas. Todo o fluxo final e uma simulacao controlada em memoria.
+
+## Completion status
+
+- Phase 1 to Phase 9 completed.
+- Final boss chain available.
+- Public release ready after validation.

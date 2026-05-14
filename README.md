@@ -27,7 +27,7 @@ Se quiser praticar como desafio, comece apenas pelo `README.md` do lab e evite a
 - Docker
 - Docker Compose
 - Navegador
-- Opcional: Burp Suite, DevTools, curl
+- Opcional: curl
 
 ## Como clonar
 
@@ -44,7 +44,7 @@ cd ctf-labs
 | [lab-02-neonvault](./lab-02-neonvault/) | Cyberpunk Identity Grid: Blind SQLi, JWT, SSRF, SSTI, Upload Bypass, Logs SQLi, IDOR e Path Traversal | 8092 | Finalizado |
 | [lab-03-netaudit](./lab-03-netaudit/) | Investigação manual web/infra: debug, request tampering, command injection, logs, traversal e abuso de endpoint interno | ver README do lab | Finalizado |
 | [lab-04-sentinelcore](./lab-04-sentinelcore/) | Cadeia hard de SOC/IR: BOLA, mass assignment, JWT, SSRF, serviços internos, worker e file read | 8094 | Finalizado |
-| [lab-05-blackgate](./lab-05-blackgate/) | Boss Final corporativo: acesso, auditoria, tickets, ativos e operações internas | 8096 | Fase 4 |
+| [lab-05-blackgate](./lab-05-blackgate/) | Boss Final corporativo: acesso, auditoria, tickets, ativos e operações internas | 8096 | Completo |
 
 ## Como rodar um lab
 
@@ -75,7 +75,7 @@ Fluxo recomendado:
 2. Leia apenas o `README.md` do lab.
 3. Suba o container com Docker.
 4. Explore a aplicação pelo navegador.
-5. Use DevTools/Burp para observar requisições.
+5. Observe requisições e respostas com ferramentas locais simples.
 6. Anote hipóteses e evidências.
 7. Se travar, consulte `WALKTHROUGH.md`.
 8. Se quiser o gabarito direto, consulte `SOLUTION.md` ou `SOLUTIONS.md`.

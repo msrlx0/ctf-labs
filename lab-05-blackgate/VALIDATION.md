@@ -399,3 +399,15 @@ Resultado esperado:
 - review id, trace marker e token nao aparecem em README, Student Guide, JS publico, views ou rotas publicas;
 - endpoints sensiveis de approval nao aparecem nas superficies publicas;
 - nenhum uso de command execution real.
+
+## Final release validation checklist
+
+- Docker build OK.
+- Port 8096 OK.
+- Public endpoints OK.
+- Sensitive routes hidden from route map.
+- Client config sanitized.
+- Debug output sanitized.
+- Flags restricted to spoiler docs/internal code.
+- Full chain validated.
+- Decoys validated.
