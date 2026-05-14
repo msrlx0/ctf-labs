@@ -1,5 +1,5 @@
 window.BlackGateClient = {
-  version: "1.2.0-phase3",
+  version: "1.3.0-phase4",
   routes: {
     dashboard: "/dashboard",
     tickets: "/tickets",
@@ -15,15 +15,15 @@ window.BlackGateClient = {
       "internal trust boundary review required"
     ]
   },
-  phaseThree: {
-    status: "weak-context-token",
-    message: "BlackGate Phase 3 exposes legacy context metadata and operator compatibility checks, not the final exploitation chain."
+  phaseFour: {
+    status: "gateway-trust-review",
+    message: "BlackGate Phase 4 exposes operator-mediated gateway metadata and simulated upstream checks, not direct internal access."
   }
 };
 
 window.BLACKGATE_CONFIG = {
   apiBase: "/api",
-  build: "phase3-weak-token",
+  build: "phase4-gateway-trust",
   routes: {
     status: "/api/status",
     version: "/api/version",
@@ -39,6 +39,10 @@ window.BLACKGATE_CONFIG = {
   context: {
     header: "X-BG-Context",
     verifyEndpoint: "/api/context/verify"
+  },
+  gateway: {
+    mode: "operator-mediated",
+    metadataEndpoint: "/api/operator/gateway-metadata"
   }
 };
 

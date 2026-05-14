@@ -1,5 +1,6 @@
 const express = require("express");
 const { requireOperatorContext } = require("../utils/contextToken");
+const { listInternalServices, resolveInternalService } = require("../utils/internalServices");
 
 const router = express.Router();
 
@@ -18,6 +19,8 @@ router.get("/api/operator/gateway-metadata", requireOperatorContext, (req, res) 
   return res.json({
     gateway: "gw-blackgate.local",
     trusted_upstream: "api-core.internal",
+    gateway_fetch: "/api/operator/gateway-fetch?url=http://api-core.internal/health",
+    allowed_internal_hosts: listInternalServices(),
     internal_candidates: [
       "api-core.internal",
       "files-vault.internal",
@@ -28,7 +31,33 @@ router.get("/api/operator/gateway-metadata", requireOperatorContext, (req, res) 
       "/legacy",
       "/debug/trace"
     ],
-    phase4_hint: "Some internal checks trust gateway-originated requests."
+    phase4_hint: "Gateway-originated requests can resolve selected internal upstreams."
+  });
+});
+
+router.get("/api/operator/gateway-fetch", requireOperatorContext, (req, res) => {
+  if (!req.query.url) {
+    return res.status(400).json({
+      error: "bad_request",
+      message: "Valid url parameter is required."
+    });
+  }
+
+  const upstream = resolveInternalService(req.query.url);
+
+  if (!upstream.ok) {
+    return res.status(upstream.status).json({
+      error: upstream.error,
+      message: upstream.message
+    });
+  }
+
+  return res.status(upstream.status).json({
+    gateway: "gw-blackgate.local",
+    requested_url: upstream.requested_url,
+    allowed: true,
+    upstream_status: upstream.status,
+    response: upstream.body
   });
 });
 

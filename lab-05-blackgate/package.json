@@ -1,6 +1,6 @@
 {
   "name": "lab-05-blackgate",
-  "version": "1.2.0-phase3",
+  "version": "1.3.0-phase4",
   "description": "BlackGate Access Control CTF lab phase 1",
   "main": "src/server.js",
   "scripts": {

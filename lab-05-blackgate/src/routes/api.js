@@ -45,8 +45,8 @@ router.get("/api/status", (req, res) => {
 router.get("/api/version", (req, res) => {
   return res.json({
     name: "BlackGate Operations Console",
-    version: "1.2.0-phase3",
-    build: "bg-phase3-weak-token",
+    version: "1.3.0-phase4",
+    build: "bg-phase4-gateway-trust",
     commit: "local-training-build",
     node_env: process.env.NODE_ENV || "development"
   });
@@ -71,6 +71,10 @@ router.get("/api/client-config", (req, res) => {
       header: "X-BG-Context",
       issuer: "legacy-context-service",
       mode: "compatibility"
+    },
+    gateway: {
+      mode: "operator-mediated",
+      metadata: "/api/operator/gateway-metadata"
     }
   });
 });
@@ -90,13 +94,16 @@ router.get("/api/routes", (req, res) => {
     ],
     operator_context: [
       "/api/operator/briefing",
-      "/api/operator/gateway-metadata"
+      "/api/operator/gateway-metadata",
+      "/api/operator/gateway-fetch?url="
     ],
     planned: [
       "/legacy",
       "/api/internal/health",
       "/api/internal/files",
       "/api/internal/fetch",
+      "/api/internal/files/catalog",
+      "/api/internal/files/read",
       "/legacy/render",
       "/debug/trace"
     ]

@@ -12,7 +12,8 @@ router.get("/dashboard", requireAuth, (req, res) => {
       gateway: "degraded",
       metadataSync: "pending",
       legacyMigration: "scheduled",
-      contextService: "compatibility mode"
+      contextService: "compatibility mode",
+      gatewayTrust: "review required"
     },
     recentTickets: tickets.slice(0, 3),
     criticalAssets: assets.filter((asset) => ["degraded", "locked", "watch"].includes(asset.status)),

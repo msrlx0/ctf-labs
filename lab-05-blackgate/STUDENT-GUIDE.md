@@ -4,7 +4,7 @@
 
 Você recebeu acesso comum ao **BlackGate Operations Console**, uma plataforma corporativa usada para controlar acessos internos, tickets de segurança, ativos monitorados e alertas operacionais.
 
-Na **Fase 3 — Weak Token / Role Escalation**, o objetivo é correlacionar reconhecimento, metadados e contexto operacional. Ainda não existe flag final nem exploração admin completa.
+Na **Fase 4 — Gateway Trust / SSRF Setup**, o objetivo é correlacionar reconhecimento, contexto operacional e gateway interno simulado. Ainda não existe flag final, file read, command injection ou exploração admin completa.
 
 ## Escopo
 
@@ -22,22 +22,23 @@ Execute o lab somente localmente com Docker.
 - Cookie de sessão após autenticação.
 - Papel do usuário logado.
 - Página `/context`.
+- Página `/gateway`.
 - Cards do dashboard.
 - Tickets com nomes de serviços e revisões pendentes.
 - Inventário de ativos internos fictícios.
 - Arquivo JavaScript público.
 - Comentários discretos no HTML.
 - Endpoints públicos de status, versão e configuração.
-- Diferenças entre interface, sessão, contexto e APIs JSON.
+- Diferenças entre interface, sessão, contexto, gateway e APIs JSON.
 
 ## Primeiros passos sugeridos
 
 1. Acesse `http://localhost:8096`.
 2. Faça login com uma conta comum.
-3. Navegue por `/dashboard`, `/context`, `/tickets` e `/assets`.
+3. Navegue por `/dashboard`, `/context`, `/gateway`, `/tickets` e `/assets`.
 4. Abra DevTools e observe Network, Application/Storage e Sources.
 5. Veja quais arquivos estáticos são carregados.
-6. Compare os textos do dashboard com os tickets e ativos.
+6. Compare os textos do dashboard com os tickets, assets, contexto e gateway.
 7. Anote nomes de hostnames internos, componentes legados e headers citados.
 
 ## Phase 2 Recon Tips
@@ -54,28 +55,30 @@ Verifique manualmente:
 - `/debug/ping`
 - arquivos JS públicos
 
-Perguntas úteis:
-
-- Quais caminhos são públicos?
-- Quais rotas exigem sessão?
-- O que aparece no HTML, mas não no menu?
-- O JavaScript público sugere nomes de rotas ou padrões de API?
-- A interface mostra exatamente os mesmos objetos que a API consegue consultar?
-- IDs de tickets e hostnames de assets podem ser usados como identificadores?
-- Uma resposta de debug muda quando você altera headers?
-
 ## Phase 3 — Weak Token / Role Escalation
 
 Dicas sem spoiler:
 
 - Compare o usuário autenticado com o contexto operacional.
 - Verifique `/api/client-config` e procure referências a contexto.
-- Use `/debug/ping` com headers já conhecidos da fase anterior.
+- Use `/debug/ping` com headers já conhecidos.
 - Procure endpoints relacionados a `context`.
 - Observe se tokens de contexto parecem opacos ou estruturados.
 - Use a rota de verificação antes de tentar endpoints `operator`.
 - Diferencie role da sessão e role do contexto legado.
-- Compare comportamento sem token, com token comum e com token modificado em ambiente local.
+
+## Phase 4 — Gateway Trust / SSRF Setup
+
+Dicas sem spoiler:
+
+- Reaproveite descobertas da Fase 3.
+- Contexto operator desbloqueia endpoints de compatibilidade.
+- Compare gateway metadata e client config.
+- Observe hosts internos em assets e metadata.
+- Teste endpoints de health antes de tentar metadata.
+- Nem todo host ou path interno responde igual.
+- Pense em SSRF controlado/simulado: o gateway resolve upstreams internos permitidos sem request real para internet.
+- Hosts externos devem ser bloqueados.
 
 ## Dicas leves de enumeração
 
@@ -94,4 +97,4 @@ Dicas sem spoiler:
 - Não procure uma flag final nesta fase.
 - Não assuma que a conta administrativa está disponível agora.
 - Não trate nomes internos como alvos externos reais.
-- Não tente SSRF, command injection, upload ou traversal; essas cadeias ainda não fazem parte da Fase 3.
+- Não tente file read, command injection, upload, Redis ou traversal; essas cadeias ainda não fazem parte da Fase 4.

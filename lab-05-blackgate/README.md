@@ -4,7 +4,7 @@
 
 Dificuldade: **Boss Final**.
 
-Status: **Fase 3 — Weak Token / Role Escalation**.
+Status: **Fase 4 — Gateway Trust / SSRF Setup**.
 
 Porta pública:
 
@@ -12,7 +12,7 @@ Porta pública:
 http://localhost:8096
 ```
 
-Nesta fase, o lab adiciona um mecanismo legado de **BG-Context Token** usado por endpoints operacionais. O objetivo é comparar sessão, role, contexto operacional e endpoints de validação, sem liberar ainda admin final, SSRF, file read ou cadeia completa.
+Nesta fase, o lab adiciona um gateway interno simulado, acessível somente com contexto operacional. O objetivo é reaproveitar o BG-Context Token da Fase 3 para estudar gateway trust, descoberta de serviços internos e SSRF controlado sem fazer chamadas reais para rede externa.
 
 ## Aviso de uso local
 
@@ -55,8 +55,9 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 - Enumerar rotas públicas e metadados expostos.
 - Comparar sessão web, role e contexto operacional.
 - Entender riscos de tokens legados fracos.
-- Observar endpoints operator-only sem implementar admin final.
-- Preparar hipóteses para fases futuras de gateway trust e SSRF controlado.
+- Explorar gateway trust de forma simulada e segura.
+- Descobrir serviços internos permitidos sem fazer request real para a internet.
+- Preparar hipóteses para uma futura fase de files-vault e leitura controlada.
 
 ## Funcionalidades atuais
 
@@ -64,13 +65,15 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 - Logout.
 - Dashboard autenticado.
 - Página `/context` sobre BG-Context Token.
+- Página `/gateway` sobre gateway trust.
 - Lista de tickets de segurança.
 - Inventário de ativos internos fictícios.
 - Endpoint `/health` com status JSON.
 - Endpoints públicos de recon e metadados.
 - Endpoint debug limitado.
 - APIs autenticadas para tickets e assets.
-- Endpoints de contexto e operator metadata.
+- Endpoints de contexto, operator briefing e gateway metadata.
+- Gateway fetch simulado para hosts internos em allowlist.
 - Página pública de política de segurança fictícia.
 - CSS próprio com identidade visual amarela e tema BlackGate.
 
@@ -80,6 +83,7 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 /login
 /dashboard
 /context
+/gateway
 /tickets
 /assets
 /health
@@ -94,6 +98,7 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 /api/context/verify
 /api/operator/briefing
 /api/operator/gateway-metadata
+/api/operator/gateway-fetch
 /api/tickets/:id
 /api/assets/:hostname
 /debug/ping
@@ -102,4 +107,4 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 
 ## Observações
 
-A Fase 3 introduz uma falha educacional de contexto legado fraco. Ela não implementa senha admin, endpoint admin final, SSRF real, path traversal, command injection, upload, Redis, worker ou pivot real.
+A Fase 4 introduz uma simulação segura de SSRF/gateway trust. Ela não implementa leitura real de arquivos, path traversal, command injection, upload, Redis, worker, senha admin, endpoint admin final, pivot real ou chamadas externas.

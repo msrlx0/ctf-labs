@@ -1,0 +1,51 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Gateway Trust</p>
+    <h1>BlackGate Gateway</h1>
+    <p>O gateway opera em modo operator-mediated para verificações de compatibilidade contra upstreams internos selecionados.</p>
+  </div>
+  <div class="header-badge">
+    <span>Status</span>
+    <strong>review required</strong>
+  </div>
+</section>
+
+<section class="dashboard-grid">
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Gateway metadata</h2>
+      <a href="/api/operator/gateway-metadata">/api/operator/gateway-metadata</a>
+    </div>
+    <p class="muted-copy">Operator context enables compatibility checks against selected upstreams. O endpoint de metadata informa os hosts permitidos e o formato do gateway fetch.</p>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Health probe</h2>
+      <span class="subtle">example</span>
+    </div>
+    <div class="kv-list">
+      <div><span>Endpoint</span><strong>/api/operator/gateway-fetch</strong></div>
+      <div><span>Example</span><strong>api-core.internal/health</strong></div>
+      <div><span>Mode</span><strong>simulated internal resolver</strong></div>
+    </div>
+  </article>
+
+  <article class="panel wide">
+    <div class="panel-head">
+      <h2>Allowed upstreams</h2>
+      <span class="subtle">training map</span>
+    </div>
+    <div class="compact-list">
+      <% allowedHosts.forEach((host) => { %>
+        <div class="list-row">
+          <div>
+            <strong><%= host %></strong>
+            <span>Internal service simulation. No external network request is performed.</span>
+          </div>
+          <span class="badge status-watch">internal</span>
+        </div>
+      <% }) %>
+    </div>
+  </article>
+</section>
