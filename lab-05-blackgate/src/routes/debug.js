@@ -10,7 +10,12 @@ router.get("/debug/ping", (req, res) => {
       message: "Debug handshake accepted for limited diagnostics.",
       diagnostics: {
         routes: ["/debug/ping", "/debug/trace"],
-        note: "Full trace requires elevated operator context."
+        note: "Full trace requires elevated operator context.",
+        context: {
+          header: "X-BG-Context",
+          verify: "/api/context/verify",
+          note: "Legacy context validation is enabled for compatibility checks."
+        }
       }
     });
   }
@@ -25,7 +30,7 @@ router.get("/debug/ping", (req, res) => {
 router.get("/debug/trace", (req, res) => {
   return res.status(501).json({
     error: "not_implemented",
-    message: "Debug trace is not available in Phase 2."
+    message: "Debug trace is not available in Phase 3."
   });
 });
 

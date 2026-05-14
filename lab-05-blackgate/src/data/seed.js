@@ -171,7 +171,7 @@ const events = [
   {
     time: "09:03",
     label: "Legacy route migration queued",
-    detail: "No migration window assigned in Phase 2."
+    detail: "No migration window assigned in Phase 3."
   }
 ];
 

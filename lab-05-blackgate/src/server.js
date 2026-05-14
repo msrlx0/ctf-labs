@@ -11,6 +11,8 @@ const healthRoutes = require("./routes/health");
 const apiRoutes = require("./routes/api");
 const debugRoutes = require("./routes/debug");
 const securityRoutes = require("./routes/security");
+const contextRoutes = require("./routes/context");
+const operatorRoutes = require("./routes/operator");
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -25,7 +27,7 @@ app.use(express.json({ limit: "64kb" }));
 
 app.use(session({
   name: "blackgate.sid",
-  secret: process.env.SESSION_SECRET || "blackgate-phase2-local-session",
+  secret: process.env.SESSION_SECRET || "blackgate-phase3-local-session",
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -75,6 +77,8 @@ app.use(dashboardRoutes);
 app.use(ticketRoutes);
 app.use(assetRoutes);
 app.use(healthRoutes);
+app.use(contextRoutes);
+app.use(operatorRoutes);
 app.use(apiRoutes);
 app.use(debugRoutes);
 
@@ -89,6 +93,19 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
+  }
+
+  if (req.path.startsWith("/api") || req.path.startsWith("/debug")) {
+    const isBadRequest = err.status === 400 || err.type === "entity.parse.failed";
+
+    return res.status(isBadRequest ? 400 : 500).json({
+      error: isBadRequest ? "bad_request" : "internal_error",
+      message: isBadRequest ? "Invalid JSON body." : "BlackGate could not complete the request."
+    });
+  }
+
+  if (typeof res.renderPage !== "function") {
+    return res.status(500).send("BlackGate could not complete the request.");
   }
 
   return res.status(500).renderPage("error", {

@@ -1,5 +1,5 @@
 window.BlackGateClient = {
-  version: "1.1.0-phase2",
+  version: "1.2.0-phase3",
   routes: {
     dashboard: "/dashboard",
     tickets: "/tickets",
@@ -15,25 +15,30 @@ window.BlackGateClient = {
       "internal trust boundary review required"
     ]
   },
-  phaseTwo: {
-    status: "recon-only",
-    message: "BlackGate Phase 2 exposes recon metadata and controlled authorization inconsistencies, not the final exploitation chain."
+  phaseThree: {
+    status: "weak-context-token",
+    message: "BlackGate Phase 3 exposes legacy context metadata and operator compatibility checks, not the final exploitation chain."
   }
 };
 
 window.BLACKGATE_CONFIG = {
   apiBase: "/api",
-  build: "phase2-recon",
+  build: "phase3-weak-token",
   routes: {
     status: "/api/status",
     version: "/api/version",
     routes: "/api/routes",
-    clientConfig: "/api/client-config"
+    clientConfig: "/api/client-config",
+    contextMe: "/api/context/me"
   },
   hints: {
     debugPrefix: "/debug",
     legacyPanel: "/legacy",
     inventoryLookup: "/api/assets/{hostname}"
+  },
+  context: {
+    header: "X-BG-Context",
+    verifyEndpoint: "/api/context/verify"
   }
 };
 

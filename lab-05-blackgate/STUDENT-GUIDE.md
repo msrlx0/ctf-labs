@@ -4,7 +4,7 @@
 
 Você recebeu acesso comum ao **BlackGate Operations Console**, uma plataforma corporativa usada para controlar acessos internos, tickets de segurança, ativos monitorados e alertas operacionais.
 
-Na **Fase 2 — Recon & Metadata Exposure**, o objetivo não é obter uma flag final. O foco é enumerar rotas, observar metadados e comparar o que aparece na interface com o que as APIs retornam.
+Na **Fase 3 — Weak Token / Role Escalation**, o objetivo é correlacionar reconhecimento, metadados e contexto operacional. Ainda não existe flag final nem exploração admin completa.
 
 ## Escopo
 
@@ -21,23 +21,24 @@ Execute o lab somente localmente com Docker.
 - Tela de login e contas comuns.
 - Cookie de sessão após autenticação.
 - Papel do usuário logado.
+- Página `/context`.
 - Cards do dashboard.
 - Tickets com nomes de serviços e revisões pendentes.
 - Inventário de ativos internos fictícios.
 - Arquivo JavaScript público.
 - Comentários discretos no HTML.
 - Endpoints públicos de status, versão e configuração.
-- Diferenças entre interface e respostas JSON.
+- Diferenças entre interface, sessão, contexto e APIs JSON.
 
 ## Primeiros passos sugeridos
 
 1. Acesse `http://localhost:8096`.
 2. Faça login com uma conta comum.
-3. Navegue por `/dashboard`, `/tickets` e `/assets`.
+3. Navegue por `/dashboard`, `/context`, `/tickets` e `/assets`.
 4. Abra DevTools e observe Network, Application/Storage e Sources.
 5. Veja quais arquivos estáticos são carregados.
 6. Compare os textos do dashboard com os tickets e ativos.
-7. Anote nomes de hosts internos e componentes legados.
+7. Anote nomes de hostnames internos, componentes legados e headers citados.
 
 ## Phase 2 Recon Tips
 
@@ -63,6 +64,19 @@ Perguntas úteis:
 - IDs de tickets e hostnames de assets podem ser usados como identificadores?
 - Uma resposta de debug muda quando você altera headers?
 
+## Phase 3 — Weak Token / Role Escalation
+
+Dicas sem spoiler:
+
+- Compare o usuário autenticado com o contexto operacional.
+- Verifique `/api/client-config` e procure referências a contexto.
+- Use `/debug/ping` com headers já conhecidos da fase anterior.
+- Procure endpoints relacionados a `context`.
+- Observe se tokens de contexto parecem opacos ou estruturados.
+- Use a rota de verificação antes de tentar endpoints `operator`.
+- Diferencie role da sessão e role do contexto legado.
+- Compare comportamento sem token, com token comum e com token modificado em ambiente local.
+
 ## Dicas leves de enumeração
 
 - Nem toda pista aparece como link no menu.
@@ -71,7 +85,7 @@ Perguntas úteis:
 - Arquivos JavaScript públicos podem conter metadados de frontend.
 - Um endpoint de health raramente é sensível sozinho, mas ajuda a validar serviço, versão e escopo.
 - Compare uma conta `guest` com uma conta `operator` ou `analyst`.
-- Observe diferença entre 401, 403 e 404 nas APIs.
+- Observe diferença entre 400, 401, 403 e 404 nas APIs.
 
 ## O que evitar
 
@@ -80,4 +94,4 @@ Perguntas úteis:
 - Não procure uma flag final nesta fase.
 - Não assuma que a conta administrativa está disponível agora.
 - Não trate nomes internos como alvos externos reais.
-- Não tente SSRF, command injection, upload ou traversal; essas cadeias ainda não fazem parte da Fase 2.
+- Não tente SSRF, command injection, upload ou traversal; essas cadeias ainda não fazem parte da Fase 3.

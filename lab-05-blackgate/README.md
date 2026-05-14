@@ -4,7 +4,7 @@
 
 Dificuldade: **Boss Final**.
 
-Status: **Fase 2 — Recon & Metadata Exposure**.
+Status: **Fase 3 — Weak Token / Role Escalation**.
 
 Porta pública:
 
@@ -12,7 +12,7 @@ Porta pública:
 http://localhost:8096
 ```
 
-Nesta fase, o objetivo é enumerar a aplicação, ler HTML/JS público, observar metadados, diferenciar endpoints públicos de rotas autenticadas e correlacionar tickets, assets e APIs. A cadeia completa de exploração ainda não está implementada.
+Nesta fase, o lab adiciona um mecanismo legado de **BG-Context Token** usado por endpoints operacionais. O objetivo é comparar sessão, role, contexto operacional e endpoints de validação, sem liberar ainda admin final, SSRF, file read ou cadeia completa.
 
 ## Aviso de uso local
 
@@ -53,22 +53,24 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 
 - Reconhecer uma aplicação corporativa interna.
 - Enumerar rotas públicas e metadados expostos.
-- Praticar navegação manual em painel autenticado.
-- Observar cookies de sessão e controle básico de acesso.
-- Comparar interface, HTML, JavaScript público e APIs JSON.
-- Identificar inconsistências leves sem transformar a Fase 2 em exploração final.
+- Comparar sessão web, role e contexto operacional.
+- Entender riscos de tokens legados fracos.
+- Observar endpoints operator-only sem implementar admin final.
+- Preparar hipóteses para fases futuras de gateway trust e SSRF controlado.
 
-## Funcionalidades da Fase 2
+## Funcionalidades atuais
 
 - Login com sessão.
 - Logout.
 - Dashboard autenticado.
+- Página `/context` sobre BG-Context Token.
 - Lista de tickets de segurança.
 - Inventário de ativos internos fictícios.
 - Endpoint `/health` com status JSON.
 - Endpoints públicos de recon e metadados.
 - Endpoint debug limitado.
 - APIs autenticadas para tickets e assets.
+- Endpoints de contexto e operator metadata.
 - Página pública de política de segurança fictícia.
 - CSS próprio com identidade visual amarela e tema BlackGate.
 
@@ -77,6 +79,7 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 ```text
 /login
 /dashboard
+/context
 /tickets
 /assets
 /health
@@ -87,6 +90,10 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 /api/version
 /api/routes
 /api/client-config
+/api/context/me
+/api/context/verify
+/api/operator/briefing
+/api/operator/gateway-metadata
 /api/tickets/:id
 /api/assets/:hostname
 /debug/ping
@@ -95,4 +102,4 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 
 ## Observações
 
-A Fase 2 prepara a base de enumeração e exposição controlada de metadados. Algumas respostas indicam serviços internos, rotas planejadas e componentes legados, mas não há flag final, senha admin ou cadeia completa nesta etapa.
+A Fase 3 introduz uma falha educacional de contexto legado fraco. Ela não implementa senha admin, endpoint admin final, SSRF real, path traversal, command injection, upload, Redis, worker ou pivot real.

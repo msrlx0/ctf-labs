@@ -384,7 +384,7 @@ button:hover,
 .ops-grid,
 .policy-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -451,6 +451,26 @@ button:hover,
   color: var(--yellow);
   font-weight: 800;
   white-space: nowrap;
+}
+
+.kv-list {
+  display: grid;
+  gap: 10px;
+}
+
+.kv-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  padding: 12px;
+}
+
+.kv-list span,
+.muted-copy {
+  color: var(--muted);
 }
 
 .compact-list,
