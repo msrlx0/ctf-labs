@@ -19,7 +19,10 @@ const filesVaultDocuments = {
   "/restricted/legacy-panel-creds.txt": "Legacy credential archive:\n[deprecated]\noperator:operator123\nadmin:admin\nbg_admin:blackgate\n\n[disabled]\nsvc_audit:audit2026\nsvc_backup:backup2026\n\n[maintenance-realm]\nsvc_migration:migrate-yellow-gate\n\nNote:\nMaintenance realm credentials are not valid on the public login page.\nGateway-originated panel checks require the maintenance realm.",
   "/restricted/report-workflow-notes.txt": "Report migration notes:\nQueue-only mode was added for maintenance validation.\nWorker diagnostics templates are not available in the public selector.\nInternal scope should remain restricted until the worker review is complete.\nThe maintenance worker accepts queued diagnostics but does not render them synchronously.",
   "/restricted/queue-review.txt": "Queue review:\ndefault queue: migration-report-queue\nlegacy queue: report-render\nmaintenance queue: maintenance-worker\nOnly maintenance queue jobs are reviewed by the worker team.",
-  "/restricted/template-archive.txt": "Template archive:\ndaily-summary enabled\nasset-inventory enabled\nsecurity-audit disabled\nmigration-check enabled\nworker-diagnostics archived\nDo not expose archived templates in public selectors."
+  "/restricted/template-archive.txt": "Template archive:\ndaily-summary enabled\nasset-inventory enabled\nsecurity-audit disabled\nmigration-check enabled\nworker-diagnostics archived\nDo not expose archived templates in public selectors.",
+  "/restricted/worker-review.txt": "Worker review:\nMaintenance jobs are queued but not rendered synchronously.\nThe diagnostics processor accepts queued worker-diagnostics jobs.\nReview metadata is attached outside the public report selector.\nSome actions are validated by prefix instead of exact match.",
+  "/restricted/diagnostics-actions.txt": "Diagnostics action notes:\nstatus: enabled\nchecksum: enabled\ntrace: enabled\ntrace:internal: review only\ntrace:internal:queue: maintenance processor\nexec: disabled\nshell: disabled\ncallback: disabled",
+  "/restricted/processor-notes.txt": "Processor notes:\nThe maintenance worker uses action prefix validation for trace operations.\nOnly jobs from maintenance-worker are eligible.\nThe internal queue trace should never return sensitive data during migration review."
 };
 
 const downloadAliases = {
@@ -30,6 +33,8 @@ const downloadAliases = {
 
 const legacySessionId = "bg6-legacy-session-migration";
 const phase7Flag = "FLAG{blackgate_report_workflow_abuse_phase7}";
+const phase8Flag = "FLAG{blackgate_worker_processing_abuse_phase8}";
+const workerDiagnosticsJobId = "bg7-job-worker-diagnostics";
 const reportJobs = new Map();
 
 const reportTemplates = [
@@ -578,7 +583,7 @@ function listReportTemplates(includeMode, auditMode) {
 
 function makeJobId(template, queue) {
   if (template === "worker-diagnostics" && queue === "maintenance-worker") {
-    return "bg7-job-worker-diagnostics";
+    return workerDiagnosticsJobId;
   }
 
   const safeTemplate = String(template || "unknown").replace(/[^a-z0-9-]/gi, "-").toLowerCase();
@@ -597,6 +602,41 @@ function persistReportJob(job) {
   return storedJob;
 }
 
+function workerDiagnosticsJobDefaults() {
+  return {
+    job_id: workerDiagnosticsJobId,
+    template: "worker-diagnostics",
+    format: "json",
+    scope: "internal",
+    queue: "maintenance-worker",
+    mode: "queue-only",
+    status: "queued",
+    worker: "pending",
+    diagnostics_profile: "migration-safe",
+    processor: "maintenance-worker",
+    risk: "unsafe-template-accepted",
+    phase8_hint: "Worker execution is disabled until maintenance review."
+  };
+}
+
+function ensureWorkerDiagnosticsJob() {
+  const existingJob = reportJobs.get(workerDiagnosticsJobId);
+
+  if (existingJob) {
+    return existingJob;
+  }
+
+  return persistReportJob(workerDiagnosticsJobDefaults());
+}
+
+function findWorkerJob(jobId) {
+  if (jobId === workerDiagnosticsJobId) {
+    return ensureWorkerDiagnosticsJob();
+  }
+
+  return reportJobs.get(jobId);
+}
+
 function reportJobSummary(job) {
   return {
     job_id: job.job_id,
@@ -606,7 +646,8 @@ function reportJobSummary(job) {
     queue: job.queue,
     mode: job.mode,
     status: job.status,
-    worker: job.worker
+    worker: job.worker,
+    processor: job.processor
   };
 }
 
@@ -822,13 +863,16 @@ function resolveLegacyPanelReportCreate(normalized) {
     }
 
     const diagnosticsJob = persistReportJob({
-      job_id: "bg7-job-worker-diagnostics",
+      job_id: workerDiagnosticsJobId,
       template: template.id,
       format,
       scope,
       queue,
       mode,
       status: "queued",
+      worker: "pending",
+      diagnostics_profile: "migration-safe",
+      processor: "maintenance-worker",
       risk: "unsafe-template-accepted",
       phase8_hint: "Worker execution is disabled until maintenance review."
     });
@@ -912,13 +956,15 @@ function resolveLegacyPanelReportJob(normalized, jobId) {
     });
   }
 
-  if (job.job_id === "bg7-job-worker-diagnostics") {
+  if (job.job_id === workerDiagnosticsJobId) {
     return sendUpstream(normalized, 200, {
       job_id: job.job_id,
       template: job.template,
       queue: job.queue,
       status: job.status,
       worker: job.worker,
+      diagnostics_profile: job.diagnostics_profile,
+      processor: job.processor,
       phase8_hint: "Worker execution is disabled until maintenance review."
     });
   }
@@ -946,6 +992,7 @@ function resolveLegacyPanelWorkerStatus(normalized) {
   return sendUpstream(normalized, 200, {
     worker: "maintenance-worker",
     status: "paused",
+    mode: "migration-review",
     accepts: [
       "queued diagnostics jobs"
     ],
@@ -954,7 +1001,7 @@ function resolveLegacyPanelWorkerStatus(normalized) {
       "external callbacks",
       "shell execution"
     ],
-    next_hint: "Queued jobs are reviewed by the worker in the next phase."
+    next_hint: "Maintenance worker review is pending."
   });
 }
 
@@ -1007,6 +1054,366 @@ function resolveLegacyPanelReports(normalized) {
   };
 }
 
+function workerJobSummary(job) {
+  return {
+    job_id: job.job_id,
+    template: job.template,
+    status: job.status,
+    processor: job.processor || "unassigned"
+  };
+}
+
+function resolveMaintenanceWorkerHome(normalized) {
+  return sendUpstream(normalized, 200, {
+    service: "legacy-panel",
+    module: "maintenance-worker",
+    status: "review",
+    mode: "migration-review",
+    message: "Maintenance worker diagnostics are restricted during migration.",
+    available_views: [
+      "status",
+      "queue",
+      "jobs",
+      "diagnostics"
+    ]
+  });
+}
+
+function resolveMaintenanceWorkerStatus(normalized) {
+  return sendUpstream(normalized, 200, {
+    service: "legacy-panel",
+    worker: "maintenance-worker",
+    status: "paused",
+    mode: "migration-review",
+    accepts: [
+      "queued diagnostics jobs"
+    ],
+    blocked: [
+      "external callbacks",
+      "shell execution",
+      "synchronous render"
+    ],
+    note: "Diagnostics jobs are reviewed through the maintenance processor."
+  });
+}
+
+function resolveMaintenanceWorkerQueue(normalized) {
+  const diagnosticsJob = ensureWorkerDiagnosticsJob();
+
+  return sendUpstream(normalized, 200, {
+    queue: "maintenance-worker",
+    status: "review",
+    jobs: [
+      workerJobSummary(diagnosticsJob)
+    ],
+    note: "Only diagnostics jobs with approved review metadata are processed."
+  });
+}
+
+function resolveMaintenanceWorkerJobs(normalized) {
+  const diagnosticsJob = ensureWorkerDiagnosticsJob();
+  const queuedJobs = [...reportJobs.values()]
+    .filter((job) => job.queue === "maintenance-worker")
+    .map(workerJobSummary);
+
+  if (!queuedJobs.some((job) => job.job_id === workerDiagnosticsJobId)) {
+    queuedJobs.unshift(workerJobSummary(diagnosticsJob));
+  }
+
+  return sendUpstream(normalized, 200, {
+    service: "legacy-panel",
+    worker: "maintenance-worker",
+    jobs: queuedJobs,
+    count: queuedJobs.length
+  });
+}
+
+function resolveMaintenanceWorkerJob(normalized, jobId) {
+  const job = findWorkerJob(jobId);
+
+  if (!job) {
+    return sendUpstream(normalized, 404, {
+      error: "job_not_found",
+      message: "Worker job was not found in the maintenance queue."
+    });
+  }
+
+  if (job.job_id !== workerDiagnosticsJobId || job.template !== "worker-diagnostics" || job.queue !== "maintenance-worker") {
+    return sendUpstream(normalized, 403, {
+      error: "job_not_eligible",
+      message: "Only queued worker diagnostics jobs are eligible for maintenance review."
+    });
+  }
+
+  return sendUpstream(normalized, 200, {
+    job_id: job.job_id,
+    template: job.template,
+    queue: job.queue,
+    status: job.status,
+    worker: job.worker,
+    diagnostics: {
+      profile: job.diagnostics_profile || "migration-safe",
+      allowed_actions: [
+        "status",
+        "checksum",
+        "trace"
+      ],
+      blocked_actions: [
+        "exec",
+        "callback",
+        "shell"
+      ]
+    },
+    review_note: "Action validation is handled by the worker processor."
+  });
+}
+
+function validateWorkerProcessJob(normalized) {
+  const jobId = normalized.searchParams.get("job");
+
+  if (!jobId) {
+    return {
+      ok: false,
+      response: sendUpstream(normalized, 400, {
+        error: "missing_job",
+        message: "job parameter is required."
+      })
+    };
+  }
+
+  const job = findWorkerJob(jobId);
+
+  if (!job) {
+    return {
+      ok: false,
+      response: sendUpstream(normalized, 404, {
+        error: "job_not_found",
+        message: "Worker job was not found in the maintenance queue."
+      })
+    };
+  }
+
+  if (job.template !== "worker-diagnostics" || job.queue !== "maintenance-worker" || job.processor !== "maintenance-worker") {
+    return {
+      ok: false,
+      response: sendUpstream(normalized, 403, {
+        error: "job_not_eligible",
+        message: "Only queued worker diagnostics jobs are eligible for maintenance review."
+      })
+    };
+  }
+
+  return {
+    ok: true,
+    job
+  };
+}
+
+function resolveMaintenanceWorkerProcess(normalized) {
+  const jobValidation = validateWorkerProcessJob(normalized);
+
+  if (!jobValidation.ok) {
+    return jobValidation.response;
+  }
+
+  const action = normalized.searchParams.get("action");
+
+  if (!action) {
+    return sendUpstream(normalized, 400, {
+      error: "missing_action",
+      message: "action parameter is required."
+    });
+  }
+
+  if (normalized.searchParams.get("review") !== "1") {
+    return sendUpstream(normalized, 403, {
+      error: "review_required",
+      message: "Worker processing requires maintenance review metadata."
+    });
+  }
+
+  if (["exec", "shell", "callback"].includes(action)) {
+    return sendUpstream(normalized, 403, {
+      error: "blocked_action",
+      action,
+      message: "Requested diagnostics action is blocked during migration."
+    });
+  }
+
+  const job = jobValidation.job;
+
+  if (action === "status") {
+    return sendUpstream(normalized, 200, {
+      service: "legacy-panel",
+      worker: "maintenance-worker",
+      job: job.job_id,
+      action,
+      processed: true,
+      status: job.status,
+      diagnostics_profile: job.diagnostics_profile || "migration-safe"
+    });
+  }
+
+  if (action === "checksum") {
+    return sendUpstream(normalized, 200, {
+      service: "legacy-panel",
+      worker: "maintenance-worker",
+      job: job.job_id,
+      action,
+      processed: true,
+      checksum: "bg8-diagnostics-7f3a-migration"
+    });
+  }
+
+  if (action === "trace") {
+    return sendUpstream(normalized, 200, {
+      service: "legacy-panel",
+      worker: "maintenance-worker",
+      job: job.job_id,
+      action,
+      processed: true,
+      trace: [
+        "queue:accepted",
+        "processor:maintenance-worker",
+        "render:disabled"
+      ]
+    });
+  }
+
+  if (action === "trace:internal") {
+    return sendUpstream(normalized, 202, {
+      service: "legacy-panel",
+      worker: "maintenance-worker",
+      job: job.job_id,
+      action,
+      processed: false,
+      status: "review_only",
+      message: "Internal trace action requires queue-level review."
+    });
+  }
+
+  if (action === "trace:internal:queue") {
+    return sendUpstream(normalized, 200, {
+      service: "legacy-panel",
+      worker: "maintenance-worker",
+      job: job.job_id,
+      action,
+      processed: true,
+      finding: "worker diagnostics action accepted internal queue trace through weak prefix validation",
+      flag: phase8Flag,
+      next_hint: "Final review requires correlating queue output with admin approval state."
+    });
+  }
+
+  if (action.startsWith("trace")) {
+    return sendUpstream(normalized, 202, {
+      service: "legacy-panel",
+      worker: "maintenance-worker",
+      job: job.job_id,
+      action,
+      processed: false,
+      status: "trace_extension_unavailable",
+      message: "Trace action was accepted for review but no safe renderer is available."
+    });
+  }
+
+  return sendUpstream(normalized, 403, {
+    error: "action_not_allowed",
+    action,
+    message: "Requested diagnostics action is not allowed for this worker profile."
+  });
+}
+
+function resolveMaintenanceWorkerDiagnostics(normalized) {
+  const jobId = normalized.searchParams.get("job");
+
+  if (!jobId) {
+    return sendUpstream(normalized, 400, {
+      error: "missing_job",
+      message: "job parameter is required."
+    });
+  }
+
+  const job = findWorkerJob(jobId);
+
+  if (!job) {
+    return sendUpstream(normalized, 404, {
+      error: "job_not_found",
+      message: "Worker job was not found in the maintenance queue."
+    });
+  }
+
+  if (job.template !== "worker-diagnostics" || job.queue !== "maintenance-worker") {
+    return sendUpstream(normalized, 403, {
+      error: "job_not_eligible",
+      message: "Only worker diagnostics jobs expose maintenance diagnostics."
+    });
+  }
+
+  if (normalized.searchParams.get("profile") === "internal") {
+    return sendUpstream(normalized, 403, {
+      error: "profile_restricted",
+      message: "Internal diagnostics profiles require worker review metadata."
+    });
+  }
+
+  return sendUpstream(normalized, 200, {
+    job: job.job_id,
+    profile: job.diagnostics_profile || "migration-safe",
+    actions: [
+      "status",
+      "checksum",
+      "trace"
+    ],
+    note: "Extended trace actions require review metadata."
+  });
+}
+
+function resolveMaintenanceWorker(normalized) {
+  const sessionError = requireLegacySession(normalized);
+
+  if (sessionError) {
+    return sessionError;
+  }
+
+  if (normalized.path === "/worker") {
+    return resolveMaintenanceWorkerHome(normalized);
+  }
+
+  if (normalized.path === "/worker/status") {
+    return resolveMaintenanceWorkerStatus(normalized);
+  }
+
+  if (normalized.path === "/worker/queue") {
+    return resolveMaintenanceWorkerQueue(normalized);
+  }
+
+  if (normalized.path === "/worker/jobs") {
+    return resolveMaintenanceWorkerJobs(normalized);
+  }
+
+  if (normalized.path.startsWith("/worker/jobs/")) {
+    const jobId = decodeURIComponent(normalized.path.slice("/worker/jobs/".length));
+    return resolveMaintenanceWorkerJob(normalized, jobId);
+  }
+
+  if (normalized.path === "/worker/process") {
+    return resolveMaintenanceWorkerProcess(normalized);
+  }
+
+  if (normalized.path === "/worker/diagnostics") {
+    return resolveMaintenanceWorkerDiagnostics(normalized);
+  }
+
+  return {
+    ok: false,
+    status: 404,
+    error: "upstream_not_found",
+    message: "Internal upstream route not found.",
+    requested_url: normalized.url
+  };
+}
+
 function resolveInternalService(inputUrl) {
   const normalized = normalizeInternalUrl(inputUrl);
 
@@ -1032,6 +1439,10 @@ function resolveInternalService(inputUrl) {
 
   if (normalized.host === "legacy-panel.internal" && normalized.path.startsWith("/reports")) {
     return resolveLegacyPanelReports(normalized);
+  }
+
+  if (normalized.host === "legacy-panel.internal" && normalized.path.startsWith("/worker")) {
+    return resolveMaintenanceWorker(normalized);
   }
 
   const key = `${normalized.host}${normalized.path}`;

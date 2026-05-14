@@ -1,5 +1,5 @@
 window.BlackGateClient = {
-  version: "1.6.0-phase7",
+  version: "1.7.0-phase8",
   routes: {
     dashboard: "/dashboard",
     tickets: "/tickets",
@@ -15,15 +15,15 @@ window.BlackGateClient = {
       "internal trust boundary review required"
     ]
   },
-  phaseSeven: {
-    status: "report-migration-review",
-    message: "BlackGate Phase 7 keeps queued migration workflows behind separated operational controls."
+  phaseEight: {
+    status: "worker-processing-review",
+    message: "BlackGate Phase 8 keeps maintenance processing behind separated operational controls."
   }
 };
 
 window.BLACKGATE_CONFIG = {
   apiBase: "/api",
-  build: "phase7-report-workflow",
+  build: "phase8-worker-processing",
   surface: "partial",
   hints: {
     debug: "limited",
@@ -46,6 +46,9 @@ window.BLACKGATE_CONFIG = {
   },
   reports: {
     mode: "migration"
+  },
+  worker: {
+    mode: "review"
   }
 };
 

@@ -6,7 +6,7 @@ router.get("/health", (req, res) => {
   return res.json({
     service: "blackgate",
     status: "ok",
-    version: "1.6.0-phase7"
+    version: "1.7.0-phase8"
   });
 });
 

@@ -4,7 +4,7 @@
 
 Dificuldade: **Boss Final**.
 
-Status: **Fase 7 - Report Workflow Abuse / Queue Preparation**.
+Status: **Fase 8 - Maintenance Worker Processing Abuse**.
 
 Porta publica:
 
@@ -12,7 +12,7 @@ Porta publica:
 http://localhost:8096
 ```
 
-Nesta fase, o lab expande o painel legado com um workflow de reports parcialmente migrado, templates com decoys, criacao simulada de jobs e uma fila em memoria. O objetivo e correlacionar sinais de manutencao, notas internas e comportamento de filas sem receber um mapa completo da aplicacao.
+Nesta fase, o lab expande a cadeia da fila de reports com processamento inseguro simulado no maintenance worker. O objetivo e correlacionar o job aceito na fase anterior, metadados de revisao, notas internas e comportamento de diagnosticos sem receber um mapa completo da aplicacao.
 
 Tudo continua local e controlado em memoria.
 
@@ -63,8 +63,9 @@ A conta administrativa existe no cenario, mas nao e documentada nem liberada nes
 - Entender riscos de canonicalizacao fraca em fluxos de compatibilidade.
 - Diferenciar identidade publica, contexto de gateway e realm legado de manutencao.
 - Reconhecer decoys e credenciais obsoletas em arquivos de migracao.
-- Identificar abuso de workflow legado de reports sem execucao de worker.
+- Identificar abuso de workflow legado de reports sem execucao real de worker.
 - Diferenciar preview, criacao de job, fila e processamento assincrono.
+- Avaliar validacao fraca de acoes de diagnostico em um processador simulado.
 
 ## Funcionalidades atuais
 
@@ -86,6 +87,7 @@ A conta administrativa existe no cenario, mas nao e documentada nem liberada nes
 - Files Vault simulado com metadata, catalogo e leitura controlada por path.
 - Legacy Panel simulado com autenticacao de manutencao separada e decoys.
 - Workflow legado de reports com templates, previews e fila simulada em memoria.
+- Maintenance worker simulado em modo review, sem processo externo ou shell.
 - Pagina publica de politica de seguranca ficticia.
 - CSS proprio com identidade visual amarela e tema BlackGate.
 
@@ -116,4 +118,4 @@ A conta administrativa existe no cenario, mas nao e documentada nem liberada nes
 
 ## Observacoes
 
-A Fase 7 introduz report workflow abuse e preparacao de fila no painel legado simulado. Ela nao implementa command injection, upload, Redis, worker real, shell, endpoint admin final, pivot real, banco externo ou chamadas externas. Jobs de reports podem ser aceitos pela fila, mas nao sao processados nesta fase.
+A Fase 8 introduz worker processing abuse simulado no painel legado. Ela nao implementa command injection real, upload, Redis, worker separado, shell, endpoint admin final, pivot real, banco externo, leitura de filesystem real ou chamadas externas. O processamento de diagnosticos e apenas uma simulacao controlada em memoria.

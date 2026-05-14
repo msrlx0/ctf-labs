@@ -4,9 +4,9 @@
 
 Voce recebeu acesso comum ao **BlackGate Operations Console**, uma plataforma corporativa usada para controlar acessos internos, tickets de seguranca, ativos monitorados e alertas operacionais.
 
-Na **Fase 7 - Report Workflow Abuse / Queue Preparation**, o objetivo e correlacionar reconhecimento, contexto operacional, gateway interno simulado, Files Vault, realm legado de manutencao e um workflow de reports parcialmente migrado. A fase inclui decoys, respostas ambiguas, templates escondidos e jobs que podem parecer sucesso parcial.
+Na **Fase 8 - Maintenance Worker Processing Abuse**, o objetivo e correlacionar reconhecimento, contexto operacional, gateway interno simulado, Files Vault, realm legado de manutencao, workflow de reports e um maintenance worker em modo review. A fase inclui decoys, respostas ambiguas, jobs parcialmente aceitos e acoes de diagnostico com validacao fraca.
 
-Ainda nao existe command injection, upload, Redis, worker real, shell ou exploracao admin completa.
+Ainda nao existe command injection real, upload, Redis, worker separado, shell ou exploracao admin completa.
 
 ## Escopo
 
@@ -121,6 +121,19 @@ Dicas sem spoiler:
 - Um workflow pode aceitar configuracoes que nao renderiza de forma sincrona.
 - Arquivos antigos podem explicar a diferenca entre fila padrao, fila legada e fila de manutencao.
 
+## Phase 8 - Maintenance Worker Processing Abuse
+
+Dicas sem spoiler:
+
+- Jobs aceitos podem nao ser processados pelo mesmo modulo que os criou.
+- Worker review metadata importa.
+- Acoes basicas nem sempre mostram impacto.
+- Diferencie status, diagnostics e processing.
+- Prefixos de acao podem ter comportamento diferente de acoes exatas.
+- Arquivos internos podem fragmentar a pista.
+- A fila correta nao significa que todo diagnostico sera renderizado.
+- Bloqueios explicitos costumam ser mais confiaveis que mensagens de sucesso parcial.
+
 ## Dicas leves de enumeracao
 
 - Nem toda pista aparece como link no menu.
@@ -139,5 +152,5 @@ Dicas sem spoiler:
 - Nao tente atacar sistemas fora do Docker local.
 - Nao assuma que a conta administrativa esta disponivel agora.
 - Nao trate nomes internos como alvos externos reais.
-- Nao tente command injection, upload, Redis, worker real ou shell; essas cadeias ainda nao fazem parte desta fase.
+- Nao tente command injection real, upload, Redis, worker separado ou shell; essas cadeias ainda nao fazem parte desta fase.
 - Nao trate credenciais de CTF como credenciais reais.

