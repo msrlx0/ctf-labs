@@ -2,7 +2,7 @@
   <div>
     <p class="eyebrow">Gateway Trust</p>
     <h1>BlackGate Gateway</h1>
-    <p>O gateway opera em modo operator-mediated para verificações de compatibilidade contra upstreams internos selecionados.</p>
+    <p>Gateway-mediated operations remain under review during the migration window.</p>
   </div>
   <div class="header-badge">
     <span>Status</span>
@@ -14,10 +14,9 @@
   <article class="panel">
     <div class="panel-head">
       <h2>Gateway metadata</h2>
-      <a href="/api/operator/gateway-metadata">/api/operator/gateway-metadata</a>
+      <span class="subtle">restricted surface</span>
     </div>
-    <p class="muted-copy">Operator context enables compatibility checks against selected upstreams. O endpoint de metadata informa os hosts permitidos e o formato do gateway fetch.</p>
-    <p class="muted-copy">Selected upstreams expose health and metadata only through operator-mediated gateway checks.</p>
+    <p class="muted-copy">Selected upstreams expose limited operational signals only when compatibility controls accept the request context.</p>
   </article>
 
   <article class="panel">
@@ -26,8 +25,8 @@
       <span class="subtle">example</span>
     </div>
     <div class="kv-list">
-      <div><span>Endpoint</span><strong>/api/operator/gateway-fetch</strong></div>
-      <div><span>Example</span><strong>api-core.internal/health</strong></div>
+      <div><span>Surface</span><strong>restricted</strong></div>
+      <div><span>Scope</span><strong>selected upstreams</strong></div>
       <div><span>Mode</span><strong>simulated internal resolver</strong></div>
     </div>
   </article>
@@ -35,18 +34,30 @@
   <article class="panel wide">
     <div class="panel-head">
       <h2>Allowed upstreams</h2>
-      <span class="subtle">training map</span>
+      <span class="subtle">internal classes</span>
     </div>
     <div class="compact-list">
-      <% allowedHosts.forEach((host) => { %>
-        <div class="list-row">
-          <div>
-            <strong><%= host %></strong>
-            <span>Internal service simulation. No external network request is performed.</span>
-          </div>
-          <span class="badge status-watch">internal</span>
+      <div class="list-row">
+        <div>
+          <strong>Core services</strong>
+          <span>Operational metadata is constrained by migration policy.</span>
         </div>
-      <% }) %>
+        <span class="badge status-watch">internal</span>
+      </div>
+      <div class="list-row">
+        <div>
+          <strong>Document services</strong>
+          <span>Catalog behavior remains under compatibility review.</span>
+        </div>
+        <span class="badge status-watch">internal</span>
+      </div>
+      <div class="list-row">
+        <div>
+          <strong>Legacy services</strong>
+          <span>Maintenance behavior may differ from public identity controls.</span>
+        </div>
+        <span class="badge status-watch">internal</span>
+      </div>
     </div>
   </article>
 </section>

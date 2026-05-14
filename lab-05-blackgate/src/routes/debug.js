@@ -7,22 +7,21 @@ router.get("/debug/ping", (req, res) => {
     return res.json({
       pong: true,
       debug: true,
-      message: "Debug handshake accepted for limited diagnostics.",
+      message: "Limited diagnostics enabled.",
       diagnostics: {
-        routes: ["/debug/ping", "/debug/trace"],
-        note: "Full trace requires elevated operator context.",
         context: {
-          header: "X-BG-Context",
-          verify: "/api/context/verify",
-          note: "Legacy context validation is enabled for compatibility checks."
+          issuer: "legacy-context-service",
+          mode: "compatibility"
         },
         gateway: {
-          note: "Gateway fetch diagnostics require operator context.",
-          metadata: "/api/operator/gateway-metadata"
+          mode: "operator-mediated",
+          note: "Selected upstream checks are available only through approved operational context."
         },
         filesVault: {
-          note: "Files vault diagnostics are available only through gateway-mediated operator checks.",
-          metadata: "files-vault metadata is not public."
+          note: "Document diagnostics remain restricted during migration."
+        },
+        legacy: {
+          note: "Legacy panel diagnostics are intentionally sparse during migration."
         }
       }
     });
@@ -38,7 +37,7 @@ router.get("/debug/ping", (req, res) => {
 router.get("/debug/trace", (req, res) => {
   return res.status(501).json({
     error: "not_implemented",
-    message: "Debug trace is not available in Phase 5."
+    message: "Debug trace is not available in Phase 6."
   });
 });
 

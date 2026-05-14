@@ -1,5 +1,5 @@
 window.BlackGateClient = {
-  version: "1.4.0-phase5",
+  version: "1.5.0-phase6",
   routes: {
     dashboard: "/dashboard",
     tickets: "/tickets",
@@ -8,45 +8,41 @@ window.BlackGateClient = {
   },
   operations: {
     gateway: "gw-blackgate.local",
-    inventory: ["api-core.internal", "files-vault.internal", "queue-worker.internal"],
+    inventory: ["core-services", "document-services", "legacy-services"],
     notes: [
       "legacy routes will be migrated soon",
       "token audit pending",
       "internal trust boundary review required"
     ]
   },
-  phaseFive: {
-    status: "files-vault-migration",
-    message: "BlackGate Phase 5 keeps Files Vault access gateway-only while document migration checks are reviewed."
+  phaseSix: {
+    status: "legacy-migration-lockdown",
+    message: "BlackGate Phase 6 keeps migration workflows behind separated operational controls."
   }
 };
 
 window.BLACKGATE_CONFIG = {
   apiBase: "/api",
-  build: "phase5-files-vault",
-  routes: {
-    status: "/api/status",
-    version: "/api/version",
-    routes: "/api/routes",
-    clientConfig: "/api/client-config",
-    contextMe: "/api/context/me"
-  },
+  build: "phase6-legacy-reuse",
+  surface: "partial",
   hints: {
-    debugPrefix: "/debug",
-    legacyPanel: "/legacy",
-    inventoryLookup: "/api/assets/{hostname}"
+    debug: "limited",
+    legacy: "migration",
+    gateway: "operator-mediated"
   },
   context: {
-    header: "X-BG-Context",
-    verifyEndpoint: "/api/context/verify"
+    issuer: "legacy-context-service",
+    mode: "compatibility"
   },
   gateway: {
-    mode: "operator-mediated",
-    metadataEndpoint: "/api/operator/gateway-metadata"
+    mode: "operator-mediated"
   },
   filesVault: {
-    mode: "gateway-only",
-    catalogHint: "metadata-first"
+    mode: "migration"
+  },
+  legacy: {
+    mode: "migration",
+    realm: "separate"
   }
 };
 

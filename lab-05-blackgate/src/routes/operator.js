@@ -33,7 +33,8 @@ router.get("/api/operator/gateway-metadata", requireOperatorContext, (req, res) 
     ],
     phase4_hint: "Gateway-originated requests can resolve selected internal upstreams.",
     phase5_hint: "files-vault exposes a catalog and legacy read compatibility through gateway-fetch.",
-    sample_files_vault_url: "http://files-vault.internal/metadata"
+    sample_files_vault_url: "http://files-vault.internal/metadata",
+    phase6_hint: "Some legacy upstreams still accept maintenance-realm checks through gateway-originated requests."
   });
 });
 

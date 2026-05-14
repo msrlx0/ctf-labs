@@ -15,6 +15,7 @@ const contextRoutes = require("./routes/context");
 const operatorRoutes = require("./routes/operator");
 const gatewayRoutes = require("./routes/gateway");
 const filesVaultRoutes = require("./routes/filesVault");
+const legacyRoutes = require("./routes/legacy");
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -29,7 +30,7 @@ app.use(express.json({ limit: "64kb" }));
 
 app.use(session({
   name: "blackgate.sid",
-  secret: process.env.SESSION_SECRET || "blackgate-phase5-local-session",
+  secret: process.env.SESSION_SECRET || "blackgate-phase6-local-session",
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -77,6 +78,7 @@ app.use(authRoutes);
 app.use(securityRoutes);
 app.use(dashboardRoutes);
 app.use(gatewayRoutes);
+app.use(legacyRoutes);
 app.use(ticketRoutes);
 app.use(assetRoutes);
 app.use(healthRoutes);

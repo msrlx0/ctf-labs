@@ -23,12 +23,8 @@ function publicRoutes() {
   return [
     "/login",
     "/health",
-    "/robots.txt",
-    "/.well-known/security.txt",
-    "/security-policy",
     "/api/status",
-    "/api/version",
-    "/api/client-config"
+    "/api/version"
   ];
 }
 
@@ -45,8 +41,8 @@ router.get("/api/status", (req, res) => {
 router.get("/api/version", (req, res) => {
   return res.json({
     name: "BlackGate Operations Console",
-    version: "1.4.0-phase5",
-    build: "bg-phase5-files-vault",
+    version: "1.5.0-phase6",
+    build: "bg-phase6-legacy-reuse",
     commit: "local-training-build",
     node_env: process.env.NODE_ENV || "development"
   });
@@ -63,22 +59,23 @@ router.get("/api/client-config", (req, res) => {
       debugBanner: false
     },
     internalHints: {
-      legacyPanel: "/legacy",
-      debugPrefix: "/debug",
-      internalApi: "/api/internal"
+      legacy: "migration",
+      debug: "limited",
+      gateway: "operator-mediated"
     },
     context: {
-      header: "X-BG-Context",
       issuer: "legacy-context-service",
       mode: "compatibility"
     },
     gateway: {
-      mode: "operator-mediated",
-      metadata: "/api/operator/gateway-metadata"
+      mode: "operator-mediated"
     },
     filesVault: {
-      mode: "gateway-only",
-      catalogHint: "metadata-first"
+      mode: "migration"
+    },
+    legacy: {
+      mode: "migration",
+      realm: "separate"
     }
   });
 });
@@ -86,37 +83,17 @@ router.get("/api/client-config", (req, res) => {
 router.get("/api/routes", (req, res) => {
   return res.json({
     public: publicRoutes(),
-    authenticated: [
-      "/dashboard",
-      "/context",
-      "/files-vault",
+    documented: [
       "/tickets",
-      "/assets",
-      "/api/context/me",
-      "/api/context/verify",
-      "/api/tickets/:id",
-      "/api/assets/:hostname"
+      "/assets"
     ],
-    operator_context: [
-      "/api/operator/briefing",
-      "/api/operator/gateway-metadata",
-      "/api/operator/gateway-fetch?url=",
-      "/api/operator/gateway-fetch?url=http://files-vault.internal/metadata",
-      "/api/operator/gateway-fetch?url=http://files-vault.internal/catalog",
-      "/api/operator/gateway-fetch?url=http://files-vault.internal/read?path="
-    ],
-    planned: [
+    undocumented: {
+      enabled: true,
+      note: "Compatibility routes are excluded from the public route map."
+    },
+    deprecated: [
       "/legacy",
-      "/api/internal/health",
-      "/api/internal/files",
-      "/api/internal/fetch",
-      "/api/internal/files/catalog",
-      "/api/internal/files/read",
-      "/legacy/panel",
-      "/legacy/auth",
-      "/api/internal/credentials",
-      "/legacy/render",
-      "/debug/trace"
+      "/debug"
     ]
   });
 });

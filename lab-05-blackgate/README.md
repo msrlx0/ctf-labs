@@ -4,7 +4,7 @@
 
 Dificuldade: **Boss Final**.
 
-Status: **Fase 5 — Files Vault / Controlled File Read**.
+Status: **Fase 6 — Credential Reuse / Legacy Panel Labyrinth**.
 
 Porta pública:
 
@@ -12,7 +12,7 @@ Porta pública:
 http://localhost:8096
 ```
 
-Nesta fase, o lab expande o gateway interno simulado com um Files Vault acessível somente por contexto operacional. O objetivo é reaproveitar o BG-Context Token da Fase 3 e o gateway-fetch da Fase 4 para estudar catálogo de documentos, diferenças entre download por nome e leitura por caminho, e uma leitura controlada com validação fraca de path. Tudo é simulado em memória, sem leitura real do filesystem.
+Nesta fase, o lab adiciona uma cadeia mais difícil de credential reuse em um painel legado simulado. O objetivo é correlacionar sinais de migração, controles operacionais, artefatos internos e realm separado sem receber um mapa completo da aplicação. Tudo continua local e controlado em memória.
 
 ## Aviso de uso local
 
@@ -53,30 +53,34 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 
 - Reconhecer uma aplicação corporativa interna.
 - Enumerar rotas públicas e metadados expostos.
-- Comparar sessão web, role e contexto operacional.
+- Entender diferenças entre sessão web, role e contexto operacional.
 - Entender riscos de tokens legados fracos.
-- Explorar gateway trust de forma simulada e segura.
-- Descobrir serviços internos permitidos sem fazer request real para a internet.
-- Comparar metadata, catálogo, download nomeado e leitura por caminho.
-- Entender riscos de validação de path antes da normalização.
+- Explorar confiança de gateway de forma simulada e segura.
+- Inferir serviços internos permitidos sem fazer request real para a internet.
+- Investigar diferenças entre catálogo, registros nomeados e referências legadas.
+- Entender riscos de canonicalização fraca em fluxos de compatibilidade.
+- Diferenciar identidade pública, contexto de gateway e realm legado de manutenção.
+- Reconhecer decoys e credenciais obsoletas em arquivos de migração.
 
 ## Funcionalidades atuais
 
 - Login com sessão.
 - Logout.
 - Dashboard autenticado.
-- Página `/context` sobre BG-Context Token.
+- Página `/context` sobre contexto operacional.
 - Página `/gateway` sobre gateway trust.
+- Página `/legacy` sobre lockdown do painel legado.
 - Página `/files-vault` sobre migração de documentos.
 - Lista de tickets de segurança.
 - Inventário de ativos internos fictícios.
 - Endpoint `/health` com status JSON.
-- Endpoints públicos de recon e metadados.
-- Endpoint debug limitado.
+- Endpoints públicos de recon e metadados limitados.
+- Diagnóstico limitado.
 - APIs autenticadas para tickets e assets.
-- Endpoints de contexto, operator briefing e gateway metadata.
-- Gateway fetch simulado para hosts internos em allowlist.
+- Controles operacionais simulados.
+- Gateway simulado para upstreams internos em allowlist.
 - Files Vault simulado com metadata, catálogo e leitura controlada por path.
+- Legacy Panel simulado com autenticação de manutenção separada e decoys.
 - Página pública de política de segurança fictícia.
 - CSS próprio com identidade visual amarela e tema BlackGate.
 
@@ -87,6 +91,7 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 /dashboard
 /context
 /gateway
+/legacy
 /files-vault
 /tickets
 /assets
@@ -98,11 +103,6 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 /api/version
 /api/routes
 /api/client-config
-/api/context/me
-/api/context/verify
-/api/operator/briefing
-/api/operator/gateway-metadata
-/api/operator/gateway-fetch
 /api/tickets/:id
 /api/assets/:hostname
 /debug/ping
@@ -111,4 +111,4 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 
 ## Observações
 
-A Fase 5 introduz uma leitura controlada e educativa dentro do Files Vault simulado. Ela não implementa leitura real de arquivos, command injection, upload, Redis, worker, senha admin, endpoint admin final, pivot real ou chamadas externas. A etapa de file read é limitada a documentos fictícios em memória e não deve ser usada contra sistemas reais.
+A Fase 6 introduz credential reuse em um painel legado simulado. Ela não implementa command injection, upload, Redis, worker, shell, endpoint admin final, pivot real, banco externo ou chamadas externas. A etapa de credencial é limitada a artefatos fictícios do lab e não deve ser usada contra sistemas reais.

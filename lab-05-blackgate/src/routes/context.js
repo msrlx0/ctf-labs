@@ -36,7 +36,7 @@ router.get("/api/context/me", requireApiAuth, (req, res) => {
     role: context.role,
     scope: context.scope,
     context_token: token,
-    hint: "Context tokens are consumed by legacy operator endpoints."
+    hint: "Issued for compatibility-mode workflows."
   });
 });
 
@@ -59,7 +59,7 @@ router.post("/api/context/verify", requireApiAuth, (req, res) => {
   return res.json({
     valid: true,
     context,
-    warning: "Legacy context tokens are not intended for direct client manipulation."
+    warning: "Legacy context validation is preserved for migration compatibility."
   });
 });
 

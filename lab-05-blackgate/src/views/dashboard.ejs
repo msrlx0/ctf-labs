@@ -21,17 +21,22 @@
   <article class="ops-card warning">
     <span>Gateway Trust</span>
     <strong><%= phaseStatus.gatewayTrust %></strong>
-    <small>Operator context enables compatibility checks against selected upstreams.</small>
+    <small>Gateway-mediated operations remain under review.</small>
   </article>
   <article class="ops-card">
     <span>Context Service</span>
     <strong><%= phaseStatus.contextService %></strong>
-    <small>Legacy operator endpoints consume BG context headers.</small>
+    <small>Operational context is evaluated separately from the web session.</small>
   </article>
   <article class="ops-card warning">
     <span>Files Vault</span>
     <strong><%= phaseStatus.filesVault %></strong>
     <small>Document access is moving through gateway-only compatibility checks.</small>
+  </article>
+  <article class="ops-card danger">
+    <span>Legacy Panel</span>
+    <strong><%= phaseStatus.legacyPanel %></strong>
+    <small>Interactive access is blocked while maintenance workflows are reviewed.</small>
   </article>
   <article class="ops-card">
     <span>Metadata Sync</span>

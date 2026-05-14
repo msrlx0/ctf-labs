@@ -13,7 +13,10 @@ const filesVaultDocuments = {
   "/public/runbooks/gateway-checklist.txt": "Gateway checklist: verify /metadata, /catalog, and controlled /read paths before enabling files-vault migration.",
   "/restricted/operator-notes.txt": "Operator notes: restricted seeds are stored outside /public but legacy compatibility checks should prevent direct reads.",
   "/restricted/phase5-seed.txt": "FLAG{blackgate_files_vault_controlled_read_phase5}\nNext: legacy panel migration may reuse operational credentials in phase 6.",
-  "/restricted/legacy-panel-creds.txt": "Do not expose in phase 5. Reserved for phase 6."
+  "/restricted/legacy-migration-notes.txt": "Legacy migration note:\nThe public BlackGate login and the legacy maintenance panel do not share the same identity provider.\nSome operator migration accounts were mirrored only for gateway-originated maintenance checks.\nDo not trust the first credential block in archived notes.",
+  "/restricted/operator-archive-2026.txt": "Archived operator notes:\ncandidate: operator / operator123\ncandidate: admin / admin\ncandidate: bg_admin / blackgate\ncandidate: svc_audit / audit2026\nStatus: most archived candidates are identity-provider accounts, not legacy maintenance accounts.",
+  "/restricted/credential-review.txt": "Credential review:\n- public operator account remains valid only on the public console.\n- svc_audit was disabled after audit-db filtering.\n- bg_admin is a placeholder in old screenshots.\n- migration service accounts use the legacy realm.\n- legacy realm accepts username format svc_migration, not email format.",
+  "/restricted/legacy-panel-creds.txt": "Legacy credential archive:\n[deprecated]\noperator:operator123\nadmin:admin\nbg_admin:blackgate\n\n[disabled]\nsvc_audit:audit2026\nsvc_backup:backup2026\n\n[maintenance-realm]\nsvc_migration:migrate-yellow-gate\n\nNote:\nMaintenance realm credentials are not valid on the public login page.\nGateway-originated panel checks require the maintenance realm."
 };
 
 const downloadAliases = {
@@ -134,11 +137,54 @@ const internalRoutes = new Map([
     body: {
       service: "legacy-panel",
       status: "maintenance",
-      note: "Legacy rendering has been disabled until migration review.",
-      planned: [
-        "/legacy/render",
-        "/legacy/report"
+      auth: "legacy-realm",
+      public_idp: false,
+      gateway_required: true,
+      notes: [
+        "Public console sessions are not accepted here.",
+        "Maintenance realm checks are still enabled for migration.",
+        "Archived credentials may contain stale entries."
       ]
+    }
+  }],
+  ["legacy-panel.internal/status", {
+    status: 200,
+    body: {
+      service: "legacy-panel",
+      status: "maintenance",
+      enabled_routes: [
+        "/health",
+        "/metadata",
+        "/auth",
+        "/maintenance"
+      ],
+      disabled_routes: [
+        "/login",
+        "/reports"
+      ],
+      note: "Interactive login disabled. Maintenance auth endpoint remains enabled for gateway-originated checks."
+    }
+  }],
+  ["legacy-panel.internal/login", {
+    status: 403,
+    body: {
+      error: "interactive_login_disabled",
+      message: "Legacy interactive login is disabled during migration."
+    }
+  }],
+  ["legacy-panel.internal/session", {
+    status: 403,
+    body: {
+      error: "session_inspection_disabled",
+      message: "Legacy session inspection is disabled during migration."
+    }
+  }],
+  ["legacy-panel.internal/reports", {
+    status: 403,
+    body: {
+      service: "legacy-panel",
+      status: "queued-reporting-disabled",
+      note: "Report generation is disabled until the maintenance queue is reviewed."
     }
   }],
   ["audit-db.internal/health", {
@@ -209,6 +255,14 @@ function normalizeDocumentPath(rawPath) {
   return normalized.startsWith("/") ? normalized : `/${normalized}`;
 }
 
+function isAllowedLegacyTraversal(rawPath, documentPath) {
+  if (documentPath.startsWith("/public/")) {
+    return true;
+  }
+
+  return rawPath.startsWith("/public/../restricted/");
+}
+
 function resolveFilesVaultRead(normalized) {
   const rawPath = normalized.searchParams.get("path");
 
@@ -218,16 +272,6 @@ function resolveFilesVaultRead(normalized) {
       status: 400,
       error: "bad_request",
       message: "path parameter is required.",
-      requested_url: normalized.url
-    };
-  }
-
-  if (rawPath === "/restricted/legacy-panel-creds.txt") {
-    return {
-      ok: false,
-      status: 403,
-      error: "redacted",
-      message: "Credential archive is sealed until migration approval.",
       requested_url: normalized.url
     };
   }
@@ -244,12 +288,12 @@ function resolveFilesVaultRead(normalized) {
 
   const documentPath = normalizeDocumentPath(rawPath);
 
-  if (documentPath === "/restricted/legacy-panel-creds.txt") {
+  if (!isAllowedLegacyTraversal(rawPath, documentPath)) {
     return {
       ok: false,
       status: 403,
-      error: "redacted",
-      message: "Credential archive is sealed until migration approval.",
+      error: "forbidden_path",
+      message: "Only public document paths are allowed by the legacy pre-check.",
       requested_url: normalized.url
     };
   }
@@ -316,6 +360,93 @@ function resolveFilesVaultDownload(normalized) {
   };
 }
 
+function resolveLegacyPanelAuth(normalized) {
+  const user = normalized.searchParams.get("user");
+  const pass = normalized.searchParams.get("pass");
+
+  if (!user || !pass) {
+    return {
+      ok: false,
+      status: 400,
+      error: "missing_credentials",
+      message: "Maintenance realm credentials are required.",
+      requested_url: normalized.url
+    };
+  }
+
+  if (user === "operator" && pass === "operator123") {
+    return {
+      ok: false,
+      status: 401,
+      error: "wrong_realm",
+      message: "Public console credentials are not valid in the maintenance realm.",
+      requested_url: normalized.url
+    };
+  }
+
+  if (user !== "svc_migration" || pass !== "migrate-yellow-gate") {
+    return {
+      ok: false,
+      status: 401,
+      error: "invalid_legacy_credentials",
+      message: "Legacy realm authentication failed.",
+      requested_url: normalized.url
+    };
+  }
+
+  return {
+    ok: true,
+    requested_url: normalized.url,
+    status: 200,
+    body: {
+      authenticated: true,
+      realm: "maintenance",
+      principal: "svc_migration",
+      legacy_session: "bg6-legacy-session-migration",
+      next: "/maintenance",
+      note: "Legacy sessions are accepted only through gateway-originated requests."
+    }
+  };
+}
+
+function resolveLegacyPanelMaintenance(normalized) {
+  const session = normalized.searchParams.get("session");
+
+  if (!session) {
+    return {
+      ok: false,
+      status: 401,
+      error: "legacy_session_required",
+      message: "Authenticated maintenance session required.",
+      requested_url: normalized.url
+    };
+  }
+
+  if (session !== "bg6-legacy-session-migration") {
+    return {
+      ok: false,
+      status: 403,
+      error: "invalid_legacy_session",
+      message: "Legacy maintenance session was not accepted.",
+      requested_url: normalized.url
+    };
+  }
+
+  return {
+    ok: true,
+    requested_url: normalized.url,
+    status: 200,
+    body: {
+      service: "legacy-panel",
+      area: "maintenance",
+      principal: "svc_migration",
+      finding: "credential reuse across migration boundary",
+      flag: "FLAG{blackgate_legacy_credential_reuse_phase6}",
+      next_hint: "Maintenance reports queue jobs for asynchronous processing in the next phase."
+    }
+  };
+}
+
 function resolveInternalService(inputUrl) {
   const normalized = normalizeInternalUrl(inputUrl);
 
@@ -329,6 +460,14 @@ function resolveInternalService(inputUrl) {
 
   if (normalized.host === "files-vault.internal" && normalized.path === "/download") {
     return resolveFilesVaultDownload(normalized);
+  }
+
+  if (normalized.host === "legacy-panel.internal" && normalized.path === "/auth") {
+    return resolveLegacyPanelAuth(normalized);
+  }
+
+  if (normalized.host === "legacy-panel.internal" && normalized.path === "/maintenance") {
+    return resolveLegacyPanelMaintenance(normalized);
   }
 
   const key = `${normalized.host}${normalized.path}`;

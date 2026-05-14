@@ -14,7 +14,8 @@ router.get("/dashboard", requireAuth, (req, res) => {
       legacyMigration: "scheduled",
       contextService: "compatibility mode",
       gatewayTrust: "review required",
-      filesVault: "migration mode"
+      filesVault: "migration mode",
+      legacyPanel: "migration lockdown"
     },
     recentTickets: tickets.slice(0, 3),
     criticalAssets: assets.filter((asset) => ["degraded", "locked", "watch"].includes(asset.status)),

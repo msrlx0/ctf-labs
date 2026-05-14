@@ -1,8 +1,8 @@
 <section class="page-header">
   <div>
     <p class="eyebrow">Access Context</p>
-    <h1>BG-Context Token</h1>
-    <p>Sistemas legados do BlackGate usam tokens de contexto para integrações internas e endpoints operacionais.</p>
+    <h1>Operational Context</h1>
+    <p>Operational context is evaluated separately from the web session for selected compatibility workflows.</p>
   </div>
   <div class="header-badge">
     <span>Issuer</span>
@@ -26,12 +26,12 @@
   <article class="panel">
     <div class="panel-head">
       <h2>Contexto legado</h2>
-      <a href="/api/context/me">/api/context/me</a>
+      <span class="subtle">compatibility mode</span>
     </div>
     <div class="kv-list">
       <div><span>Context role</span><strong><%= contextPreview.role %></strong></div>
       <div><span>Scope</span><strong><%= contextPreview.scope %></strong></div>
-      <div><span>Header</span><strong>X-BG-Context</strong></div>
+      <div><span>Issuer</span><strong><%= contextPreview.issued_by %></strong></div>
     </div>
   </article>
 
@@ -40,6 +40,6 @@
       <h2>Operações</h2>
       <span class="subtle">Compatibility mode</span>
     </div>
-    <p class="muted-copy">Legacy operator endpoints consume BG context headers. Operator context enables compatibility checks against selected upstreams. Use DevTools ou Burp para comparar a sessão web, o token de contexto e as respostas dos endpoints de validação.</p>
+    <p class="muted-copy">Legacy compatibility remains enabled for selected workflows. Some migration checks are handled outside the public console.</p>
   </article>
 </section>
