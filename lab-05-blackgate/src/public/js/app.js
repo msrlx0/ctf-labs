@@ -1,5 +1,5 @@
 window.BlackGateClient = {
-  version: "1.7.0-phase8",
+  version: "1.8.0-phase9",
   routes: {
     dashboard: "/dashboard",
     tickets: "/tickets",
@@ -15,15 +15,15 @@ window.BlackGateClient = {
       "internal trust boundary review required"
     ]
   },
-  phaseEight: {
-    status: "worker-processing-review",
-    message: "BlackGate Phase 8 keeps maintenance processing behind separated operational controls."
+  phaseNine: {
+    status: "final-approval-review",
+    message: "BlackGate Phase 9 keeps final review behind separated operational controls."
   }
 };
 
 window.BLACKGATE_CONFIG = {
   apiBase: "/api",
-  build: "phase8-worker-processing",
+  build: "phase9-final-approval",
   surface: "partial",
   hints: {
     debug: "limited",
@@ -49,6 +49,9 @@ window.BLACKGATE_CONFIG = {
   },
   worker: {
     mode: "review"
+  },
+  approval: {
+    mode: "restricted"
   }
 };
 

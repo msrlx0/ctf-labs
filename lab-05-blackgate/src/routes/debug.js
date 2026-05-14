@@ -28,6 +28,9 @@ router.get("/debug/ping", (req, res) => {
         },
         worker: {
           note: "Worker diagnostics remain restricted during migration."
+        },
+        approval: {
+          note: "Approval diagnostics are not available through limited debug."
         }
       }
     });
@@ -43,7 +46,7 @@ router.get("/debug/ping", (req, res) => {
 router.get("/debug/trace", (req, res) => {
   return res.status(501).json({
     error: "not_implemented",
-    message: "Debug trace is not available in Phase 8."
+    message: "Debug trace is not available in Phase 9."
   });
 });
 

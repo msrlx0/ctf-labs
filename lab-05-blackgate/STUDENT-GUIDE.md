@@ -4,9 +4,9 @@
 
 Voce recebeu acesso comum ao **BlackGate Operations Console**, uma plataforma corporativa usada para controlar acessos internos, tickets de seguranca, ativos monitorados e alertas operacionais.
 
-Na **Fase 8 - Maintenance Worker Processing Abuse**, o objetivo e correlacionar reconhecimento, contexto operacional, gateway interno simulado, Files Vault, realm legado de manutencao, workflow de reports e um maintenance worker em modo review. A fase inclui decoys, respostas ambiguas, jobs parcialmente aceitos e acoes de diagnostico com validacao fraca.
+Na **Fase 9 - Final Admin Approval / Boss Flag**, o objetivo e correlacionar reconhecimento, contexto operacional, gateway interno simulado, Files Vault, realm legado de manutencao, workflow de reports, diagnostics do worker e estado final de aprovacao. A fase inclui decoys, respostas ambiguas e diferencas importantes entre identidade publica, contexto operator e manutencao legada.
 
-Ainda nao existe command injection real, upload, Redis, worker separado, shell ou exploracao admin completa.
+Ainda nao existe command injection real, upload, Redis, worker separado, shell ou exploracao de sistema operacional.
 
 ## Escopo
 
@@ -134,6 +134,19 @@ Dicas sem spoiler:
 - A fila correta nao significa que todo diagnostico sera renderizado.
 - Bloqueios explicitos costumam ser mais confiaveis que mensagens de sucesso parcial.
 
+## Phase 9 - Final Admin Approval / Boss Flag
+
+Dicas sem spoiler:
+
+- Nem todo admin e um finalizer valido.
+- Estados de aprovacao podem depender de worker traces.
+- Queue reference, review code e trace marker precisam fazer sentido juntos.
+- Reconciliation e finalization sao etapas diferentes.
+- Public identity, operator context e maintenance realm tem papeis diferentes.
+- Decoys de finalizer sao esperados.
+- Arquivos internos podem explicar formato sem entregar a URL final.
+- Uma etapa pode produzir contexto que so fica util quando comparado com outra superficie.
+
 ## Dicas leves de enumeracao
 
 - Nem toda pista aparece como link no menu.
@@ -150,7 +163,7 @@ Dicas sem spoiler:
 
 - Nao rode scanners barulhentos.
 - Nao tente atacar sistemas fora do Docker local.
-- Nao assuma que a conta administrativa esta disponivel agora.
+- Nao assuma que a conta administrativa esta disponivel como atalho.
 - Nao trate nomes internos como alvos externos reais.
-- Nao tente command injection real, upload, Redis, worker separado ou shell; essas cadeias ainda nao fazem parte desta fase.
+- Nao tente command injection real, upload, Redis, worker separado ou shell; essas cadeias nao fazem parte deste lab.
 - Nao trate credenciais de CTF como credenciais reais.

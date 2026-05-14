@@ -22,7 +22,10 @@ const filesVaultDocuments = {
   "/restricted/template-archive.txt": "Template archive:\ndaily-summary enabled\nasset-inventory enabled\nsecurity-audit disabled\nmigration-check enabled\nworker-diagnostics archived\nDo not expose archived templates in public selectors.",
   "/restricted/worker-review.txt": "Worker review:\nMaintenance jobs are queued but not rendered synchronously.\nThe diagnostics processor accepts queued worker-diagnostics jobs.\nReview metadata is attached outside the public report selector.\nSome actions are validated by prefix instead of exact match.",
   "/restricted/diagnostics-actions.txt": "Diagnostics action notes:\nstatus: enabled\nchecksum: enabled\ntrace: enabled\ntrace:internal: review only\ntrace:internal:queue: maintenance processor\nexec: disabled\nshell: disabled\ncallback: disabled",
-  "/restricted/processor-notes.txt": "Processor notes:\nThe maintenance worker uses action prefix validation for trace operations.\nOnly jobs from maintenance-worker are eligible.\nThe internal queue trace should never return sensitive data during migration review."
+  "/restricted/processor-notes.txt": "Processor notes:\nThe maintenance worker uses action prefix validation for trace operations.\nOnly jobs from maintenance-worker are eligible.\nThe internal queue trace should never return sensitive data during migration review.",
+  "/restricted/final-review-notes.txt": "Final review notes:\nAdmin approval is reconciled after maintenance-worker queue traces.\nReview IDs are bound to queue trace markers, not to public console sessions.\nThe finalizer rejects direct public identities.\nApproval state is expected to remain pending-admin until reconciliation.",
+  "/restricted/approval-reconciliation.txt": "Approval reconciliation:\nqueue_ref format: <queue>:<job_id>\ntrace_marker format: qtrace-<review-number>\nreview code format: BG-REV-<review-number>\nLegacy reconciler checks consistency between review_id, trace_marker and queue_ref.\nDo not expose finalizer routes in public route maps.",
+  "/restricted/admin-approval-policy.txt": "Admin approval policy:\nOnly reconciled maintenance reviews should reach finalization.\nThe public admin role is not sufficient.\nMaintenance-originated reviews may be finalized when queue trace and review code match.\nRejected examples:\n- wrong queue\n- wrong job\n- missing trace marker\n- public console identity\n- stale review number"
 };
 
 const downloadAliases = {
@@ -34,8 +37,14 @@ const downloadAliases = {
 const legacySessionId = "bg6-legacy-session-migration";
 const phase7Flag = "FLAG{blackgate_report_workflow_abuse_phase7}";
 const phase8Flag = "FLAG{blackgate_worker_processing_abuse_phase8}";
+const phase9Flag = "FLAG{blackgate_final_admin_approval_boss_chain}";
 const workerDiagnosticsJobId = "bg7-job-worker-diagnostics";
+const finalReviewId = "BG-REV-9041";
+const finalTraceMarker = "qtrace-9041";
+const finalQueueRef = `maintenance-worker:${workerDiagnosticsJobId}`;
+const finalReconciliationToken = `bg9-reconciled-${finalReviewId}`;
 const reportJobs = new Map();
+const approvalReviews = new Map();
 
 const reportTemplates = [
   {
@@ -635,6 +644,37 @@ function findWorkerJob(jobId) {
   }
 
   return reportJobs.get(jobId);
+}
+
+function approvalReviewDefaults() {
+  return {
+    review_id: finalReviewId,
+    state: "pending-admin",
+    queue_ref: finalQueueRef,
+    trace_marker: finalTraceMarker,
+    worker_trace_observed: false,
+    reconciliation_token: null,
+    finalizer: null
+  };
+}
+
+function getApprovalReview() {
+  const existingReview = approvalReviews.get(finalReviewId);
+
+  if (existingReview) {
+    return existingReview;
+  }
+
+  const review = approvalReviewDefaults();
+  approvalReviews.set(finalReviewId, review);
+  return review;
+}
+
+function markApprovalTraceObserved() {
+  const review = getApprovalReview();
+  review.worker_trace_observed = true;
+  review.state = "pending-admin";
+  return review;
 }
 
 function reportJobSummary(job) {
@@ -1293,6 +1333,8 @@ function resolveMaintenanceWorkerProcess(normalized) {
   }
 
   if (action === "trace:internal:queue") {
+    const approvalReview = markApprovalTraceObserved();
+
     return sendUpstream(normalized, 200, {
       service: "legacy-panel",
       worker: "maintenance-worker",
@@ -1301,6 +1343,16 @@ function resolveMaintenanceWorkerProcess(normalized) {
       processed: true,
       finding: "worker diagnostics action accepted internal queue trace through weak prefix validation",
       flag: phase8Flag,
+      review_id: approvalReview.review_id,
+      trace_marker: approvalReview.trace_marker,
+      queue_ref: approvalReview.queue_ref,
+      approval: {
+        state: approvalReview.state,
+        review_id: approvalReview.review_id,
+        queue_ref: approvalReview.queue_ref,
+        trace_marker: approvalReview.trace_marker,
+        note: "Final approval state is reconciled by the maintenance review service."
+      },
       next_hint: "Final review requires correlating queue output with admin approval state."
     });
   }
@@ -1414,6 +1466,245 @@ function resolveMaintenanceWorker(normalized) {
   };
 }
 
+function resolveApprovalHome(normalized) {
+  return sendUpstream(normalized, 200, {
+    service: "legacy-panel",
+    module: "approval",
+    status: "restricted",
+    message: "Approval workflows are reconciled through maintenance review state.",
+    visible_actions: [
+      "status",
+      "audit"
+    ],
+    hidden_actions: "reconciliation requires trace-derived metadata"
+  });
+}
+
+function resolveApprovalStatus(normalized) {
+  const reviewId = normalized.searchParams.get("review_id");
+
+  if (!reviewId) {
+    return sendUpstream(normalized, 200, {
+      approval: "pending",
+      known_reviews: "restricted",
+      note: "Review status requires a maintenance review code."
+    });
+  }
+
+  if (reviewId !== finalReviewId) {
+    return sendUpstream(normalized, 404, {
+      error: "review_not_found",
+      message: "Maintenance review was not found."
+    });
+  }
+
+  const review = getApprovalReview();
+
+  return sendUpstream(normalized, 200, {
+    review_id: review.review_id,
+    state: review.state,
+    queue_ref: review.queue_ref,
+    trace_marker_required: true,
+    finalizable: review.state === "reconciled"
+  });
+}
+
+function resolveApprovalAudit(normalized) {
+  const reviewId = normalized.searchParams.get("review_id") || finalReviewId;
+
+  if (reviewId !== finalReviewId) {
+    return sendUpstream(normalized, 404, {
+      error: "review_not_found",
+      message: "Maintenance review was not found."
+    });
+  }
+
+  return sendUpstream(normalized, 200, {
+    audit: "limited",
+    review_id: finalReviewId,
+    events: [
+      "report-job-created",
+      "worker-trace-observed",
+      "admin-approval-pending"
+    ],
+    note: "Reconciliation state is not shown in limited audit view."
+  });
+}
+
+function resolveApprovalReconcile(normalized) {
+  const reviewId = normalized.searchParams.get("review_id");
+  const traceMarker = normalized.searchParams.get("trace_marker");
+  const queueRef = normalized.searchParams.get("queue_ref");
+  const missing = [
+    ["review_id", reviewId],
+    ["trace_marker", traceMarker],
+    ["queue_ref", queueRef]
+  ].filter(([, value]) => !value).map(([name]) => name);
+
+  if (missing.length > 0) {
+    return sendUpstream(normalized, 400, {
+      error: "reconciliation_incomplete",
+      missing,
+      message: "Approval reconciliation requires review metadata."
+    });
+  }
+
+  if (reviewId !== finalReviewId) {
+    return sendUpstream(normalized, 404, {
+      error: "review_not_found",
+      message: "Maintenance review was not found."
+    });
+  }
+
+  if (traceMarker !== finalTraceMarker) {
+    return sendUpstream(normalized, 403, {
+      error: "invalid_trace_marker",
+      message: "Trace marker does not match the maintenance review."
+    });
+  }
+
+  if (queueRef !== finalQueueRef) {
+    return sendUpstream(normalized, 403, {
+      error: "invalid_queue_ref",
+      message: "Queue reference does not match the maintenance review."
+    });
+  }
+
+  const review = getApprovalReview();
+
+  if (!review.worker_trace_observed) {
+    return sendUpstream(normalized, 403, {
+      error: "trace_not_observed",
+      message: "Maintenance queue trace has not been observed by the review service."
+    });
+  }
+
+  review.state = "reconciled";
+  review.reconciliation_token = finalReconciliationToken;
+
+  return sendUpstream(normalized, 200, {
+    service: "legacy-panel",
+    module: "approval",
+    review_id: review.review_id,
+    state: review.state,
+    reconciliation_token: review.reconciliation_token,
+    note: "Reconciled maintenance reviews can be submitted to final approval."
+  });
+}
+
+function resolveApprovalFinalize(normalized) {
+  const reviewId = normalized.searchParams.get("review_id");
+  const reconciliationToken = normalized.searchParams.get("reconciliation_token");
+  const finalizer = normalized.searchParams.get("finalizer");
+  const missing = [
+    ["review_id", reviewId],
+    ["reconciliation_token", reconciliationToken],
+    ["finalizer", finalizer]
+  ].filter(([, value]) => !value).map(([name]) => name);
+
+  if (missing.length > 0) {
+    return sendUpstream(normalized, 400, {
+      error: "finalization_incomplete",
+      missing,
+      message: "Approval finalization request is incomplete."
+    });
+  }
+
+  if (reviewId !== finalReviewId) {
+    return sendUpstream(normalized, 404, {
+      error: "review_not_found",
+      message: "Maintenance review was not found."
+    });
+  }
+
+  if (finalizer === "admin") {
+    return sendUpstream(normalized, 403, {
+      error: "public_admin_rejected",
+      message: "Public admin identity is not accepted for maintenance finalization."
+    });
+  }
+
+  if (finalizer === "operator") {
+    return sendUpstream(normalized, 403, {
+      error: "operator_finalizer_rejected",
+      message: "Operator context cannot finalize admin approval directly."
+    });
+  }
+
+  if (finalizer !== "maintenance") {
+    return sendUpstream(normalized, 403, {
+      error: "finalizer_rejected",
+      message: "Finalizer is not accepted for maintenance approval."
+    });
+  }
+
+  const review = getApprovalReview();
+
+  if (review.state !== "reconciled" || review.reconciliation_token !== finalReconciliationToken) {
+    return sendUpstream(normalized, 403, {
+      error: "reconciliation_required",
+      message: "Approval review has not been reconciled by the maintenance service."
+    });
+  }
+
+  if (reconciliationToken !== review.reconciliation_token) {
+    return sendUpstream(normalized, 403, {
+      error: "invalid_reconciliation_token",
+      message: "Reconciliation token was not accepted."
+    });
+  }
+
+  review.state = "finalized";
+  review.finalizer = finalizer;
+
+  return sendUpstream(normalized, 200, {
+    service: "legacy-panel",
+    module: "approval",
+    review_id: review.review_id,
+    state: review.state,
+    finalizer: review.finalizer,
+    finding: "admin approval finalization trusted reconciled maintenance state",
+    flag: phase9Flag,
+    complete: true
+  });
+}
+
+function resolveApproval(normalized) {
+  const sessionError = requireLegacySession(normalized);
+
+  if (sessionError) {
+    return sessionError;
+  }
+
+  if (normalized.path === "/approval") {
+    return resolveApprovalHome(normalized);
+  }
+
+  if (normalized.path === "/approval/status") {
+    return resolveApprovalStatus(normalized);
+  }
+
+  if (normalized.path === "/approval/audit") {
+    return resolveApprovalAudit(normalized);
+  }
+
+  if (normalized.path === "/approval/reconcile") {
+    return resolveApprovalReconcile(normalized);
+  }
+
+  if (normalized.path === "/approval/finalize") {
+    return resolveApprovalFinalize(normalized);
+  }
+
+  return {
+    ok: false,
+    status: 404,
+    error: "upstream_not_found",
+    message: "Internal upstream route not found.",
+    requested_url: normalized.url
+  };
+}
+
 function resolveInternalService(inputUrl) {
   const normalized = normalizeInternalUrl(inputUrl);
 
@@ -1443,6 +1734,10 @@ function resolveInternalService(inputUrl) {
 
   if (normalized.host === "legacy-panel.internal" && normalized.path.startsWith("/worker")) {
     return resolveMaintenanceWorker(normalized);
+  }
+
+  if (normalized.host === "legacy-panel.internal" && normalized.path.startsWith("/approval")) {
+    return resolveApproval(normalized);
   }
 
   const key = `${normalized.host}${normalized.path}`;

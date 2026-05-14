@@ -4,7 +4,7 @@
 
 Dificuldade: **Boss Final**.
 
-Status: **Fase 8 - Maintenance Worker Processing Abuse**.
+Status: **Fase 9 - Final Admin Approval / Boss Flag**.
 
 Porta publica:
 
@@ -12,7 +12,7 @@ Porta publica:
 http://localhost:8096
 ```
 
-Nesta fase, o lab expande a cadeia da fila de reports com processamento inseguro simulado no maintenance worker. O objetivo e correlacionar o job aceito na fase anterior, metadados de revisao, notas internas e comportamento de diagnosticos sem receber um mapa completo da aplicacao.
+Nesta fase final, o lab fecha a cadeia com um fluxo de aprovacao administrativa simulado. O objetivo e correlacionar sessao publica, contexto operacional, gateway interno, realm legado, reports, worker diagnostics e estado de aprovacao sem receber um mapa completo da aplicacao.
 
 Tudo continua local e controlado em memoria.
 
@@ -49,7 +49,7 @@ analyst / analyst123
 guest / guest123
 ```
 
-A conta administrativa existe no cenario, mas nao e documentada nem liberada nesta fase.
+A conta administrativa existe no cenario, mas nao e documentada nem liberada como atalho.
 
 ## Objetivo educacional
 
@@ -66,6 +66,7 @@ A conta administrativa existe no cenario, mas nao e documentada nem liberada nes
 - Identificar abuso de workflow legado de reports sem execucao real de worker.
 - Diferenciar preview, criacao de job, fila e processamento assincrono.
 - Avaliar validacao fraca de acoes de diagnostico em um processador simulado.
+- Correlacionar estado de aprovacao, revisao de manutencao e finalizacao administrativa simulada.
 
 ## Funcionalidades atuais
 
@@ -88,6 +89,7 @@ A conta administrativa existe no cenario, mas nao e documentada nem liberada nes
 - Legacy Panel simulado com autenticacao de manutencao separada e decoys.
 - Workflow legado de reports com templates, previews e fila simulada em memoria.
 - Maintenance worker simulado em modo review, sem processo externo ou shell.
+- Final approval review simulado, restrito ao fluxo interno de manutencao.
 - Pagina publica de politica de seguranca ficticia.
 - CSS proprio com identidade visual amarela e tema BlackGate.
 
@@ -118,4 +120,4 @@ A conta administrativa existe no cenario, mas nao e documentada nem liberada nes
 
 ## Observacoes
 
-A Fase 8 introduz worker processing abuse simulado no painel legado. Ela nao implementa command injection real, upload, Redis, worker separado, shell, endpoint admin final, pivot real, banco externo, leitura de filesystem real ou chamadas externas. O processamento de diagnosticos e apenas uma simulacao controlada em memoria.
+A Fase 9 introduz a etapa final de aprovacao administrativa simulada. Ela nao implementa command injection real, upload, Redis, worker separado, shell, endpoint admin real, pivot real, banco externo, leitura de filesystem real ou chamadas externas. Todo o fluxo final e uma simulacao controlada em memoria.

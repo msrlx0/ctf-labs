@@ -41,8 +41,8 @@ router.get("/api/status", (req, res) => {
 router.get("/api/version", (req, res) => {
   return res.json({
     name: "BlackGate Operations Console",
-    version: "1.7.0-phase8",
-    build: "bg-phase8-worker-processing",
+    version: "1.8.0-phase9",
+    build: "bg-phase9-final-approval",
     commit: "local-training-build",
     node_env: process.env.NODE_ENV || "development"
   });
@@ -82,6 +82,9 @@ router.get("/api/client-config", (req, res) => {
     },
     worker: {
       mode: "review"
+    },
+    approval: {
+      mode: "restricted"
     }
   });
 });
