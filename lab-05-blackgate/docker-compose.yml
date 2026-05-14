@@ -7,4 +7,4 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - SESSION_SECRET=blackgate-phase6-local-session
+      - SESSION_SECRET=blackgate-phase7-local-session

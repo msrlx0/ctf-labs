@@ -22,6 +22,9 @@ router.get("/debug/ping", (req, res) => {
         },
         legacy: {
           note: "Legacy panel diagnostics are intentionally sparse during migration."
+        },
+        reports: {
+          note: "Report diagnostics are sparse during migration."
         }
       }
     });
@@ -37,7 +40,7 @@ router.get("/debug/ping", (req, res) => {
 router.get("/debug/trace", (req, res) => {
   return res.status(501).json({
     error: "not_implemented",
-    message: "Debug trace is not available in Phase 6."
+    message: "Debug trace is not available in Phase 7."
   });
 });
 

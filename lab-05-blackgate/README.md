@@ -1,26 +1,28 @@
 # Lab 05 - BlackGate
 
-**BlackGate** é um laboratório CTF local sobre uma plataforma corporativa de acesso, auditoria e operações internas. A aplicação simula uma console moderna usada para controlar tickets de segurança, ativos internos, alertas operacionais e revisões de acesso.
+**BlackGate** e um laboratorio CTF local sobre uma plataforma corporativa de acesso, auditoria e operacoes internas. A aplicacao simula uma console moderna usada para controlar tickets de seguranca, ativos internos, alertas operacionais e revisoes de acesso.
 
 Dificuldade: **Boss Final**.
 
-Status: **Fase 6 — Credential Reuse / Legacy Panel Labyrinth**.
+Status: **Fase 7 - Report Workflow Abuse / Queue Preparation**.
 
-Porta pública:
+Porta publica:
 
 ```text
 http://localhost:8096
 ```
 
-Nesta fase, o lab adiciona uma cadeia mais difícil de credential reuse em um painel legado simulado. O objetivo é correlacionar sinais de migração, controles operacionais, artefatos internos e realm separado sem receber um mapa completo da aplicação. Tudo continua local e controlado em memória.
+Nesta fase, o lab expande o painel legado com um workflow de reports parcialmente migrado, templates com decoys, criacao simulada de jobs e uma fila em memoria. O objetivo e correlacionar sinais de manutencao, notas internas e comportamento de filas sem receber um mapa completo da aplicacao.
+
+Tudo continua local e controlado em memoria.
 
 ## Aviso de uso local
 
-Este laboratório é intencionalmente vulnerável e foi criado apenas para estudo local e educacional. Não exponha os containers na internet. Não use payloads, técnicas ou comandos deste lab contra sistemas reais, terceiros ou ambientes sem permissão explícita.
+Este laboratorio e intencionalmente vulneravel e foi criado apenas para estudo local e educacional. Nao exponha os containers na internet. Nao use payloads, tecnicas ou comandos deste lab contra sistemas reais, terceiros ou ambientes sem permissao explicita.
 
 ## Como subir
 
-Dentro do repositório:
+Dentro do repositorio:
 
 ```bash
 cd lab-05-blackgate
@@ -47,42 +49,45 @@ analyst / analyst123
 guest / guest123
 ```
 
-A conta administrativa existe no cenário, mas não é documentada nem liberada nesta fase.
+A conta administrativa existe no cenario, mas nao e documentada nem liberada nesta fase.
 
 ## Objetivo educacional
 
-- Reconhecer uma aplicação corporativa interna.
-- Enumerar rotas públicas e metadados expostos.
-- Entender diferenças entre sessão web, role e contexto operacional.
+- Reconhecer uma aplicacao corporativa interna.
+- Enumerar rotas publicas e metadados expostos.
+- Entender diferencas entre sessao web, role e contexto operacional.
 - Entender riscos de tokens legados fracos.
-- Explorar confiança de gateway de forma simulada e segura.
-- Inferir serviços internos permitidos sem fazer request real para a internet.
-- Investigar diferenças entre catálogo, registros nomeados e referências legadas.
-- Entender riscos de canonicalização fraca em fluxos de compatibilidade.
-- Diferenciar identidade pública, contexto de gateway e realm legado de manutenção.
-- Reconhecer decoys e credenciais obsoletas em arquivos de migração.
+- Explorar confianca de gateway de forma simulada e segura.
+- Inferir servicos internos permitidos sem fazer request real para a internet.
+- Investigar diferencas entre catalogo, registros nomeados e referencias legadas.
+- Entender riscos de canonicalizacao fraca em fluxos de compatibilidade.
+- Diferenciar identidade publica, contexto de gateway e realm legado de manutencao.
+- Reconhecer decoys e credenciais obsoletas em arquivos de migracao.
+- Identificar abuso de workflow legado de reports sem execucao de worker.
+- Diferenciar preview, criacao de job, fila e processamento assincrono.
 
 ## Funcionalidades atuais
 
-- Login com sessão.
+- Login com sessao.
 - Logout.
 - Dashboard autenticado.
-- Página `/context` sobre contexto operacional.
-- Página `/gateway` sobre gateway trust.
-- Página `/legacy` sobre lockdown do painel legado.
-- Página `/files-vault` sobre migração de documentos.
-- Lista de tickets de segurança.
-- Inventário de ativos internos fictícios.
+- Pagina `/context` sobre contexto operacional.
+- Pagina `/gateway` sobre gateway trust.
+- Pagina `/legacy` sobre lockdown do painel legado.
+- Pagina `/files-vault` sobre migracao de documentos.
+- Lista de tickets de seguranca.
+- Inventario de ativos internos ficticios.
 - Endpoint `/health` com status JSON.
-- Endpoints públicos de recon e metadados limitados.
-- Diagnóstico limitado.
+- Endpoints publicos de recon e metadados limitados.
+- Diagnostico limitado.
 - APIs autenticadas para tickets e assets.
 - Controles operacionais simulados.
 - Gateway simulado para upstreams internos em allowlist.
-- Files Vault simulado com metadata, catálogo e leitura controlada por path.
-- Legacy Panel simulado com autenticação de manutenção separada e decoys.
-- Página pública de política de segurança fictícia.
-- CSS próprio com identidade visual amarela e tema BlackGate.
+- Files Vault simulado com metadata, catalogo e leitura controlada por path.
+- Legacy Panel simulado com autenticacao de manutencao separada e decoys.
+- Workflow legado de reports com templates, previews e fila simulada em memoria.
+- Pagina publica de politica de seguranca ficticia.
+- CSS proprio com identidade visual amarela e tema BlackGate.
 
 ## Rotas principais
 
@@ -109,6 +114,6 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 /logout
 ```
 
-## Observações
+## Observacoes
 
-A Fase 6 introduz credential reuse em um painel legado simulado. Ela não implementa command injection, upload, Redis, worker, shell, endpoint admin final, pivot real, banco externo ou chamadas externas. A etapa de credencial é limitada a artefatos fictícios do lab e não deve ser usada contra sistemas reais.
+A Fase 7 introduz report workflow abuse e preparacao de fila no painel legado simulado. Ela nao implementa command injection, upload, Redis, worker real, shell, endpoint admin final, pivot real, banco externo ou chamadas externas. Jobs de reports podem ser aceitos pela fila, mas nao sao processados nesta fase.

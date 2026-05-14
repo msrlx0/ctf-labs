@@ -1,5 +1,5 @@
 window.BlackGateClient = {
-  version: "1.5.0-phase6",
+  version: "1.6.0-phase7",
   routes: {
     dashboard: "/dashboard",
     tickets: "/tickets",
@@ -15,15 +15,15 @@ window.BlackGateClient = {
       "internal trust boundary review required"
     ]
   },
-  phaseSix: {
-    status: "legacy-migration-lockdown",
-    message: "BlackGate Phase 6 keeps migration workflows behind separated operational controls."
+  phaseSeven: {
+    status: "report-migration-review",
+    message: "BlackGate Phase 7 keeps queued migration workflows behind separated operational controls."
   }
 };
 
 window.BLACKGATE_CONFIG = {
   apiBase: "/api",
-  build: "phase6-legacy-reuse",
+  build: "phase7-report-workflow",
   surface: "partial",
   hints: {
     debug: "limited",
@@ -43,6 +43,9 @@ window.BLACKGATE_CONFIG = {
   legacy: {
     mode: "migration",
     realm: "separate"
+  },
+  reports: {
+    mode: "migration"
   }
 };
 

@@ -1,14 +1,16 @@
 # Student Guide - Lab 05 BlackGate
 
-## Introdução
+## Introducao
 
-Você recebeu acesso comum ao **BlackGate Operations Console**, uma plataforma corporativa usada para controlar acessos internos, tickets de segurança, ativos monitorados e alertas operacionais.
+Voce recebeu acesso comum ao **BlackGate Operations Console**, uma plataforma corporativa usada para controlar acessos internos, tickets de seguranca, ativos monitorados e alertas operacionais.
 
-Na **Fase 6 — Credential Reuse / Legacy Panel Labyrinth**, o objetivo é correlacionar reconhecimento, contexto operacional, gateway interno simulado, Files Vault e realm legado de manutenção. A fase inclui decoys, respostas ambíguas e credenciais obsoletas; ainda não existe command injection, Redis, worker, shell ou exploração admin completa.
+Na **Fase 7 - Report Workflow Abuse / Queue Preparation**, o objetivo e correlacionar reconhecimento, contexto operacional, gateway interno simulado, Files Vault, realm legado de manutencao e um workflow de reports parcialmente migrado. A fase inclui decoys, respostas ambiguas, templates escondidos e jobs que podem parecer sucesso parcial.
+
+Ainda nao existe command injection, upload, Redis, worker real, shell ou exploracao admin completa.
 
 ## Escopo
 
-O único alvo autorizado é:
+O unico alvo autorizado e:
 
 ```text
 http://localhost:8096
@@ -19,110 +21,123 @@ Execute o lab somente localmente com Docker.
 ## O que observar
 
 - Tela de login e contas comuns.
-- Cookie de sessão após autenticação.
-- Papel do usuário logado.
-- Página `/context`.
-- Página `/gateway`.
-- Página `/legacy`.
-- Página `/files-vault`.
+- Cookie de sessao apos autenticacao.
+- Papel do usuario logado.
+- Pagina `/context`.
+- Pagina `/gateway`.
+- Pagina `/legacy`.
+- Pagina `/files-vault`.
 - Cards do dashboard.
-- Tickets com nomes de serviços e revisões pendentes.
-- Inventário de ativos internos fictícios.
-- Arquivo JavaScript público.
-- Comentários discretos no HTML.
-- Endpoints públicos de status, versão e configuração.
-- Diferenças entre interface, sessão, contexto operacional, gateway e APIs JSON.
+- Tickets com nomes de servicos e revisoes pendentes.
+- Inventario de ativos internos ficticios.
+- Arquivo JavaScript publico.
+- Comentarios discretos no HTML.
+- Endpoints publicos de status, versao e configuracao.
+- Diferencas entre interface, sessao, contexto operacional, gateway e APIs JSON.
+- Estados de migracao que aparecem em mais de uma camada.
 
 ## Primeiros passos sugeridos
 
 1. Acesse `http://localhost:8096`.
-2. Faça login com uma conta comum.
+2. Faca login com uma conta comum.
 3. Navegue por `/dashboard`, `/context`, `/gateway`, `/legacy`, `/files-vault`, `/tickets` e `/assets`.
-4. Observe arquivos estáticos, comentários, cookies e respostas JSON.
+4. Observe arquivos estaticos, comentarios, cookies e respostas JSON.
 5. Relacione textos do dashboard com tickets, assets, contexto e gateway.
-6. Anote nomes internos, componentes legados e estados de migração.
+6. Anote nomes internos, componentes legados e estados de migracao.
 
 ## Phase 2 Recon Tips
 
-Procure sinais de enumeração em:
+Procure sinais de enumeracao em:
 
-- arquivos estáticos;
-- políticas públicas;
-- status e versão;
-- configuração exposta;
+- arquivos estaticos;
+- politicas publicas;
+- status e versao;
+- configuracao exposta;
 - mapas parciais de rotas;
-- diagnósticos limitados.
+- diagnosticos limitados.
 
-## Phase 3 — Weak Token / Role Escalation
+## Phase 3 - Weak Token / Role Escalation
 
 Dicas sem spoiler:
 
-- Relacione usuário autenticado, role e contexto operacional.
-- Procure referências a contexto em superfícies públicas e autenticadas.
-- Diagnósticos limitados podem mudar conforme metadados enviados.
+- Relacione usuario autenticado, role e contexto operacional.
+- Procure referencias a contexto em superficies publicas e autenticadas.
+- Diagnosticos limitados podem mudar conforme metadados enviados.
 - Procure rotas relacionadas a compatibilidade.
 - Observe se tokens de contexto parecem opacos ou estruturados.
-- Diferencie role da sessão e role do contexto legado.
+- Diferencie role da sessao e role do contexto legado.
 
-## Phase 4 — Gateway Trust / SSRF Setup
+## Phase 4 - Gateway Trust / SSRF Setup
 
 Dicas sem spoiler:
 
 - Reaproveite descobertas da Fase 3.
 - Contexto operacional pode influenciar workflows de compatibilidade.
 - Relacione gateway, assets e metadados.
-- Observe hostnames internos e estados de manutenção.
+- Observe hostnames internos e estados de manutencao.
 - Valide sinais simples antes de assumir acesso amplo.
 - Nem todo host ou path interno responde igual.
 - Pense em SSRF controlado/simulado: o gateway resolve upstreams internos permitidos sem request real para internet.
 - Hosts externos devem ser bloqueados.
 
-## Phase 5 — Files Vault / Controlled File Read
+## Phase 5 - Files Vault / Controlled File Read
 
 Dicas sem spoiler:
 
 - Reaproveite o contexto operator da Fase 3.
 - Reaproveite o fluxo de gateway da Fase 4.
 - Comece por sinais de metadata antes de tentar documentos.
-- Observe diferenças entre catálogo, download nomeado e leitura legada.
-- Observe diferença entre nome de arquivo e path completo.
-- Procure pistas de migração e compatibilidade.
-- Pense em normalização de path.
-- Valide caminhos públicos antes de tentar algo fora do catálogo.
-- Uma resposta pública bem-sucedida costuma ensinar o formato da próxima tentativa.
+- Observe diferencas entre catalogo, download nomeado e leitura legada.
+- Observe diferenca entre nome de arquivo e path completo.
+- Procure pistas de migracao e compatibilidade.
+- Pense em normalizacao de path.
+- Valide caminhos publicos antes de tentar algo fora do catalogo.
+- Uma resposta publica bem-sucedida costuma ensinar o formato da proxima tentativa.
 
-## Phase 6 — Credential Reuse / Legacy Panel
+## Phase 6 - Credential Reuse / Legacy Panel
 
 Dicas sem spoiler:
 
-- Nem toda credencial encontrada é útil.
+- Nem toda credencial encontrada e util.
 - Nem todo login usa o mesmo realm.
-- O login público e o painel legado não compartilham identidade.
-- Arquivos de migração podem conter entradas antigas, falsas ou desativadas.
+- O login publico e o painel legado nao compartilham identidade.
+- Arquivos de migracao podem conter entradas antigas, falsas ou desativadas.
 - Diferencie public console, gateway context e legacy maintenance realm.
-- Se um endpoint diz `interactive login disabled`, procure o fluxo de manutenção.
-- Preserve query strings ao atravessar camadas intermediárias.
-- Encode URLs internas quando houver parâmetros.
+- Se um endpoint diz `interactive login disabled`, procure o fluxo de manutencao.
+- Preserve query strings ao atravessar camadas intermediarias.
+- Encode URLs internas quando houver parametros.
 - Mensagens de erro parecidas podem apontar para realms diferentes.
 
-## Dicas leves de enumeração
+## Phase 7 - Report Workflow Abuse / Queue Preparation
+
+Dicas sem spoiler:
+
+- Nem todo template listado e tudo que existe.
+- Workflows legados podem ter modos de migracao.
+- Diferencie preview, create e queue.
+- Leia notas internas com atencao.
+- Combinacoes erradas podem parecer sucesso parcial.
+- Jobs aceitos nem sempre sao processados imediatamente.
+- Um workflow pode aceitar configuracoes que nao renderiza de forma sincrona.
+- Arquivos antigos podem explicar a diferenca entre fila padrao, fila legada e fila de manutencao.
+
+## Dicas leves de enumeracao
 
 - Nem toda pista aparece como link no menu.
-- Tickets operacionais costumam citar nomes de serviços importantes.
-- Ativos internos podem revelar fronteiras de confiança.
-- Arquivos JavaScript públicos podem conter metadados de frontend.
-- Um endpoint de health raramente é sensível sozinho, mas ajuda a validar serviço, versão e escopo.
-- Observe diferenças entre contas comuns.
-- Observe diferença entre 400, 401, 403 e 404 nas APIs.
-- Mensagens de erro para path ausente, path bloqueado e documento inexistente podem não significar a mesma coisa.
-- Não confie no primeiro bloco de credenciais encontrado em arquivo antigo.
+- Tickets operacionais costumam citar nomes de servicos importantes.
+- Ativos internos podem revelar fronteiras de confianca.
+- Arquivos JavaScript publicos podem conter metadados de frontend.
+- Um endpoint de health raramente e sensivel sozinho, mas ajuda a validar servico, versao e escopo.
+- Observe diferencas entre contas comuns.
+- Observe diferenca entre 400, 401, 403 e 404 nas APIs.
+- Mensagens de erro para path ausente, path bloqueado e documento inexistente podem nao significar a mesma coisa.
+- Nao confie no primeiro bloco de credenciais encontrado em arquivo antigo.
 
 ## O que evitar
 
-- Não rode scanners barulhentos.
-- Não tente atacar sistemas fora do Docker local.
-- Não procure uma flag final nesta fase.
-- Não assuma que a conta administrativa está disponível agora.
-- Não trate nomes internos como alvos externos reais.
-- Não tente command injection, upload, Redis, worker ou shell; essas cadeias ainda não fazem parte desta fase.
-- Não trate credenciais de CTF como credenciais reais.
+- Nao rode scanners barulhentos.
+- Nao tente atacar sistemas fora do Docker local.
+- Nao assuma que a conta administrativa esta disponivel agora.
+- Nao trate nomes internos como alvos externos reais.
+- Nao tente command injection, upload, Redis, worker real ou shell; essas cadeias ainda nao fazem parte desta fase.
+- Nao trate credenciais de CTF como credenciais reais.

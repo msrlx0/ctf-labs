@@ -41,8 +41,8 @@ router.get("/api/status", (req, res) => {
 router.get("/api/version", (req, res) => {
   return res.json({
     name: "BlackGate Operations Console",
-    version: "1.5.0-phase6",
-    build: "bg-phase6-legacy-reuse",
+    version: "1.6.0-phase7",
+    build: "bg-phase7-report-workflow",
     commit: "local-training-build",
     node_env: process.env.NODE_ENV || "development"
   });
@@ -76,6 +76,9 @@ router.get("/api/client-config", (req, res) => {
     legacy: {
       mode: "migration",
       realm: "separate"
+    },
+    reports: {
+      mode: "migration"
     }
   });
 });

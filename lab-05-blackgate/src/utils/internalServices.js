@@ -16,7 +16,10 @@ const filesVaultDocuments = {
   "/restricted/legacy-migration-notes.txt": "Legacy migration note:\nThe public BlackGate login and the legacy maintenance panel do not share the same identity provider.\nSome operator migration accounts were mirrored only for gateway-originated maintenance checks.\nDo not trust the first credential block in archived notes.",
   "/restricted/operator-archive-2026.txt": "Archived operator notes:\ncandidate: operator / operator123\ncandidate: admin / admin\ncandidate: bg_admin / blackgate\ncandidate: svc_audit / audit2026\nStatus: most archived candidates are identity-provider accounts, not legacy maintenance accounts.",
   "/restricted/credential-review.txt": "Credential review:\n- public operator account remains valid only on the public console.\n- svc_audit was disabled after audit-db filtering.\n- bg_admin is a placeholder in old screenshots.\n- migration service accounts use the legacy realm.\n- legacy realm accepts username format svc_migration, not email format.",
-  "/restricted/legacy-panel-creds.txt": "Legacy credential archive:\n[deprecated]\noperator:operator123\nadmin:admin\nbg_admin:blackgate\n\n[disabled]\nsvc_audit:audit2026\nsvc_backup:backup2026\n\n[maintenance-realm]\nsvc_migration:migrate-yellow-gate\n\nNote:\nMaintenance realm credentials are not valid on the public login page.\nGateway-originated panel checks require the maintenance realm."
+  "/restricted/legacy-panel-creds.txt": "Legacy credential archive:\n[deprecated]\noperator:operator123\nadmin:admin\nbg_admin:blackgate\n\n[disabled]\nsvc_audit:audit2026\nsvc_backup:backup2026\n\n[maintenance-realm]\nsvc_migration:migrate-yellow-gate\n\nNote:\nMaintenance realm credentials are not valid on the public login page.\nGateway-originated panel checks require the maintenance realm.",
+  "/restricted/report-workflow-notes.txt": "Report migration notes:\nQueue-only mode was added for maintenance validation.\nWorker diagnostics templates are not available in the public selector.\nInternal scope should remain restricted until the worker review is complete.\nThe maintenance worker accepts queued diagnostics but does not render them synchronously.",
+  "/restricted/queue-review.txt": "Queue review:\ndefault queue: migration-report-queue\nlegacy queue: report-render\nmaintenance queue: maintenance-worker\nOnly maintenance queue jobs are reviewed by the worker team.",
+  "/restricted/template-archive.txt": "Template archive:\ndaily-summary enabled\nasset-inventory enabled\nsecurity-audit disabled\nmigration-check enabled\nworker-diagnostics archived\nDo not expose archived templates in public selectors."
 };
 
 const downloadAliases = {
@@ -24,6 +27,38 @@ const downloadAliases = {
   "migration-note.txt": "/public/notices/migration-note.txt",
   "gateway-checklist.txt": "/public/runbooks/gateway-checklist.txt"
 };
+
+const legacySessionId = "bg6-legacy-session-migration";
+const phase7Flag = "FLAG{blackgate_report_workflow_abuse_phase7}";
+const reportJobs = new Map();
+
+const reportTemplates = [
+  {
+    id: "daily-summary",
+    status: "enabled",
+    safe: true
+  },
+  {
+    id: "asset-inventory",
+    status: "enabled",
+    safe: true
+  },
+  {
+    id: "security-audit",
+    status: "disabled",
+    safe: false
+  },
+  {
+    id: "migration-check",
+    status: "enabled",
+    safe: true
+  },
+  {
+    id: "worker-diagnostics",
+    status: "hidden",
+    safe: false
+  }
+];
 
 const internalRoutes = new Map([
   ["api-core.internal/health", {
@@ -159,10 +194,12 @@ const internalRoutes = new Map([
         "/maintenance"
       ],
       disabled_routes: [
-        "/login",
-        "/reports"
+        "/login"
       ],
-      note: "Interactive login disabled. Maintenance auth endpoint remains enabled for gateway-originated checks."
+      migration_modules: [
+        "maintenance reports"
+      ],
+      note: "Interactive login disabled. Maintenance auth endpoint remains enabled for gateway-originated checks. Queued reporting is under migration review."
     }
   }],
   ["legacy-panel.internal/login", {
@@ -177,14 +214,6 @@ const internalRoutes = new Map([
     body: {
       error: "session_inspection_disabled",
       message: "Legacy session inspection is disabled during migration."
-    }
-  }],
-  ["legacy-panel.internal/reports", {
-    status: 403,
-    body: {
-      service: "legacy-panel",
-      status: "queued-reporting-disabled",
-      note: "Report generation is disabled until the maintenance queue is reviewed."
     }
   }],
   ["audit-db.internal/health", {
@@ -402,7 +431,7 @@ function resolveLegacyPanelAuth(normalized) {
       authenticated: true,
       realm: "maintenance",
       principal: "svc_migration",
-      legacy_session: "bg6-legacy-session-migration",
+      legacy_session: legacySessionId,
       next: "/maintenance",
       note: "Legacy sessions are accepted only through gateway-originated requests."
     }
@@ -422,7 +451,7 @@ function resolveLegacyPanelMaintenance(normalized) {
     };
   }
 
-  if (session !== "bg6-legacy-session-migration") {
+  if (session !== legacySessionId) {
     return {
       ok: false,
       status: 403,
@@ -442,8 +471,539 @@ function resolveLegacyPanelMaintenance(normalized) {
       principal: "svc_migration",
       finding: "credential reuse across migration boundary",
       flag: "FLAG{blackgate_legacy_credential_reuse_phase6}",
-      next_hint: "Maintenance reports queue jobs for asynchronous processing in the next phase."
+      next_hint: "Maintenance reports queue jobs for asynchronous processing."
     }
+  };
+}
+
+function sendUpstream(normalized, status, body) {
+  return {
+    ok: true,
+    requested_url: normalized.url,
+    status,
+    body
+  };
+}
+
+function requireLegacySession(normalized) {
+  const session = normalized.searchParams.get("session");
+
+  if (!session) {
+    return {
+      ok: false,
+      status: 401,
+      error: "legacy_session_required",
+      message: "Authenticated maintenance session required.",
+      requested_url: normalized.url
+    };
+  }
+
+  if (session !== legacySessionId) {
+    return {
+      ok: false,
+      status: 403,
+      error: "invalid_legacy_session",
+      message: "Legacy maintenance session was not accepted.",
+      requested_url: normalized.url
+    };
+  }
+
+  return null;
+}
+
+function findReportTemplate(templateId) {
+  return reportTemplates.find((template) => template.id === templateId);
+}
+
+function listReportTemplates(includeMode, auditMode) {
+  const enabledTemplates = reportTemplates.filter((template) => template.status === "enabled");
+
+  if (includeMode === "archived") {
+    return {
+      templates: [
+        ...enabledTemplates,
+        {
+          id: "security-audit",
+          status: "disabled",
+          safe: false
+        },
+        {
+          id: "worker-diagnostics",
+          status: "archived",
+          visibility: "restricted"
+        }
+      ],
+      note: "Archive entries are incomplete outside audit review."
+    };
+  }
+
+  if (includeMode === "all" && auditMode === "1") {
+    return {
+      templates: reportTemplates.map((template) => {
+        if (template.id !== "worker-diagnostics") {
+          return template;
+        }
+
+        return {
+          id: template.id,
+          status: "hidden",
+          safe: template.safe,
+          renderer: "deferred",
+          visibility: "maintenance"
+        };
+      }),
+      note: "Audit view includes migration-only records."
+    };
+  }
+
+  if (includeMode === "all") {
+    return {
+      templates: [
+        ...enabledTemplates,
+        {
+          id: "security-audit",
+          status: "disabled",
+          safe: false
+        }
+      ],
+      note: "Full archive review is restricted."
+    };
+  }
+
+  return {
+    templates: enabledTemplates,
+    note: "Only enabled templates are shown in the public selector."
+  };
+}
+
+function makeJobId(template, queue) {
+  if (template === "worker-diagnostics" && queue === "maintenance-worker") {
+    return "bg7-job-worker-diagnostics";
+  }
+
+  const safeTemplate = String(template || "unknown").replace(/[^a-z0-9-]/gi, "-").toLowerCase();
+  const safeQueue = String(queue || "default").replace(/[^a-z0-9-]/gi, "-").toLowerCase();
+  return `bg7-job-${safeTemplate}-${safeQueue}`;
+}
+
+function persistReportJob(job) {
+  const storedJob = {
+    created_at: "2026-05-14T00:00:00.000Z",
+    worker: "pending",
+    ...job
+  };
+
+  reportJobs.set(storedJob.job_id, storedJob);
+  return storedJob;
+}
+
+function reportJobSummary(job) {
+  return {
+    job_id: job.job_id,
+    template: job.template,
+    format: job.format,
+    scope: job.scope,
+    queue: job.queue,
+    mode: job.mode,
+    status: job.status,
+    worker: job.worker
+  };
+}
+
+function resolveLegacyPanelReportsHome(normalized) {
+  return sendUpstream(normalized, 200, {
+    service: "legacy-panel",
+    module: "reports",
+    status: "partial",
+    message: "Report generation is partially enabled for migration validation.",
+    available_actions: [
+      "templates",
+      "preview",
+      "create"
+    ],
+    queue: "migration-report-queue",
+    note: "Only migration-safe templates are accepted."
+  });
+}
+
+function resolveLegacyPanelReportTemplates(normalized) {
+  const includeMode = normalized.searchParams.get("include");
+  const auditMode = normalized.searchParams.get("audit");
+  const templateView = listReportTemplates(includeMode, auditMode);
+
+  return sendUpstream(normalized, 200, {
+    service: "legacy-panel",
+    module: "reports",
+    selector: includeMode || "enabled",
+    templates: templateView.templates,
+    note: templateView.note
+  });
+}
+
+function resolveLegacyPanelReportPreview(normalized) {
+  const templateId = normalized.searchParams.get("template");
+  const format = normalized.searchParams.get("format") || "json";
+  const scope = normalized.searchParams.get("scope") || "summary";
+
+  if (!templateId) {
+    return sendUpstream(normalized, 400, {
+      error: "missing_template",
+      message: "template parameter is required."
+    });
+  }
+
+  const template = findReportTemplate(templateId);
+
+  if (!template) {
+    return sendUpstream(normalized, 404, {
+      error: "template_not_found",
+      message: "Requested report template was not found."
+    });
+  }
+
+  if (format === "pdf") {
+    return sendUpstream(normalized, 415, {
+      error: "unsupported_format",
+      message: "PDF rendering is not enabled during migration."
+    });
+  }
+
+  if (!["json", "html"].includes(format)) {
+    return sendUpstream(normalized, 415, {
+      error: "unsupported_format",
+      message: "Requested report format is not supported."
+    });
+  }
+
+  if (template.status === "disabled") {
+    return sendUpstream(normalized, 403, {
+      error: "template_disabled",
+      template: template.id,
+      message: "Template is disabled during migration."
+    });
+  }
+
+  if (template.id === "worker-diagnostics") {
+    return sendUpstream(normalized, 202, {
+      service: "legacy-panel",
+      module: "reports",
+      template: template.id,
+      rendered: false,
+      status: "queue_validation_required",
+      message: "Template requires queue validation before rendering."
+    });
+  }
+
+  if (scope === "full") {
+    return sendUpstream(normalized, 403, {
+      error: "restricted_scope",
+      message: "Full report scope is restricted during migration."
+    });
+  }
+
+  if (scope !== "summary") {
+    return sendUpstream(normalized, 403, {
+      error: "restricted_scope",
+      message: "Requested scope is not available for this template."
+    });
+  }
+
+  return sendUpstream(normalized, 200, {
+    service: "legacy-panel",
+    module: "reports",
+    template: template.id,
+    format,
+    scope,
+    rendered: true,
+    sanitized: format === "html",
+    preview: {
+      rows: 3,
+      source: "migration-sample"
+    }
+  });
+}
+
+function resolveLegacyPanelReportCreate(normalized) {
+  const templateId = normalized.searchParams.get("template");
+  const format = normalized.searchParams.get("format");
+  const scope = normalized.searchParams.get("scope");
+  const queue = normalized.searchParams.get("queue");
+  const mode = normalized.searchParams.get("mode");
+  const missing = [
+    ["template", templateId],
+    ["format", format],
+    ["scope", scope],
+    ["queue", queue],
+    ["mode", mode]
+  ].filter(([, value]) => !value).map(([name]) => name);
+
+  if (missing.length > 0) {
+    return sendUpstream(normalized, 400, {
+      error: "job_config_incomplete",
+      missing,
+      message: "Report job config is incomplete."
+    });
+  }
+
+  const template = findReportTemplate(templateId);
+
+  if (!template) {
+    return sendUpstream(normalized, 404, {
+      error: "template_not_found",
+      message: "Requested report template was not found."
+    });
+  }
+
+  if (template.status === "disabled") {
+    return sendUpstream(normalized, 403, {
+      error: "template_disabled",
+      template: template.id,
+      message: "Template is disabled during migration."
+    });
+  }
+
+  if (template.id === "worker-diagnostics") {
+    if (format !== "json") {
+      return sendUpstream(normalized, 415, {
+        error: "unsupported_format",
+        template: template.id,
+        message: "Worker diagnostics jobs only accept queued JSON configs."
+      });
+    }
+
+    if (mode === "render") {
+      return sendUpstream(normalized, 403, {
+        error: "synchronous_render_disabled",
+        template: template.id,
+        message: "Synchronous rendering is disabled for diagnostics templates."
+      });
+    }
+
+    if (scope !== "internal") {
+      return sendUpstream(normalized, 202, {
+        service: "legacy-panel",
+        module: "reports",
+        created: false,
+        template: template.id,
+        status: "preview-only",
+        message: "Template requires queue validation before rendering."
+      });
+    }
+
+    if (queue !== "maintenance-worker") {
+      const wrongQueueJob = persistReportJob({
+        job_id: makeJobId(template.id, queue),
+        template: template.id,
+        format,
+        scope,
+        queue,
+        mode,
+        status: "queued",
+        risk: "wrong-queue-no-worker-review"
+      });
+
+      return sendUpstream(normalized, 202, {
+        service: "legacy-panel",
+        module: "reports",
+        created: true,
+        job_id: wrongQueueJob.job_id,
+        queue: wrongQueueJob.queue,
+        status: wrongQueueJob.status,
+        finding: "diagnostics job accepted by a non-maintenance queue"
+      });
+    }
+
+    if (mode !== "queue-only") {
+      return sendUpstream(normalized, 403, {
+        error: "queue_mode_required",
+        template: template.id,
+        message: "Diagnostics templates are accepted only for queue validation."
+      });
+    }
+
+    const diagnosticsJob = persistReportJob({
+      job_id: "bg7-job-worker-diagnostics",
+      template: template.id,
+      format,
+      scope,
+      queue,
+      mode,
+      status: "queued",
+      risk: "unsafe-template-accepted",
+      phase8_hint: "Worker execution is disabled until maintenance review."
+    });
+
+    return sendUpstream(normalized, 200, {
+      service: "legacy-panel",
+      module: "reports",
+      created: true,
+      job_id: diagnosticsJob.job_id,
+      queue: diagnosticsJob.queue,
+      status: diagnosticsJob.status,
+      risk: diagnosticsJob.risk,
+      finding: "report workflow accepted an internal worker diagnostics job",
+      flag: phase7Flag,
+      next_hint: "Queued diagnostics jobs are processed by a maintenance worker in the next phase."
+    });
+  }
+
+  if (!["json", "html"].includes(format)) {
+    return sendUpstream(normalized, 415, {
+      error: "unsupported_format",
+      message: "Requested report format is not supported."
+    });
+  }
+
+  if (scope !== "summary") {
+    return sendUpstream(normalized, 403, {
+      error: "restricted_scope",
+      message: "Only summary scope is available for migration-safe templates."
+    });
+  }
+
+  if (mode === "render") {
+    return sendUpstream(normalized, 403, {
+      error: "synchronous_render_disabled",
+      message: "Synchronous rendering is disabled during migration."
+    });
+  }
+
+  const normalJob = persistReportJob({
+    job_id: makeJobId(template.id, queue),
+    template: template.id,
+    format,
+    scope,
+    queue,
+    mode,
+    status: "queued",
+    risk: "migration-safe"
+  });
+
+  return sendUpstream(normalized, 202, {
+    service: "legacy-panel",
+    module: "reports",
+    created: true,
+    job_id: normalJob.job_id,
+    queue: normalJob.queue,
+    status: normalJob.status,
+    risk: normalJob.risk,
+    message: "Report job queued for migration validation."
+  });
+}
+
+function resolveLegacyPanelReportJobs(normalized) {
+  const jobs = [...reportJobs.values()].map(reportJobSummary);
+
+  return sendUpstream(normalized, 200, {
+    service: "legacy-panel",
+    module: "reports",
+    jobs,
+    count: jobs.length
+  });
+}
+
+function resolveLegacyPanelReportJob(normalized, jobId) {
+  const job = reportJobs.get(jobId);
+
+  if (!job) {
+    return sendUpstream(normalized, 404, {
+      error: "job_not_found",
+      message: "Report job was not found in the migration queue."
+    });
+  }
+
+  if (job.job_id === "bg7-job-worker-diagnostics") {
+    return sendUpstream(normalized, 200, {
+      job_id: job.job_id,
+      template: job.template,
+      queue: job.queue,
+      status: job.status,
+      worker: job.worker,
+      phase8_hint: "Worker execution is disabled until maintenance review."
+    });
+  }
+
+  return sendUpstream(normalized, 200, reportJobSummary(job));
+}
+
+function resolveLegacyPanelReportQueue(normalized) {
+  const queues = [...reportJobs.values()].reduce((accumulator, job) => {
+    accumulator[job.queue] = accumulator[job.queue] || [];
+    accumulator[job.queue].push(reportJobSummary(job));
+    return accumulator;
+  }, {});
+
+  return sendUpstream(normalized, 200, {
+    service: "legacy-panel",
+    module: "reports",
+    queue_mode: "in-memory",
+    queues,
+    worker: "paused"
+  });
+}
+
+function resolveLegacyPanelWorkerStatus(normalized) {
+  return sendUpstream(normalized, 200, {
+    worker: "maintenance-worker",
+    status: "paused",
+    accepts: [
+      "queued diagnostics jobs"
+    ],
+    blocked: [
+      "synchronous execution",
+      "external callbacks",
+      "shell execution"
+    ],
+    next_hint: "Queued jobs are reviewed by the worker in the next phase."
+  });
+}
+
+function resolveLegacyPanelReports(normalized) {
+  const sessionError = requireLegacySession(normalized);
+
+  if (sessionError) {
+    return sessionError;
+  }
+
+  if (normalized.path === "/reports") {
+    return resolveLegacyPanelReportsHome(normalized);
+  }
+
+  if (normalized.path === "/reports/templates") {
+    return resolveLegacyPanelReportTemplates(normalized);
+  }
+
+  if (normalized.path === "/reports/preview") {
+    return resolveLegacyPanelReportPreview(normalized);
+  }
+
+  if (normalized.path === "/reports/create") {
+    return resolveLegacyPanelReportCreate(normalized);
+  }
+
+  if (normalized.path === "/reports/jobs") {
+    return resolveLegacyPanelReportJobs(normalized);
+  }
+
+  if (normalized.path.startsWith("/reports/jobs/")) {
+    const jobId = decodeURIComponent(normalized.path.slice("/reports/jobs/".length));
+    return resolveLegacyPanelReportJob(normalized, jobId);
+  }
+
+  if (normalized.path === "/reports/queue") {
+    return resolveLegacyPanelReportQueue(normalized);
+  }
+
+  if (normalized.path === "/reports/worker-status") {
+    return resolveLegacyPanelWorkerStatus(normalized);
+  }
+
+  return {
+    ok: false,
+    status: 404,
+    error: "upstream_not_found",
+    message: "Internal upstream route not found.",
+    requested_url: normalized.url
   };
 }
 
@@ -468,6 +1028,10 @@ function resolveInternalService(inputUrl) {
 
   if (normalized.host === "legacy-panel.internal" && normalized.path === "/maintenance") {
     return resolveLegacyPanelMaintenance(normalized);
+  }
+
+  if (normalized.host === "legacy-panel.internal" && normalized.path.startsWith("/reports")) {
+    return resolveLegacyPanelReports(normalized);
   }
 
   const key = `${normalized.host}${normalized.path}`;
