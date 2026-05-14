@@ -2,7 +2,7 @@ const users = [
   {
     id: 1,
     username: "admin",
-    password: "not-available-in-phase1",
+    password: "not-available-in-phase2",
     displayName: "BlackGate Administrator",
     role: "admin",
     team: "Core Access",
@@ -44,7 +44,10 @@ const tickets = [
     severity: "medium",
     status: "open",
     owner: "operator",
-    description: "Fornecedor externo solicitou janela de acesso para manutencao controlada."
+    exposure: "public-summary",
+    visibility: ["operator", "guest"],
+    description: "Fornecedor externo solicitou janela de acesso para manutencao controlada.",
+    metadata: "External gateway active; request is safe for limited review."
   },
   {
     id: "BG-1002",
@@ -52,7 +55,10 @@ const tickets = [
     severity: "high",
     status: "triage",
     owner: "analyst",
-    description: "Evento de autenticacao fora do padrao em sistema financeiro interno."
+    exposure: "restricted",
+    visibility: ["analyst"],
+    description: "Evento de autenticacao fora do padrao em sistema financeiro interno.",
+    metadata: "Financial server event requires analyst context."
   },
   {
     id: "BG-1003",
@@ -60,7 +66,10 @@ const tickets = [
     severity: "high",
     status: "open",
     owner: "operator",
-    description: "External gateway active; verificar excesso de tentativas negadas."
+    exposure: "restricted",
+    visibility: ["operator"],
+    description: "External gateway active; verificar excesso de tentativas negadas.",
+    metadata: "Gateway failures correlate with access-control telemetry."
   },
   {
     id: "BG-1004",
@@ -68,7 +77,10 @@ const tickets = [
     severity: "medium",
     status: "pending",
     owner: "analyst",
-    description: "Legacy components are scheduled for migration."
+    exposure: "metadata",
+    visibility: ["analyst"],
+    description: "Legacy components are scheduled for migration.",
+    metadata: "legacy-files was moved behind api-core.internal. Direct access should be blocked by gateway rules."
   },
   {
     id: "BG-1005",
@@ -76,7 +88,10 @@ const tickets = [
     severity: "critical",
     status: "blocked",
     owner: "admin",
-    description: "Token audit pending. Internal trust boundary review required."
+    exposure: "metadata",
+    visibility: ["admin"],
+    description: "Token audit pending. Internal trust boundary review required.",
+    metadata: "Token audit pending. Legacy debug token should be rotated."
   }
 ];
 
@@ -87,7 +102,8 @@ const assets = [
     environment: "edge",
     status: "active",
     exposure: "public entrypoint",
-    note: "BlackGate controls access to restricted operational systems."
+    note: "BlackGate controls access to restricted operational systems.",
+    visibility: ["operator", "analyst", "guest"]
   },
   {
     hostname: "api-core.internal",
@@ -95,7 +111,8 @@ const assets = [
     environment: "internal",
     status: "nominal",
     exposure: "trusted paths only",
-    note: "Some internal services are visible only through trusted paths."
+    note: "Some internal services are visible only through trusted paths.",
+    visibility: ["operator", "analyst"]
   },
   {
     hostname: "files-vault.internal",
@@ -103,7 +120,8 @@ const assets = [
     environment: "internal",
     status: "migration",
     exposure: "internal",
-    note: "Legacy components are scheduled for migration."
+    note: "Legacy components are scheduled for migration.",
+    visibility: ["analyst"]
   },
   {
     hostname: "queue-worker.internal",
@@ -111,7 +129,8 @@ const assets = [
     environment: "operations",
     status: "watch",
     exposure: "internal",
-    note: "Processes asynchronous access review tasks."
+    note: "Processes asynchronous access review tasks.",
+    visibility: ["operator"]
   },
   {
     hostname: "audit-db.internal",
@@ -119,7 +138,8 @@ const assets = [
     environment: "restricted",
     status: "locked",
     exposure: "internal",
-    note: "Stores audit snapshots and approval history."
+    note: "Stores audit snapshots and approval history.",
+    visibility: ["admin"]
   },
   {
     hostname: "legacy-panel.internal",
@@ -127,7 +147,8 @@ const assets = [
     environment: "legacy",
     status: "degraded",
     exposure: "internal",
-    note: "Scheduled for route migration."
+    note: "Scheduled for route migration.",
+    visibility: ["admin"]
   }
 ];
 
@@ -150,12 +171,38 @@ const events = [
   {
     time: "09:03",
     label: "Legacy route migration queued",
-    detail: "No migration window assigned in Phase 1."
+    detail: "No migration window assigned in Phase 2."
   }
 ];
 
 function findUser(username) {
   return users.find((user) => user.username === username);
+}
+
+function findTicketById(id) {
+  return tickets.find((ticket) => ticket.id.toLowerCase() === String(id || "").toLowerCase());
+}
+
+function findAssetByHostname(hostname) {
+  return assets.find((asset) => asset.hostname.toLowerCase() === String(hostname || "").toLowerCase());
+}
+
+function canViewTicket(user, ticket) {
+  if (!user || !ticket) {
+    return false;
+  }
+
+  return user.role === "admin"
+    || ticket.owner === user.username
+    || (ticket.visibility || []).includes(user.role);
+}
+
+function canViewAssetInInterface(user, asset) {
+  if (!user || !asset) {
+    return false;
+  }
+
+  return user.role === "admin" || (asset.visibility || []).includes(user.role);
 }
 
 function getMetrics() {
@@ -173,5 +220,9 @@ module.exports = {
   assets,
   events,
   findUser,
+  findTicketById,
+  findAssetByHostname,
+  canViewTicket,
+  canViewAssetInInterface,
   getMetrics
 };

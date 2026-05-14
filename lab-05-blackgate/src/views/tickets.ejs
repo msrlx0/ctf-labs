@@ -13,7 +13,7 @@
 <section class="panel">
   <div class="panel-head">
     <h2>Fila atual</h2>
-    <span class="subtle">Leitura de Fase 1</span>
+    <span class="subtle">Metadata view available through ticket API</span>
   </div>
 
   <div class="table-wrap">
@@ -26,6 +26,7 @@
           <th>Status</th>
           <th>Owner</th>
           <th>Descrição</th>
+          <th>API</th>
         </tr>
       </thead>
       <tbody>
@@ -37,6 +38,7 @@
             <td><span class="badge status-<%= ticket.status %>"><%= ticket.status %></span></td>
             <td><%= ticket.owner %></td>
             <td><%= ticket.description %></td>
+            <td><a class="inline-link" href="/api/tickets/<%= ticket.id %>">API view</a></td>
           </tr>
         <% }) %>
       </tbody>

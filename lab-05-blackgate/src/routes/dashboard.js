@@ -8,6 +8,11 @@ router.get("/dashboard", requireAuth, (req, res) => {
   return res.renderPage("dashboard", {
     title: "Dashboard",
     metrics: getMetrics(),
+    phaseStatus: {
+      gateway: "degraded",
+      metadataSync: "pending",
+      legacyMigration: "scheduled"
+    },
     recentTickets: tickets.slice(0, 3),
     criticalAssets: assets.filter((asset) => ["degraded", "locked", "watch"].includes(asset.status)),
     events

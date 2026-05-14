@@ -1,6 +1,6 @@
-# Lab 05 - BlackGate - Walkthrough da Fase 1
+# Lab 05 - BlackGate - Walkthrough da Fase 2
 
-Este walkthrough cobre apenas a **Fase 1** do Lab 05. A aplicação ainda não implementa a cadeia completa de exploração; esta fase existe para validar base, identidade visual, sessão, navegação e pistas iniciais.
+Este walkthrough cobre a **Fase 2 — Recon & Metadata Exposure** do Lab 05. A aplicação ainda não implementa a cadeia completa de exploração; esta fase valida base visual, sessão, navegação, enumeração, metadados e uma inconsistência leve de autorização.
 
 ## Como subir
 
@@ -29,7 +29,7 @@ Resultado esperado:
 {
   "service": "blackgate",
   "status": "ok",
-  "version": "1.0.0-phase1"
+  "version": "1.1.0-phase2"
 }
 ```
 
@@ -43,13 +43,89 @@ Use uma conta comum:
 operator / operator123
 ```
 
-Também existem contas comuns para `analyst` e `guest`. A conta administrativa está presente no cenário, mas não é liberada na Fase 1.
+Também existem contas comuns para `analyst` e `guest`. A conta administrativa está presente no cenário, mas não é liberada na Fase 2.
 
 Resultado esperado:
 
 - login bem-sucedido;
 - redirecionamento para `/dashboard`;
 - topo com usuário, role e link de logout.
+
+## Enumeração pública
+
+Antes ou depois do login, abra:
+
+```text
+http://localhost:8096/robots.txt
+http://localhost:8096/.well-known/security.txt
+http://localhost:8096/api/status
+http://localhost:8096/api/version
+http://localhost:8096/api/client-config
+http://localhost:8096/api/routes
+```
+
+O que observar:
+
+- `robots.txt` cita caminhos planejados como `/debug`, `/legacy`, `/api/internal` e `/backups`.
+- `security.txt` aponta para `/security-policy`.
+- `/api/status` mostra gateway degradado em ambiente de treinamento.
+- `/api/version` informa `1.1.0-phase2` e build `bg-phase2-recon`.
+- `/api/client-config` expõe configuração pública sem segredo real.
+- `/api/routes` mistura rotas públicas, autenticadas e planejadas.
+
+## Página security-policy
+
+Abra:
+
+```text
+http://localhost:8096/security-policy
+```
+
+Resultado esperado:
+
+- página visual pública usando o tema BlackGate;
+- política fictícia de reporte;
+- reforço de que o escopo é local.
+
+## Debug ping limitado
+
+Abra:
+
+```text
+http://localhost:8096/debug/ping
+```
+
+Resultado esperado:
+
+```json
+{
+  "pong": true,
+  "debug": false,
+  "message": "Debug interface is disabled in production profile."
+}
+```
+
+Depois envie a mesma rota com o header:
+
+```text
+X-Debug-Token: guest-debug
+```
+
+Resultado esperado:
+
+```json
+{
+  "pong": true,
+  "debug": true,
+  "message": "Debug handshake accepted for limited diagnostics.",
+  "diagnostics": {
+    "routes": ["/debug/ping", "/debug/trace"],
+    "note": "Full trace requires elevated operator context."
+  }
+}
+```
+
+`/debug/trace` não é funcional nesta fase e retorna que ainda não está implementado.
 
 ## Dashboard
 
@@ -58,15 +134,14 @@ Em `/dashboard`, valide:
 - usuário logado;
 - role atual;
 - cards de métricas;
-- total de tickets;
-- ativos monitorados;
-- alertas pendentes;
-- operações bloqueadas;
+- `Gateway Status: degraded`;
+- `Metadata Sync: pending`;
+- `Legacy Migration: scheduled`;
 - eventos recentes.
 
-Também existe um comentário HTML discreto indicando migração futura de rotas legadas. Ele é apenas uma pista leve nesta fase.
+Também existem comentários HTML discretos sobre migração legada e uso de hostnames como identificadores de inventário.
 
-## Tickets
+## Tickets e API de tickets
 
 Abra:
 
@@ -74,17 +149,32 @@ Abra:
 http://localhost:8096/tickets
 ```
 
-Valide que aparecem tickets fictícios como:
+Observe os links discretos `API view`.
 
-- `BG-1001` — Revisar acesso VPN de fornecedor;
-- `BG-1002` — Validar alerta em servidor financeiro;
-- `BG-1003` — Investigar falha de autenticação no gateway;
-- `BG-1004` — Revisar logs do serviço legacy-files;
-- `BG-1005` — Auditoria de tokens internos.
+Com uma sessão ativa, acesse exemplos como:
 
-Nesta fase, a tabela é apenas superfície de reconhecimento.
+```text
+http://localhost:8096/api/tickets/BG-1001
+http://localhost:8096/api/tickets/BG-1004
+http://localhost:8096/api/tickets/BG-1005
+```
 
-## Assets
+O comportamento esperado:
+
+- sem login, a API retorna `authentication_required`;
+- tickets permitidos para a role retornam dados completos;
+- tickets com `exposure: metadata` podem retornar metadados limitados mesmo quando a role não deveria ver o objeto completo;
+- tickets restritos sem exposição de metadata retornam `forbidden`.
+
+Exemplo didático com `guest`:
+
+- `BG-1001` retorna informação permitida;
+- `BG-1004` ou `BG-1005` retornam metadados limitados;
+- `BG-1002` tende a retornar `forbidden`.
+
+Isso cria uma falha leve no estilo IDOR/BOLA, mas sem flag, senha ou exploração final.
+
+## Assets e API de assets
 
 Abra:
 
@@ -92,16 +182,20 @@ Abra:
 http://localhost:8096/assets
 ```
 
-Valide ativos como:
+A interface mostra assets conforme o contexto da role. Em seguida, teste hostnames diretamente pela API:
 
-- `gw-blackgate.local`;
-- `api-core.internal`;
-- `files-vault.internal`;
-- `queue-worker.internal`;
-- `audit-db.internal`;
-- `legacy-panel.internal`.
+```text
+http://localhost:8096/api/assets/api-core.internal
+http://localhost:8096/api/assets/files-vault.internal
+http://localhost:8096/api/assets/legacy-panel.internal
+```
 
-Esses nomes ajudam a construir o tema do lab, mas ainda não representam serviços exploráveis nesta fase.
+O comportamento esperado:
+
+- sem login, a API retorna `authentication_required`;
+- com login, qualquer usuário autenticado consegue consultar metadados por hostname;
+- a resposta contém `hostname`, `type`, `environment`, `status`, `exposure` e `notes`;
+- nenhum serviço interno real é acessado.
 
 ## JavaScript público
 
@@ -111,7 +205,15 @@ Abra DevTools > Sources ou acesse:
 http://localhost:8096/static/js/app.js
 ```
 
-Observe o objeto `BlackGateClient`. Ele contém rotas, nomes operacionais e mensagens de Fase 1. Não há segredo real nem cadeia completa implementada nesse arquivo.
+Observe:
+
+- `BlackGateClient`;
+- `BLACKGATE_CONFIG`;
+- `apiBase`;
+- rotas de status, version, client config e routes;
+- hints como `/debug`, `/legacy` e `/api/assets/{hostname}`.
+
+Não há segredo real, senha admin ou flag final nesse arquivo.
 
 ## Logout
 
@@ -125,10 +227,10 @@ Resultado esperado:
 
 - sessão encerrada;
 - redirecionamento para `/login`;
-- `/dashboard` volta a exigir autenticação.
+- `/dashboard`, `/api/tickets/:id` e `/api/assets/:hostname` voltam a exigir autenticação.
 
 ## O que deve ficar para fases futuras
 
-A Fase 1 não implementa SSRF funcional, JWT explorável, command injection, upload, path traversal, fila real, banco externo, flag final ou exploração de admin.
+A Fase 2 não implementa SSRF funcional, JWT explorável, command injection, upload, path traversal, fila real, banco externo, flag final ou exploração de admin.
 
-Ela prepara o terreno narrativo e técnico para próximas fases, mantendo o lab seguro para execução local.
+Ela prepara o terreno para a próxima etapa: token fraco ou role escalation controlada.

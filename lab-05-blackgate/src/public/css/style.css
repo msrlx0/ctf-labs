@@ -381,13 +381,52 @@ button:hover,
   gap: 16px;
 }
 
+.ops-grid,
+.policy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.policy-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .panel {
   padding: 18px;
   transition: transform 160ms ease, border-color 160ms ease;
 }
 
-.panel.wide {
+.panel.wide,
+.policy-grid .wide {
   grid-column: 1 / -1;
+}
+
+.ops-card {
+  min-height: 118px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(250, 204, 21, 0.08), rgba(31, 31, 31, 0.9));
+  padding: 16px;
+}
+
+.ops-card span,
+.ops-card small {
+  display: block;
+  color: var(--muted);
+}
+
+.ops-card strong {
+  display: block;
+  margin: 8px 0 6px;
+  color: var(--yellow);
+  font-size: 1.35rem;
+  text-transform: uppercase;
+}
+
+.ops-card.warning strong {
+  color: var(--orange);
 }
 
 .panel-head {
@@ -406,6 +445,12 @@ button:hover,
 .panel-head a {
   color: var(--yellow);
   font-weight: 800;
+}
+
+.inline-link {
+  color: var(--yellow);
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .compact-list,
@@ -545,7 +590,9 @@ td {
 @media (max-width: 900px) {
   .login-grid,
   .metric-grid,
-  .dashboard-grid {
+  .dashboard-grid,
+  .ops-grid,
+  .policy-grid {
     grid-template-columns: 1fr;
   }
 

@@ -1,4 +1,5 @@
 <!-- legacy routes will be migrated soon; keep migration notes in the operations backlog -->
+<!-- inventory API uses hostnames as identifiers -->
 <section class="page-header">
   <div>
     <p class="eyebrow">Security Operations</p>
@@ -9,6 +10,24 @@
     <span>Team</span>
     <strong><%= currentUser.team %></strong>
   </div>
+</section>
+
+<section class="ops-grid">
+  <article class="ops-card warning">
+    <span>Gateway Status</span>
+    <strong><%= phaseStatus.gateway %></strong>
+    <small>Public edge accepts limited training telemetry.</small>
+  </article>
+  <article class="ops-card">
+    <span>Metadata Sync</span>
+    <strong><%= phaseStatus.metadataSync %></strong>
+    <small>Client configuration and route registry are under review.</small>
+  </article>
+  <article class="ops-card">
+    <span>Legacy Migration</span>
+    <strong><%= phaseStatus.legacyMigration %></strong>
+    <small>Legacy routes are listed for future migration windows.</small>
+  </article>
 </section>
 
 <section class="metric-grid">

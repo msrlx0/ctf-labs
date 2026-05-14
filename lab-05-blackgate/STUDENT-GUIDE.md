@@ -4,7 +4,7 @@
 
 Você recebeu acesso comum ao **BlackGate Operations Console**, uma plataforma corporativa usada para controlar acessos internos, tickets de segurança, ativos monitorados e alertas operacionais.
 
-Nesta Fase 1, o objetivo não é obter uma flag final. O foco é reconhecer a aplicação, entender a superfície inicial e aprender a separar navegação normal de pistas úteis para fases posteriores.
+Na **Fase 2 — Recon & Metadata Exposure**, o objetivo não é obter uma flag final. O foco é enumerar rotas, observar metadados e comparar o que aparece na interface com o que as APIs retornam.
 
 ## Escopo
 
@@ -26,7 +26,8 @@ Execute o lab somente localmente com Docker.
 - Inventário de ativos internos fictícios.
 - Arquivo JavaScript público.
 - Comentários discretos no HTML.
-- Endpoint `/health`.
+- Endpoints públicos de status, versão e configuração.
+- Diferenças entre interface e respostas JSON.
 
 ## Primeiros passos sugeridos
 
@@ -38,6 +39,30 @@ Execute o lab somente localmente com Docker.
 6. Compare os textos do dashboard com os tickets e ativos.
 7. Anote nomes de hosts internos e componentes legados.
 
+## Phase 2 Recon Tips
+
+Verifique manualmente:
+
+- `/robots.txt`
+- `/.well-known/security.txt`
+- `/security-policy`
+- `/api/status`
+- `/api/version`
+- `/api/client-config`
+- `/api/routes`
+- `/debug/ping`
+- arquivos JS públicos
+
+Perguntas úteis:
+
+- Quais caminhos são públicos?
+- Quais rotas exigem sessão?
+- O que aparece no HTML, mas não no menu?
+- O JavaScript público sugere nomes de rotas ou padrões de API?
+- A interface mostra exatamente os mesmos objetos que a API consegue consultar?
+- IDs de tickets e hostnames de assets podem ser usados como identificadores?
+- Uma resposta de debug muda quando você altera headers?
+
 ## Dicas leves de enumeração
 
 - Nem toda pista aparece como link no menu.
@@ -45,6 +70,8 @@ Execute o lab somente localmente com Docker.
 - Ativos internos podem revelar fronteiras de confiança.
 - Arquivos JavaScript públicos podem conter metadados de frontend.
 - Um endpoint de health raramente é sensível sozinho, mas ajuda a validar serviço, versão e escopo.
+- Compare uma conta `guest` com uma conta `operator` ou `analyst`.
+- Observe diferença entre 401, 403 e 404 nas APIs.
 
 ## O que evitar
 
@@ -53,3 +80,4 @@ Execute o lab somente localmente com Docker.
 - Não procure uma flag final nesta fase.
 - Não assuma que a conta administrativa está disponível agora.
 - Não trate nomes internos como alvos externos reais.
+- Não tente SSRF, command injection, upload ou traversal; essas cadeias ainda não fazem parte da Fase 2.

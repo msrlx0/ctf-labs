@@ -4,7 +4,7 @@
 
 Dificuldade: **Boss Final**.
 
-Status: **Fase 1**.
+Status: **Fase 2 — Recon & Metadata Exposure**.
 
 Porta pública:
 
@@ -12,7 +12,7 @@ Porta pública:
 http://localhost:8096
 ```
 
-Nesta fase, o objetivo é reconhecer a aplicação, entender sua navegação, validar login, observar o inventário e identificar pistas leves para expansões futuras. A cadeia completa de exploração ainda não está implementada.
+Nesta fase, o objetivo é enumerar a aplicação, ler HTML/JS público, observar metadados, diferenciar endpoints públicos de rotas autenticadas e correlacionar tickets, assets e APIs. A cadeia completa de exploração ainda não está implementada.
 
 ## Aviso de uso local
 
@@ -52,12 +52,13 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 ## Objetivo educacional
 
 - Reconhecer uma aplicação corporativa interna.
+- Enumerar rotas públicas e metadados expostos.
 - Praticar navegação manual em painel autenticado.
 - Observar cookies de sessão e controle básico de acesso.
-- Enumerar tickets, ativos e metadados públicos.
-- Identificar pistas leves sem transformar a Fase 1 em exploração completa.
+- Comparar interface, HTML, JavaScript público e APIs JSON.
+- Identificar inconsistências leves sem transformar a Fase 2 em exploração final.
 
-## Funcionalidades da Fase 1
+## Funcionalidades da Fase 2
 
 - Login com sessão.
 - Logout.
@@ -65,6 +66,10 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 - Lista de tickets de segurança.
 - Inventário de ativos internos fictícios.
 - Endpoint `/health` com status JSON.
+- Endpoints públicos de recon e metadados.
+- Endpoint debug limitado.
+- APIs autenticadas para tickets e assets.
+- Página pública de política de segurança fictícia.
 - CSS próprio com identidade visual amarela e tema BlackGate.
 
 ## Rotas principais
@@ -75,9 +80,19 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 /tickets
 /assets
 /health
+/robots.txt
+/.well-known/security.txt
+/security-policy
+/api/status
+/api/version
+/api/routes
+/api/client-config
+/api/tickets/:id
+/api/assets/:hostname
+/debug/ping
 /logout
 ```
 
 ## Observações
 
-A Fase 1 prepara a base visual, narrativa e técnica do lab. Algumas páginas e arquivos públicos possuem pistas leves sobre componentes legados, serviços internos e revisões de confiança, mas não há flag final nem cadeia completa implementada nesta etapa.
+A Fase 2 prepara a base de enumeração e exposição controlada de metadados. Algumas respostas indicam serviços internos, rotas planejadas e componentes legados, mas não há flag final, senha admin ou cadeia completa nesta etapa.

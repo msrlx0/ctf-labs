@@ -8,6 +8,9 @@ const dashboardRoutes = require("./routes/dashboard");
 const ticketRoutes = require("./routes/tickets");
 const assetRoutes = require("./routes/assets");
 const healthRoutes = require("./routes/health");
+const apiRoutes = require("./routes/api");
+const debugRoutes = require("./routes/debug");
+const securityRoutes = require("./routes/security");
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -22,7 +25,7 @@ app.use(express.json({ limit: "64kb" }));
 
 app.use(session({
   name: "blackgate.sid",
-  secret: process.env.SESSION_SECRET || "blackgate-phase1-local-session",
+  secret: process.env.SESSION_SECRET || "blackgate-phase2-local-session",
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -67,10 +70,13 @@ app.get("/", (req, res) => {
 });
 
 app.use(authRoutes);
+app.use(securityRoutes);
 app.use(dashboardRoutes);
 app.use(ticketRoutes);
 app.use(assetRoutes);
 app.use(healthRoutes);
+app.use(apiRoutes);
+app.use(debugRoutes);
 
 app.use((req, res) => {
   return res.status(404).renderPage("error", {

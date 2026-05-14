@@ -13,7 +13,7 @@
 <section class="panel">
   <div class="panel-head">
     <h2>Inventário BlackGate</h2>
-    <span class="subtle">Some internal services are visible only through trusted paths.</span>
+    <span class="subtle">Asset metadata available through internal inventory API.</span>
   </div>
 
   <div class="table-wrap">
@@ -26,6 +26,7 @@
           <th>Status</th>
           <th>Exposição</th>
           <th>Observação</th>
+          <th>API</th>
         </tr>
       </thead>
       <tbody>
@@ -37,6 +38,7 @@
             <td><span class="badge status-<%= asset.status %>"><%= asset.status %></span></td>
             <td><%= asset.exposure %></td>
             <td><%= asset.note %></td>
+            <td><a class="inline-link" href="/api/assets/<%= asset.hostname %>">API view</a></td>
           </tr>
         <% }) %>
       </tbody>

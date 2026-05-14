@@ -1,4 +1,4 @@
-# Validação - Lab 05 BlackGate - Fase 1
+# Validação - Lab 05 BlackGate - Fase 2
 
 ## Escopo
 
@@ -34,7 +34,27 @@ Resultado esperado:
 
 - HTTP 200;
 - JSON contendo `blackgate`;
-- versão `1.0.0-phase1`.
+- versão `1.1.0-phase2`.
+
+## Enumeração pública
+
+```bash
+curl -i http://localhost:8096/robots.txt
+curl -i http://localhost:8096/.well-known/security.txt
+curl -i http://localhost:8096/api/status
+curl -i http://localhost:8096/api/version
+curl -i http://localhost:8096/api/client-config
+curl -i http://localhost:8096/api/routes
+curl -i http://localhost:8096/debug/ping
+curl -i -H "X-Debug-Token: guest-debug" http://localhost:8096/debug/ping
+```
+
+Resultado esperado:
+
+- endpoints respondem sem login;
+- `/api/version` retorna `1.1.0-phase2`;
+- debug com header retorna diagnostics limitados;
+- nenhum segredo real é exposto.
 
 ## Login manual
 
@@ -50,23 +70,65 @@ Resultado esperado:
 - login com `operator / operator123` funciona;
 - redireciona para `/dashboard`.
 
-## Rotas autenticadas
+## Login por terminal e APIs autenticadas
 
-Após login, validar no navegador:
+```bash
+rm -f /tmp/bg-cookie.txt
+
+curl -i -c /tmp/bg-cookie.txt \
+  -d "username=guest" \
+  -d "password=guest123" \
+  -X POST http://localhost:8096/login
+
+curl -i -b /tmp/bg-cookie.txt http://localhost:8096/api/tickets/BG-1004
+curl -i -b /tmp/bg-cookie.txt http://localhost:8096/api/tickets/BG-1005
+curl -i -b /tmp/bg-cookie.txt http://localhost:8096/api/assets/api-core.internal
+```
+
+Resultado esperado:
+
+- login retorna redirecionamento para `/dashboard`;
+- tickets com metadata retornam dados limitados;
+- asset por hostname retorna metadados;
+- não há flag final.
+
+## Rotas autenticadas no navegador
+
+Após login, validar:
 
 ```text
 /dashboard
 /tickets
 /assets
+/security-policy
 /logout
 ```
 
 Resultado esperado:
 
-- `/dashboard` mostra cards de métricas;
-- `/tickets` mostra tabela de tickets;
-- `/assets` mostra inventário de ativos;
+- `/dashboard` mostra cards de métricas e cards da Fase 2;
+- `/tickets` mostra tabela de tickets e links `API view`;
+- `/assets` mostra inventário e links `API view`;
+- `/security-policy` mostra política pública fictícia;
 - `/logout` encerra a sessão.
+
+## Respostas de erro JSON
+
+Sem cookie, validar:
+
+```bash
+curl -i http://localhost:8096/api/tickets/BG-1004
+curl -i http://localhost:8096/api/assets/api-core.internal
+```
+
+Resultado esperado:
+
+```json
+{
+  "error": "authentication_required",
+  "message": "Login required to access this resource."
+}
+```
 
 ## Docker
 
@@ -91,7 +153,7 @@ grep -R "FLA[G]{" -n . || true
 
 Resultado esperado:
 
-- nenhuma flag final exposta na Fase 1.
+- nenhuma flag final exposta na Fase 2.
 
 ## Arquivos principais
 

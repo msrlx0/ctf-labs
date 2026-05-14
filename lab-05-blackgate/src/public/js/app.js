@@ -1,5 +1,5 @@
 window.BlackGateClient = {
-  version: "1.0.0-phase1",
+  version: "1.1.0-phase2",
   routes: {
     dashboard: "/dashboard",
     tickets: "/tickets",
@@ -15,9 +15,25 @@ window.BlackGateClient = {
       "internal trust boundary review required"
     ]
   },
-  phaseOne: {
+  phaseTwo: {
     status: "recon-only",
-    message: "BlackGate Phase 1 exposes navigation and operational hints, not the final exploitation chain."
+    message: "BlackGate Phase 2 exposes recon metadata and controlled authorization inconsistencies, not the final exploitation chain."
+  }
+};
+
+window.BLACKGATE_CONFIG = {
+  apiBase: "/api",
+  build: "phase2-recon",
+  routes: {
+    status: "/api/status",
+    version: "/api/version",
+    routes: "/api/routes",
+    clientConfig: "/api/client-config"
+  },
+  hints: {
+    debugPrefix: "/debug",
+    legacyPanel: "/legacy",
+    inventoryLookup: "/api/assets/{hostname}"
   }
 };
 
