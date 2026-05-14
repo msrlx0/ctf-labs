@@ -19,6 +19,10 @@ router.get("/debug/ping", (req, res) => {
         gateway: {
           note: "Gateway fetch diagnostics require operator context.",
           metadata: "/api/operator/gateway-metadata"
+        },
+        filesVault: {
+          note: "Files vault diagnostics are available only through gateway-mediated operator checks.",
+          metadata: "files-vault metadata is not public."
         }
       }
     });
@@ -34,7 +38,7 @@ router.get("/debug/ping", (req, res) => {
 router.get("/debug/trace", (req, res) => {
   return res.status(501).json({
     error: "not_implemented",
-    message: "Debug trace is not available in Phase 4."
+    message: "Debug trace is not available in Phase 5."
   });
 });
 

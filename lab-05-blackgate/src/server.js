@@ -14,6 +14,7 @@ const securityRoutes = require("./routes/security");
 const contextRoutes = require("./routes/context");
 const operatorRoutes = require("./routes/operator");
 const gatewayRoutes = require("./routes/gateway");
+const filesVaultRoutes = require("./routes/filesVault");
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -28,7 +29,7 @@ app.use(express.json({ limit: "64kb" }));
 
 app.use(session({
   name: "blackgate.sid",
-  secret: process.env.SESSION_SECRET || "blackgate-phase4-local-session",
+  secret: process.env.SESSION_SECRET || "blackgate-phase5-local-session",
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -83,6 +84,7 @@ app.use(contextRoutes);
 app.use(operatorRoutes);
 app.use(apiRoutes);
 app.use(debugRoutes);
+app.use(filesVaultRoutes);
 
 app.use((req, res) => {
   return res.status(404).renderPage("error", {

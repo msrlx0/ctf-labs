@@ -4,7 +4,7 @@
 
 Você recebeu acesso comum ao **BlackGate Operations Console**, uma plataforma corporativa usada para controlar acessos internos, tickets de segurança, ativos monitorados e alertas operacionais.
 
-Na **Fase 4 — Gateway Trust / SSRF Setup**, o objetivo é correlacionar reconhecimento, contexto operacional e gateway interno simulado. Ainda não existe flag final, file read, command injection ou exploração admin completa.
+Na **Fase 5 — Files Vault / Controlled File Read**, o objetivo é correlacionar reconhecimento, contexto operacional, gateway interno simulado e diferenças entre catálogo, download nomeado e leitura por caminho. Ainda não existe flag final, command injection, Redis, worker ou exploração admin completa.
 
 ## Escopo
 
@@ -23,6 +23,7 @@ Execute o lab somente localmente com Docker.
 - Papel do usuário logado.
 - Página `/context`.
 - Página `/gateway`.
+- Página `/files-vault`.
 - Cards do dashboard.
 - Tickets com nomes de serviços e revisões pendentes.
 - Inventário de ativos internos fictícios.
@@ -35,7 +36,7 @@ Execute o lab somente localmente com Docker.
 
 1. Acesse `http://localhost:8096`.
 2. Faça login com uma conta comum.
-3. Navegue por `/dashboard`, `/context`, `/gateway`, `/tickets` e `/assets`.
+3. Navegue por `/dashboard`, `/context`, `/gateway`, `/files-vault`, `/tickets` e `/assets`.
 4. Abra DevTools e observe Network, Application/Storage e Sources.
 5. Veja quais arquivos estáticos são carregados.
 6. Compare os textos do dashboard com os tickets, assets, contexto e gateway.
@@ -80,6 +81,20 @@ Dicas sem spoiler:
 - Pense em SSRF controlado/simulado: o gateway resolve upstreams internos permitidos sem request real para internet.
 - Hosts externos devem ser bloqueados.
 
+## Phase 5 — Files Vault / Controlled File Read
+
+Dicas sem spoiler:
+
+- Reaproveite o contexto operator da Fase 3.
+- Reaproveite o gateway-fetch da Fase 4.
+- Comece pelo metadata do `files-vault.internal`.
+- Compare `/catalog`, `/download` e `/read`.
+- Observe diferença entre nome de arquivo e path completo.
+- Procure pistas de migração e compatibilidade.
+- Pense em normalização de path.
+- Valide caminhos públicos antes de tentar algo fora do catálogo.
+- Uma resposta pública bem-sucedida costuma ensinar o formato da próxima tentativa.
+
 ## Dicas leves de enumeração
 
 - Nem toda pista aparece como link no menu.
@@ -89,6 +104,7 @@ Dicas sem spoiler:
 - Um endpoint de health raramente é sensível sozinho, mas ajuda a validar serviço, versão e escopo.
 - Compare uma conta `guest` com uma conta `operator` ou `analyst`.
 - Observe diferença entre 400, 401, 403 e 404 nas APIs.
+- Compare mensagens de erro para path ausente, path bloqueado e documento inexistente.
 
 ## O que evitar
 
@@ -97,4 +113,5 @@ Dicas sem spoiler:
 - Não procure uma flag final nesta fase.
 - Não assuma que a conta administrativa está disponível agora.
 - Não trate nomes internos como alvos externos reais.
-- Não tente file read, command injection, upload, Redis ou traversal; essas cadeias ainda não fazem parte da Fase 4.
+- Não tente command injection, upload, Redis, worker ou shell; essas cadeias ainda não fazem parte desta fase.
+- Não procure credenciais reais de painel legado ainda.

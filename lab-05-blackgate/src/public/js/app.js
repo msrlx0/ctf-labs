@@ -1,5 +1,5 @@
 window.BlackGateClient = {
-  version: "1.3.0-phase4",
+  version: "1.4.0-phase5",
   routes: {
     dashboard: "/dashboard",
     tickets: "/tickets",
@@ -15,15 +15,15 @@ window.BlackGateClient = {
       "internal trust boundary review required"
     ]
   },
-  phaseFour: {
-    status: "gateway-trust-review",
-    message: "BlackGate Phase 4 exposes operator-mediated gateway metadata and simulated upstream checks, not direct internal access."
+  phaseFive: {
+    status: "files-vault-migration",
+    message: "BlackGate Phase 5 keeps Files Vault access gateway-only while document migration checks are reviewed."
   }
 };
 
 window.BLACKGATE_CONFIG = {
   apiBase: "/api",
-  build: "phase4-gateway-trust",
+  build: "phase5-files-vault",
   routes: {
     status: "/api/status",
     version: "/api/version",
@@ -43,6 +43,10 @@ window.BLACKGATE_CONFIG = {
   gateway: {
     mode: "operator-mediated",
     metadataEndpoint: "/api/operator/gateway-metadata"
+  },
+  filesVault: {
+    mode: "gateway-only",
+    catalogHint: "metadata-first"
   }
 };
 

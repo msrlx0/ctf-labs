@@ -4,7 +4,7 @@
 
 Dificuldade: **Boss Final**.
 
-Status: **Fase 4 — Gateway Trust / SSRF Setup**.
+Status: **Fase 5 — Files Vault / Controlled File Read**.
 
 Porta pública:
 
@@ -12,7 +12,7 @@ Porta pública:
 http://localhost:8096
 ```
 
-Nesta fase, o lab adiciona um gateway interno simulado, acessível somente com contexto operacional. O objetivo é reaproveitar o BG-Context Token da Fase 3 para estudar gateway trust, descoberta de serviços internos e SSRF controlado sem fazer chamadas reais para rede externa.
+Nesta fase, o lab expande o gateway interno simulado com um Files Vault acessível somente por contexto operacional. O objetivo é reaproveitar o BG-Context Token da Fase 3 e o gateway-fetch da Fase 4 para estudar catálogo de documentos, diferenças entre download por nome e leitura por caminho, e uma leitura controlada com validação fraca de path. Tudo é simulado em memória, sem leitura real do filesystem.
 
 ## Aviso de uso local
 
@@ -57,7 +57,8 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 - Entender riscos de tokens legados fracos.
 - Explorar gateway trust de forma simulada e segura.
 - Descobrir serviços internos permitidos sem fazer request real para a internet.
-- Preparar hipóteses para uma futura fase de files-vault e leitura controlada.
+- Comparar metadata, catálogo, download nomeado e leitura por caminho.
+- Entender riscos de validação de path antes da normalização.
 
 ## Funcionalidades atuais
 
@@ -66,6 +67,7 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 - Dashboard autenticado.
 - Página `/context` sobre BG-Context Token.
 - Página `/gateway` sobre gateway trust.
+- Página `/files-vault` sobre migração de documentos.
 - Lista de tickets de segurança.
 - Inventário de ativos internos fictícios.
 - Endpoint `/health` com status JSON.
@@ -74,6 +76,7 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 - APIs autenticadas para tickets e assets.
 - Endpoints de contexto, operator briefing e gateway metadata.
 - Gateway fetch simulado para hosts internos em allowlist.
+- Files Vault simulado com metadata, catálogo e leitura controlada por path.
 - Página pública de política de segurança fictícia.
 - CSS próprio com identidade visual amarela e tema BlackGate.
 
@@ -84,6 +87,7 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 /dashboard
 /context
 /gateway
+/files-vault
 /tickets
 /assets
 /health
@@ -107,4 +111,4 @@ A conta administrativa existe no cenário, mas não é documentada nem liberada 
 
 ## Observações
 
-A Fase 4 introduz uma simulação segura de SSRF/gateway trust. Ela não implementa leitura real de arquivos, path traversal, command injection, upload, Redis, worker, senha admin, endpoint admin final, pivot real ou chamadas externas.
+A Fase 5 introduz uma leitura controlada e educativa dentro do Files Vault simulado. Ela não implementa leitura real de arquivos, command injection, upload, Redis, worker, senha admin, endpoint admin final, pivot real ou chamadas externas. A etapa de file read é limitada a documentos fictícios em memória e não deve ser usada contra sistemas reais.

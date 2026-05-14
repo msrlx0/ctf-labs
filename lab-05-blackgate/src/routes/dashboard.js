@@ -13,7 +13,8 @@ router.get("/dashboard", requireAuth, (req, res) => {
       metadataSync: "pending",
       legacyMigration: "scheduled",
       contextService: "compatibility mode",
-      gatewayTrust: "review required"
+      gatewayTrust: "review required",
+      filesVault: "migration mode"
     },
     recentTickets: tickets.slice(0, 3),
     criticalAssets: assets.filter((asset) => ["degraded", "locked", "watch"].includes(asset.status)),

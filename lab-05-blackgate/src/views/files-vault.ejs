@@ -1,0 +1,41 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Document Operations</p>
+    <h1>Files Vault</h1>
+    <p>O Files Vault está em modo gateway-only durante a migração de downloads nomeados para leituras por caminho controlado.</p>
+  </div>
+  <div class="header-badge">
+    <span>Status</span>
+    <strong>migration mode</strong>
+  </div>
+</section>
+
+<section class="dashboard-grid">
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Gateway required</h2>
+      <a href="/gateway">Gateway</a>
+    </div>
+    <p class="muted-copy">Acesso direto ao vault não é exposto pela interface. Operações de compatibilidade usam verificações mediadas pelo gateway.</p>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Migration note</h2>
+      <span class="subtle">metadata-first</span>
+    </div>
+    <div class="kv-list">
+      <div><span>Mode</span><strong>gateway-only</strong></div>
+      <div><span>Catalog</span><strong>metadata-first</strong></div>
+      <div><span>Direct access</span><strong>not exposed</strong></div>
+    </div>
+  </article>
+
+  <article class="panel wide">
+    <div class="panel-head">
+      <h2>Operational guidance</h2>
+      <span class="subtle">training</span>
+    </div>
+    <p class="muted-copy">Compare metadata, catalog and document retrieval behaviors before assuming that named downloads and path-based reads enforce the same policy.</p>
+  </article>
+</section>
