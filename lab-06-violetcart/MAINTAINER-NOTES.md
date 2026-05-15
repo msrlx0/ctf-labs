@@ -31,3 +31,9 @@ git tag private/lab-06-violetcart-maintainer-pre-public
 ```
 
 Push private refs only to a private remote.
+
+## Public Snapshot Note
+
+The public release intentionally omits full solution automation. Maintainer-only walkthrough content and validation scripts must be kept in the development branch history or a private copy.
+
+To continue private development with the complete maintainer materials, use the `lab-06-violetcart` branch history before the public-sanitization commit or restore them from a private maintainer branch/tag.
