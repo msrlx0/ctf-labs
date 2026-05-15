@@ -87,3 +87,9 @@ Advanced secondary vulnerabilities are present for manual testing practice. They
 `WALKTHROUGH.md` is a maintainer-only solution file during development. The public main branch should not include the real walkthrough or should replace it with a spoiler warning stub before release.
 
 `README.md` and `STUDENT-GUIDE.md` are intended to remain public-safe and must not contain flags or exact solution steps.
+
+## Public Release Notes
+
+The official walkthrough is not included in the public release. Maintainers should follow `PUBLIC-RELEASE-CHECKLIST.md` before publishing.
+
+No brute force is required. Burp Suite or similar manual HTTP analysis is recommended.

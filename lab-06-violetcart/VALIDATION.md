@@ -2,6 +2,8 @@
 
 This file is for maintainers. Keep public README and Student Guide spoiler-safe.
 
+Some validation material reveals intended behavior and full-chain structure. For public release, follow `PUBLIC-RELEASE-CHECKLIST.md` and do not include maintainer-only scripts in a student-facing release if you want to preserve challenge difficulty.
+
 Before public merge, remove or replace `WALKTHROUGH.md` with a spoiler warning stub.
 
 ## Setup validation
