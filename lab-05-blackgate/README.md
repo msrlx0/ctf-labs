@@ -43,11 +43,9 @@ Para parar:
 docker compose down
 ```
 
-## Credenciais comuns
+## Credencial inicial
 
 ```text
-operator / operator123
-analyst / analyst123
 guest / guest123
 ```
 
