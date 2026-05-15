@@ -6,10 +6,23 @@ const router = express.Router();
 
 router.get("/assets", requireAuth, (req, res) => {
   const visibleAssets = assets.filter((asset) => canViewAssetInInterface(req.session.user, asset));
+  const showApiLinks = ["operator", "admin"].includes(req.session.user.role);
+  const limitedAssetView = req.session.user.role === "guest";
+  const assetsForView = limitedAssetView
+    ? visibleAssets.map((asset) => ({
+        ...asset,
+        type: "Service",
+        environment: "training",
+        exposure: "scoped",
+        note: "Servico disponivel para revisao inicial."
+      }))
+    : visibleAssets;
 
   return res.renderPage("assets", {
     title: "Assets",
-    assets: visibleAssets
+    assets: assetsForView,
+    showApiLinks,
+    limitedAssetView
   });
 });
 

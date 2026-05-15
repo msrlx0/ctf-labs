@@ -366,20 +366,24 @@ Tambem deve retornar:
 - `finalizer: maintenance`;
 - `complete: true`.
 
-## Rotas autenticadas no navegador
+## Visibilidade autenticada no navegador
 
-Apos login, validar:
+Apos login com a conta inicial, validar que o menu publico mostra apenas:
 
 ```text
 /dashboard
-/context
-/gateway
-/legacy
-/files-vault
 /tickets
 /assets
-/security-policy
 /logout
+```
+
+Para a conta inicial, acessos diretos a `/context`, `/gateway`, `/legacy` e `/files-vault` devem retornar acesso restrito.
+
+Em validacao interna de roles, a visibilidade esperada e:
+
+```text
+analyst: /dashboard, /tickets, /assets, /context, /logout
+operator: /dashboard, /context, /gateway, /legacy, /files-vault, /tickets, /assets, /health, /logout
 ```
 
 ## Checks estaticos

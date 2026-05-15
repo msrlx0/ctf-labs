@@ -73,10 +73,7 @@ A conta administrativa existe no cenario, mas nao e documentada nem liberada com
 - Login com sessao.
 - Logout.
 - Dashboard autenticado.
-- Pagina `/context` sobre contexto operacional.
-- Pagina `/gateway` sobre gateway trust.
-- Pagina `/legacy` sobre lockdown do painel legado.
-- Pagina `/files-vault` sobre migracao de documentos.
+- Paginas operacionais autenticadas com visibilidade por role.
 - Lista de tickets de seguranca.
 - Inventario de ativos internos ficticios.
 - Endpoint `/health` com status JSON.
@@ -98,10 +95,6 @@ A conta administrativa existe no cenario, mas nao e documentada nem liberada com
 ```text
 /login
 /dashboard
-/context
-/gateway
-/legacy
-/files-vault
 /tickets
 /assets
 /health
@@ -117,6 +110,8 @@ A conta administrativa existe no cenario, mas nao e documentada nem liberada com
 /debug/ping
 /logout
 ```
+
+Rotas operacionais adicionais permanecem no lab, mas nao sao expostas para a conta inicial.
 
 ## Observacoes
 

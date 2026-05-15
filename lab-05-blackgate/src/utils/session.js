@@ -6,6 +6,30 @@ function requireAuth(req, res, next) {
   return next();
 }
 
+function userHasRole(user, allowedRoles) {
+  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+
+  return Boolean(user && roles.includes(user.role));
+}
+
+function requirePageRole(allowedRoles) {
+  return (req, res, next) => {
+    if (!req.session || !req.session.user) {
+      return res.redirect("/login");
+    }
+
+    if (!userHasRole(req.session.user, allowedRoles)) {
+      return res.status(403).renderPage("error", {
+        title: "Acesso restrito",
+        statusCode: 403,
+        message: "Esta area nao esta disponivel para sua funcao atual."
+      });
+    }
+
+    return next();
+  };
+}
+
 function redirectIfAuthenticated(req, res, next) {
   if (req.session && req.session.user) {
     return res.redirect("/dashboard");
@@ -26,6 +50,8 @@ function createSessionUser(user) {
 
 module.exports = {
   requireAuth,
+  requirePageRole,
   redirectIfAuthenticated,
-  createSessionUser
+  createSessionUser,
+  userHasRole
 };

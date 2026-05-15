@@ -20,13 +20,11 @@ Execute o lab somente localmente com Docker.
 
 ## O que observar
 
-- Tela de login e contas comuns.
+- Tela de login e credencial inicial.
 - Cookie de sessao apos autenticacao.
 - Papel do usuario logado.
-- Pagina `/context`.
-- Pagina `/gateway`.
-- Pagina `/legacy`.
-- Pagina `/files-vault`.
+- Menus disponiveis para a role atual.
+- Pagina `/context` quando sua role permitir.
 - Cards do dashboard.
 - Tickets com nomes de servicos e revisoes pendentes.
 - Inventario de ativos internos ficticios.
@@ -40,10 +38,10 @@ Execute o lab somente localmente com Docker.
 
 1. Acesse `http://localhost:8096`.
 2. Faca login com uma conta comum.
-3. Navegue por `/dashboard`, `/context`, `/gateway`, `/legacy`, `/files-vault`, `/tickets` e `/assets`.
-4. Observe arquivos estaticos, comentarios, cookies e respostas JSON.
-5. Relacione textos do dashboard com tickets, assets, contexto e gateway.
-6. Anote nomes internos, componentes legados e estados de migracao.
+3. Navegue por `/dashboard`, `/tickets` e `/assets`.
+4. Se a sua role mostrar `/context`, revise a pagina sem assumir que ela representa privilegio operacional.
+5. Observe arquivos estaticos, comentarios, cookies e respostas JSON.
+6. Relacione textos do dashboard com tickets, assets e contexto disponivel.
 
 ## Phase 2 Recon Tips
 
@@ -154,7 +152,7 @@ Dicas sem spoiler:
 - Ativos internos podem revelar fronteiras de confianca.
 - Arquivos JavaScript publicos podem conter metadados de frontend.
 - Um endpoint de health raramente e sensivel sozinho, mas ajuda a validar servico, versao e escopo.
-- Observe diferencas entre contas comuns.
+- Observe diferencas entre identidade publica, sessao web e contexto operacional.
 - Observe diferenca entre 400, 401, 403 e 404 nas APIs.
 - Mensagens de erro para path ausente, path bloqueado e documento inexistente podem nao significar a mesma coisa.
 - Nao confie no primeiro bloco de credenciais encontrado em arquivo antigo.

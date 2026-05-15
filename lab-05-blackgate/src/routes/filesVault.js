@@ -1,9 +1,9 @@
 const express = require("express");
-const { requireAuth } = require("../utils/session");
+const { requirePageRole } = require("../utils/session");
 
 const router = express.Router();
 
-router.get("/files-vault", requireAuth, (req, res) => {
+router.get("/files-vault", requirePageRole(["operator", "admin"]), (req, res) => {
   return res.renderPage("files-vault", {
     title: "Files Vault"
   });

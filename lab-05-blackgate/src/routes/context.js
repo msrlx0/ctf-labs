@@ -4,7 +4,7 @@ const {
   decodeContext,
   encodeContext
 } = require("../utils/contextToken");
-const { requireAuth } = require("../utils/session");
+const { requireAuth, userHasRole } = require("../utils/session");
 
 const router = express.Router();
 
@@ -21,9 +21,20 @@ function requireApiAuth(req, res, next) {
 }
 
 router.get("/context", requireAuth, (req, res) => {
+  if (!userHasRole(req.session.user, ["analyst", "operator", "admin"])) {
+    return res.status(403).renderPage("error", {
+      title: "Acesso restrito",
+      statusCode: 403,
+      message: "Esta area nao esta disponivel para sua funcao atual."
+    });
+  }
+
+  const limitedContext = req.session.user.role === "analyst";
+
   return res.renderPage("context", {
     title: "Context",
-    contextPreview: buildContextForUser(req.session.user)
+    contextPreview: limitedContext ? null : buildContextForUser(req.session.user),
+    limitedContext
   });
 });
 

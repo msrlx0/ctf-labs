@@ -7,8 +7,26 @@
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body class="<%= currentUser ? 'app-shell' : 'auth-shell' %>">
-  <!-- legacy migration note: debug prefix moved to /debug -->
   <% if (currentUser) { %>
+    <%
+      const baseLinks = {
+        dashboard: { href: "/dashboard", label: "Dashboard" },
+        tickets: { href: "/tickets", label: "Tickets" },
+        assets: { href: "/assets", label: "Assets" },
+        context: { href: "/context", label: "Context" },
+        gateway: { href: "/gateway", label: "Gateway" },
+        legacy: { href: "/legacy", label: "Legacy" },
+        filesVault: { href: "/files-vault", label: "Files Vault" },
+        health: { href: "/health", label: "Health" }
+      };
+      const navLinksByRole = {
+        guest: [baseLinks.dashboard, baseLinks.tickets, baseLinks.assets],
+        analyst: [baseLinks.dashboard, baseLinks.tickets, baseLinks.assets, baseLinks.context],
+        operator: [baseLinks.dashboard, baseLinks.context, baseLinks.gateway, baseLinks.legacy, baseLinks.filesVault, baseLinks.tickets, baseLinks.assets, baseLinks.health],
+        admin: [baseLinks.dashboard, baseLinks.context, baseLinks.gateway, baseLinks.legacy, baseLinks.filesVault, baseLinks.tickets, baseLinks.assets, baseLinks.health]
+      };
+      const navLinks = navLinksByRole[currentUser.role] || navLinksByRole.guest;
+    %>
     <header class="topbar">
       <a class="brand" href="/dashboard" aria-label="BlackGate dashboard">
         <span class="brand-mark">BG</span>
@@ -18,14 +36,9 @@
         </span>
       </a>
       <nav class="nav-links" aria-label="Navegacao principal">
-        <a class="<%= currentPath === '/dashboard' ? 'active' : '' %>" href="/dashboard">Dashboard</a>
-        <a class="<%= currentPath === '/context' ? 'active' : '' %>" href="/context">Context</a>
-        <a class="<%= currentPath === '/gateway' ? 'active' : '' %>" href="/gateway">Gateway</a>
-        <a class="<%= currentPath === '/legacy' ? 'active' : '' %>" href="/legacy">Legacy</a>
-        <a class="<%= currentPath === '/files-vault' ? 'active' : '' %>" href="/files-vault">Files Vault</a>
-        <a class="<%= currentPath === '/tickets' ? 'active' : '' %>" href="/tickets">Tickets</a>
-        <a class="<%= currentPath === '/assets' ? 'active' : '' %>" href="/assets">Assets</a>
-        <a href="/health">Health</a>
+        <% navLinks.forEach((link) => { %>
+          <a class="<%= currentPath === link.href ? 'active' : '' %>" href="<%= link.href %>"><%= link.label %></a>
+        <% }) %>
       </nav>
       <div class="session-pill">
         <span><%= currentUser.username %></span>

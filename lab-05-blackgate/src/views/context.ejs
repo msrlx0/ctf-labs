@@ -1,3 +1,38 @@
+<% if (limitedContext) { %>
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Access Context</p>
+    <h1>Context Review</h1>
+    <p>Sua sessao possui uma visao limitada do contexto operacional para revisao de treinamento.</p>
+  </div>
+  <div class="header-badge">
+    <span>Role</span>
+    <strong><%= currentUser.role %></strong>
+  </div>
+</section>
+
+<section class="dashboard-grid">
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Sessao atual</h2>
+      <span class="subtle">Training access</span>
+    </div>
+    <div class="kv-list">
+      <div><span>Usuario</span><strong><%= currentUser.username %></strong></div>
+      <div><span>Role</span><strong><%= currentUser.role %></strong></div>
+      <div><span>Team</span><strong><%= currentUser.team %></strong></div>
+    </div>
+  </article>
+
+  <article class="panel wide">
+    <div class="panel-head">
+      <h2>Escopo</h2>
+      <span class="subtle">Limited view</span>
+    </div>
+    <p class="muted-copy">Detalhes operacionais avancados ficam restritos a funcoes de operacao. Continue a revisao pelos tickets e ativos disponiveis.</p>
+  </article>
+</section>
+<% } else { %>
 <section class="page-header">
   <div>
     <p class="eyebrow">Access Context</p>
@@ -43,3 +78,4 @@
     <p class="muted-copy">Legacy compatibility remains enabled for selected workflows. Some migration checks are handled outside the public console.</p>
   </article>
 </section>
+<% } %>

@@ -1,5 +1,3 @@
-<!-- legacy routes will be migrated soon; keep migration notes in the operations backlog -->
-<!-- inventory API uses hostnames as identifiers -->
 <section class="page-header">
   <div>
     <p class="eyebrow">Security Operations</p>
@@ -13,51 +11,23 @@
 </section>
 
 <section class="ops-grid">
-  <article class="ops-card warning">
-    <span>Gateway Status</span>
-    <strong><%= phaseStatus.gateway %></strong>
-    <small>Public edge accepts limited training telemetry.</small>
-  </article>
-  <article class="ops-card warning">
-    <span>Gateway Trust</span>
-    <strong><%= phaseStatus.gatewayTrust %></strong>
-    <small>Gateway-mediated operations remain under review.</small>
-  </article>
-  <article class="ops-card">
-    <span>Context Service</span>
-    <strong><%= phaseStatus.contextService %></strong>
-    <small>Operational context is evaluated separately from the web session.</small>
-  </article>
-  <article class="ops-card warning">
-    <span>Files Vault</span>
-    <strong><%= phaseStatus.filesVault %></strong>
-    <small>Document access is moving through gateway-only compatibility checks.</small>
-  </article>
-  <article class="ops-card danger">
-    <span>Legacy Panel</span>
-    <strong><%= phaseStatus.legacyPanel %></strong>
-    <small>Interactive access is blocked while maintenance workflows are reviewed.</small>
-  </article>
-  <article class="ops-card">
-    <span>Metadata Sync</span>
-    <strong><%= phaseStatus.metadataSync %></strong>
-    <small>Client configuration and route registry are under review.</small>
-  </article>
-  <article class="ops-card">
-    <span>Legacy Migration</span>
-    <strong><%= phaseStatus.legacyMigration %></strong>
-    <small>Legacy routes are listed for future migration windows.</small>
-  </article>
+  <% dashboardCards.forEach((card) => { %>
+    <article class="ops-card <%= card.tone || '' %>">
+      <span><%= card.label %></span>
+      <strong><%= card.value %></strong>
+      <small><%= card.note %></small>
+    </article>
+  <% }) %>
 </section>
 
 <section class="metric-grid">
   <article class="metric-card">
-    <span>Total de tickets</span>
+    <span><%= isOperationalRole ? "Total de tickets" : "Tickets visiveis" %></span>
     <strong><%= metrics.totalTickets %></strong>
     <small>Fila de revisão ativa</small>
   </article>
   <article class="metric-card">
-    <span>Ativos monitorados</span>
+    <span><%= isOperationalRole ? "Ativos monitorados" : "Ativos visiveis" %></span>
     <strong><%= metrics.monitoredAssets %></strong>
     <small>Inventário visível nesta fase</small>
   </article>
@@ -67,7 +37,7 @@
     <small>Triagem manual recomendada</small>
   </article>
   <article class="metric-card danger">
-    <span>Operações bloqueadas</span>
+    <span><%= isOperationalRole ? "Operações bloqueadas" : "Itens bloqueados" %></span>
     <strong><%= metrics.blockedOperations %></strong>
     <small>Aguardando aprovação</small>
   </article>
@@ -94,7 +64,7 @@
 
   <article class="panel">
     <div class="panel-head">
-      <h2>Ativos críticos</h2>
+      <h2><%= assetPanelTitle %></h2>
       <a href="/assets">Inventário</a>
     </div>
     <div class="compact-list">
