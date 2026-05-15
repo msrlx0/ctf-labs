@@ -71,6 +71,10 @@ guest / guest123
 - Assuming a common XSS payload will work.
 - Assuming the first credential-like string is useful.
 
+## Testing style
+
+Burp or a similar proxy is strongly recommended. Compare near-identical requests, including duplicate parameters, custom headers, JSON bodies with extra fields, and requests repeated after state changes. Some filters are intentionally strong, so common payloads may fail even when a context-specific issue still exists.
+
 ## If you are stuck
 
 Ask what changed:

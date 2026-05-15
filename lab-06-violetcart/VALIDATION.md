@@ -101,6 +101,35 @@ Validate each behavior with Burp/Repetitor or curl equivalents.
 - Redirect stays non-destructive.
 - Query endpoint reveals policy hints but blocks obvious sensitive names.
 
+## Phase 2 deep audit matrix
+
+Use this checklist to confirm every intended issue is testable, clue-backed, and unable to skip the final chain.
+
+| # | Type | Endpoint | Blocked/simple behavior | Successful/contextual behavior | Impact | Final-chain safety |
+|---|---|---|---|---|---|---|
+| 1 | Main | `/api/reservation_status.php` | Random `id=1` or bad token returns 403/404. | Valid quote/reservation/token returns state; after sync it includes internal hints. | Contextual IDOR and state disclosure. | No flag returned. |
+| 2 | Main | reservation/legacy/seller APIs | Mismatched quote, reservation, token, or car fails. | Correlated `quote_id`, `reservation_id`, `car_id`, `seller_ref`, and `internal_reservation` move the flow. | Cross-object authorization weakness. | Requires normal staged state. |
+| 3 | Main | `/seller/reservation.php` | Missing or public channel header returns 403. | Valid internal ref plus `X-Violet-Channel: partner_checkout` renders seller view. | Broken access control by spoofed context. | Only Flag 3, no final order. |
+| 4 | Main | `/api/confirm_order.php` | Public flow, missing approval, wrong coupon, or wrong payment fails. | Partner state plus seller approval plus staff coupon confirms order. | Business logic flaw. | Still requires all prior gates. |
+| 5 | Main | `/api/apply_coupon.php` | `PURPLE-STAFF` fails without partner header, with `public_checkout`, or before approval. | Partner header, partner state, approval, and duplicate coupon can apply it. | Coupon logic/parser bypass. | Does not confirm order alone. |
+| 6 | Main | `/legacy/quote-sync.php` | GET, missing channel, public channel, or bad context fails. | Partner header plus quote/reservation/token creates seller state and Flag 2. | Legacy endpoint abuse. | Needs prior quote/reservation. |
+| 7 | Main | multiple | Header alone fails where state is missing. | Header changes behavior on legacy, seller, coupon, hold, and order endpoints. | Header/context confusion. | Header never bypasses all gates alone. |
+| 8 | Main | quote/reservation/coupon/order | Public cache/state cannot settle. | Sync/hold rewrites cache keys to partner state. | Cache/key/state confusion. | Requires seller approval and coupon. |
+| 9 | Main | reservation/order APIs | Public token alone cannot approve seller or order. | Public token authorizes too much reservation state when paired with IDs. | Token confusion. | No direct final flag. |
+| 10 | Main | headers, JS, support, docs, errors | Direct source-visible real flag grep must fail. | Correlating hints reveals checkpoint, channel, sync path, and state vocabulary. | Information disclosure. | Clues only, except intended dynamic flags. |
+| 11 | Secondary | `/search.php?q=` | `<script>`, `<img onerror>`, `<svg onload>`, `javascript:`, `alert`, `prompt`, `confirm`, `document.cookie` are filtered. | JS-string payload such as `';window.violetProof=1;violetSearchNotice('proof');//` changes local UI state. | Reflected XSS in JS string context. | No flags or cookies needed. |
+| 12 | Secondary | `/reviews.php` | Common script/image/svg/event-handler payloads in body/title/display fields fail. | Attribute-breaking proof such as `" autofocus onfocus="violetReviewProof('stored')` works in title/display context. | Stored XSS attribute context. | Harmless local proof only. |
+| 13 | Secondary | `/api/apply_coupon.php` | Single public `PURPLE-STAFF` request fails. | `coupon=WELCOME10&coupon=PURPLE-STAFF` shows `frontend_seen` vs `backend_applied` after partner approval. | HTTP parameter pollution. | Coupon gate still enforced. |
+| 14 | Secondary | `/api/create_reservation.php` | Extra fields do not approve seller or return flags. | `channel`, `requested_status`, and `partner_hint` alter partial state/header clues. | Mass assignment. | Misleading/intermediate state only. |
+| 15 | Secondary | `/documents.php` | Predicting docs reveals no real flags. | `VC-2026-0017` and neighbors expose checkpoint/trace and workflow vocabulary. | Predictable document IDs. | Flag 1 still requires query confirmation. |
+| 16 | Secondary | `/download.php` | `../`, `..\\`, `%2e%2e`, `/etc/passwd`, `php://`, `data://`, `file://`, `expect://` fail. | Safe public paths, including normalized public-doc paths, download approved docs. | Limited path normalization/download mirror. | Cannot read source, creds, system files, or flags. |
+| 17 | Secondary | `/cars.php?sort=` | `union`, `select`, `sleep`, `benchmark`, comments, quotes, and `or 1=1` are blocked. | Hidden names like `partner_only` or invalid safe-looking sort keys expose warnings/errors/order changes. | Filtered order-by bug. | No DB dump or flags. |
+| 18 | Secondary | `/api/vehicle_inspection.php` | `localhost`, loopback, metadata, `file://`, `gopher://`, and `dict://` fail. | `violet://inspection/<VIN>` and `https://inspection.violet.local/status?vin=<VIN>` return seeded inspection hints. | Controlled SSRF-like alias resolver. | No network requests or flags. |
+| 19 | Secondary | `/redirect.php?next=` | `http://`, `https://`, `//`, backslash tricks, and `evil.com` fail. | Relative paths redirect and reveal internal routing assumptions. | Weak relative redirect/allowlist behavior. | Not useful for phishing or flags. |
+| 20 | Secondary | `/api/query.php` | `debugFlags`, `sellerNotes`, `internalReservation`, `flags`, `admin`, `password` fail. | `quoteMeta`, `channelPolicy`, `reconCheckpoint`, and `inspectionProfile` return safe clues. | Query enumeration. | Only exact recon checkpoint returns Flag 1. |
+
+For all secondary issues, confirm the expected impact is a clue, local proof, or state observation only. None should create seller approval, apply the staff coupon without all gates, or return the final flag.
+
 ## Final safety checks
 
 ```bash

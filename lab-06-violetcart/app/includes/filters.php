@@ -28,5 +28,5 @@ function review_attribute_filter(string $value): string
 
 function looks_like_sql_probe(string $value): bool
 {
-    return (bool)preg_match('/(union|select|sleep|benchmark|information_schema|--|#|\/\*|\*\/|;)/i', $value);
+    return (bool)preg_match('/(union|select|sleep|benchmark|information_schema|--|#|\/\*|\*\/|;|["\']|\bor\s+1\s*=\s*1\b)/i', $value);
 }

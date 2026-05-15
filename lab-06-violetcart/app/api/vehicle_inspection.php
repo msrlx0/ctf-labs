@@ -6,7 +6,7 @@ if ($inspectionUrl === '') {
     json_response(['error' => 'inspection_url_required', 'message' => 'Inspection URL is required.'], 400);
 }
 
-if (preg_match('/(localhost|127\.0\.0\.1|0\.0\.0\.0|file:|gopher:|dict:|169\.254|metadata)/i', $inspectionUrl)) {
+if (preg_match('/(localhost|127\.0\.0\.1|0\.0\.0\.0|::1|file:|gopher:|dict:|169\.254\.169\.254|169\.254|metadata)/i', $inspectionUrl)) {
     json_response(['error' => 'inspection_target_blocked', 'message' => 'Inspection target is not allowed.'], 403, ['X-Violet-Trace' => 'inspection-blocked-target']);
 }
 

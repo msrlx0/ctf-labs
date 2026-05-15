@@ -43,6 +43,8 @@ Docker Compose exposes:
 
 This lab is not designed as a copy/paste terminal challenge. The intended experience is to intercept, compare, modify, retry, and correlate.
 
+No brute force is needed. Most progress comes from manual request analysis: comparing headers, duplicate parameters, JSON fields, redirects, document IDs, and how older migration endpoints react after normal application state has been created.
+
 ## Public starting point
 
 Use the public training account shown by the application:

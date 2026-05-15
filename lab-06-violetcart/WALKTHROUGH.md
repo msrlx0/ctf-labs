@@ -408,3 +408,17 @@ Stored attribute-context proof in review title or display name:
 ```
 
 These are harmless local proofs. They are not part of the final flag chain.
+
+## Phase 2 implementation notes
+
+Mass assignment is intentionally partial. `channel=partner_checkout` can place the new reservation into a partner-looking state and change `X-Violet-Flow`; `requested_status=seller_review` or any `partner_hint` changes the reservation to `seller_review_requested` with `seller_status=requested`. None of these values create an `internal_reservation`, approve seller review, apply `PURPLE-STAFF`, or unlock final settlement.
+
+Parameter pollution is intentionally gated. `coupon=WELCOME10&coupon=PURPLE-STAFF` demonstrates first-vs-last parser disagreement, but `PURPLE-STAFF` still requires all three conditions: active request header `X-Violet-Channel: partner_checkout`, quote/reservation partner state, and seller approval.
+
+The download issue is constrained to public document mirrors. Obvious traversal, wrappers, absolute paths, and system-file probes are blocked before and after URL decoding. The useful behavior is confirming predictable public memo names and the public document mirror, not reading source or secrets.
+
+The inspection endpoint is a controlled SSRF-like teaching aid, not a network client. It only resolves seeded aliases such as `violet://inspection/VCORI2024BE` and `https://inspection.violet.local/status?vin=VCORI2024BE`; blocked targets and unsupported hosts never trigger outbound requests.
+
+The sort bug is an order-by/key exposure issue. Obvious SQL injection strings are filtered, while safe-looking hidden sort keys can change ordering or produce subtle catalog errors. It should never dump data or expose flags.
+
+Common XSS payloads fail because the filters target tags, event names, JavaScript URLs, browser dialogs, and cookie/document primitives. The intended proofs require noticing the exact sink: JavaScript string context in search, and unescaped attribute context in reviews.

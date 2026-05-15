@@ -33,8 +33,16 @@ switch ($query) {
     case 'documentIndex':
         json_response([
             'query' => $query,
-            'documents' => ['VC-2026-0007', 'VC-2026-0011', 'VC-2026-0020']
+            'documents' => ['VC-2026-0007', 'VC-2026-0011', 'VC-2026-0017', 'VC-2026-0020'],
+            'note' => 'Tracked recon memos are public documents; flags are confirmed through stateful queries.'
         ], 200);
+        break;
+    case 'inspectionProfile':
+        json_response([
+            'query' => $query,
+            'aliases' => ['violet://inspection/<VIN>', 'https://inspection.violet.local/status?vin=<VIN>'],
+            'note' => 'Inspection aliases can explain seller review state, but they do not approve checkout.'
+        ], 200, ['X-Violet-Trace' => 'query-inspection-profile']);
         break;
     case 'reviewQueues':
         json_response([

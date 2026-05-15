@@ -10,7 +10,10 @@ foreach (explode('&', $_SERVER['QUERY_STRING'] ?? '') as $part) {
 }
 header('X-Violet-Download-Mirror: public-docs');
 
-if ($file === '' || preg_match('/(\.\.\/|\.\.\\\\|^[a-z]+:\/\/|^\/|%00)/i', $file)) {
+$decodedOnce = rawurldecode($file);
+$blocked = '/(\.\.\/|\.\.\\\\|%2e%2e|\/etc\/passwd|^[a-z]+:\/\/|php:\/\/|data:\/\/|file:\/\/|expect:\/\/|^\/|%00)/i';
+
+if ($file === '' || preg_match($blocked, $file) || preg_match($blocked, $decodedOnce)) {
     http_response_code(400);
     echo 'Invalid public document path.';
     exit;
@@ -22,22 +25,19 @@ if (!str_starts_with($file, 'public_docs/')) {
     exit;
 }
 
-$decoded = rawurldecode($file);
 $storageRoot = realpath(__DIR__ . '/storage');
 $publicRoot = realpath(__DIR__ . '/storage/public_docs');
-$logsRoot = realpath(__DIR__ . '/storage/logs');
-$target = realpath(__DIR__ . '/storage/' . $decoded);
+$target = realpath(__DIR__ . '/storage/' . $decodedOnce);
 
-if (!$target || !$storageRoot || !$publicRoot || !$logsRoot) {
+if (!$target || !$storageRoot || !$publicRoot) {
     http_response_code(404);
     echo 'Document not found.';
     exit;
 }
 
 $insidePublic = str_starts_with($target, $publicRoot);
-$insideLogsViaMirror = str_starts_with($target, $logsRoot) && str_starts_with($file, 'public_docs/');
 
-if (!$insidePublic && !$insideLogsViaMirror) {
+if (!$insidePublic) {
     http_response_code(403);
     echo 'Document mirror denied.';
     exit;
