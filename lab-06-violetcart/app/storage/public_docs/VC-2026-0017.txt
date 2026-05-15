@@ -1,0 +1,12 @@
+VioletCart Partner Checkout Recon Memo VC-2026-0017
+
+Migration marker:
+checkpoint: violet-recon-patience
+trace: quote-migration-2026-02
+
+Flow hint:
+public checkout does not expose partner context directly
+partner checkout requires quote + reservation context before sync
+
+Operations note:
+The query registry can confirm completed migration checkpoints, but only when checkpoint and trace values agree.

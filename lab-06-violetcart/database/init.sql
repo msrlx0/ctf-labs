@@ -169,6 +169,7 @@ INSERT INTO seller_notes (seller_ref, internal_reservation, note) VALUES
 INSERT INTO public_documents (doc_code, title, body, file_name) VALUES
 ('VC-2026-0007', 'Financing memo: public quote token behavior', 'Public quote tokens start with vc_quote_. Seller assisted reservations use R-####-V references after sync. Old logs mention why public_docs and logs were mirrored during import.', 'VC-2026-0007.txt'),
 ('VC-2026-0011', 'Import status memo: seller review queues', 'Seller review state may lag behind public reservation state. QA placeholders are not challenge flags.', 'VC-2026-0011.txt'),
+('VC-2026-0017', 'Partner checkout recon memo', 'Migration marker for partner checkout recon. Public checkout does not expose partner context directly; query confirmation requires checkpoint and trace values.', 'VC-2026-0017.txt'),
 ('VC-2026-0020', 'Coupon policy memo', 'WELCOME10 remains public. Staff settlement coupons belong to partner review and should not be accepted before seller approval.', NULL);
 
 INSERT INTO reviews (car_id, display_name, title, body, rating) VALUES

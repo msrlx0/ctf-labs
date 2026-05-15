@@ -54,7 +54,8 @@ Expected:
 4. Confirm no real flag appears in normal UI.
 5. Confirm admin page is a rabbit hole and labels the QA placeholder as fake.
 6. Confirm support tickets give hints but not exact solution steps.
-7. Confirm public docs hint at formats and logs but do not reveal final chain.
+7. Confirm public docs hint at formats and checkpoint/trace values but do not reveal final flags or final chain.
+8. Confirm `VC-2026-0017.txt` is reachable through normal document browsing/download.
 
 ## Maintainer endpoint checklist
 
@@ -64,7 +65,7 @@ Validate each behavior with Burp/Repetitor or curl equivalents.
 
 1. Create quote with `/api/create_quote.php`.
 2. Create reservation with `/api/create_reservation.php`.
-3. Read the safe old log through `download.php` encoded sibling traversal and confirm it only contains checkpoint/trace clues.
+3. Read the tracked public recon memo `VC-2026-0017.txt` through `documents.php` or `download.php` and confirm it only contains checkpoint/trace clues.
 4. Submit the checkpoint and trace to `/api/query.php` with `query=reconCheckpoint` and confirm Flag 1 is returned dynamically.
 5. Call `/legacy/quote-sync.php` with no channel and confirm `missing_channel`.
 6. Call it with public channel and confirm `unsupported_public_flow`.
@@ -86,13 +87,13 @@ Validate each behavior with Burp/Repetitor or curl equivalents.
 - Header context changes only selected endpoints.
 - Quote/reservation state changes after legacy sync.
 - Public token is over-trusted by reservation status.
-- Headers, JS, support tickets, docs, and logs expose subtle clues.
+- Headers, JS, support tickets, docs, and response differences expose subtle clues.
 - Search reflected XSS blocks common payloads but JS-string proof works.
 - Review stored XSS blocks common payloads but attribute proof works.
 - Duplicate coupon parameters show parser inconsistency.
 - Reservation mass assignment only partially influences state.
 - Predictable documents expose hints, not final flag.
-- Download bypass reads only safe public docs/logs.
+- Download behavior reads safe public docs; ignored runtime logs are not required for solving.
 - Sort bug leaks behavior but not database contents.
 - Inspection endpoint never reaches external network.
 - Redirect stays non-destructive.
@@ -104,6 +105,8 @@ Validate each behavior with Burp/Repetitor or curl equivalents.
 grep -R "FLAG{" README.md STUDENT-GUIDE.md || true
 grep -R "WALKTHROUGH.md" README.md
 grep -R "8098:80" docker-compose.yml
+git ls-files app/storage/public_docs/VC-2026-0017.txt
+git status --ignored -s app/storage
 find app -name "*.php" -print0 | xargs -0 -n1 php -l
 ```
 
@@ -112,4 +115,6 @@ Expected:
 - no flags in public docs;
 - README warns that real walkthrough is not for public release;
 - compose exposes `8098:80`;
+- required public recon clues are in tracked `app/storage/public_docs/VC-2026-0017.txt`;
+- ignored `app/storage/logs/` files are not required for the intended path;
 - PHP syntax passes.

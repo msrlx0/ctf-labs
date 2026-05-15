@@ -46,7 +46,7 @@ Important observations:
 
 ## 2. Flag 1 - deep recon
 
-Open documents and inspect `VC-2026-0007`. It hints that public docs and old logs were mirrored as sibling paths.
+Open documents and inspect the public financing/import memos. `VC-2026-0007` hints at quote token and internal reservation formats. The required recon checkpoint is in the tracked public document `VC-2026-0017`.
 
 Normal download:
 
@@ -56,15 +56,15 @@ Host: localhost:8098
 Cookie: PHPSESSID=...
 ```
 
-Use the normalization weakness to reach the safe old log:
+Download the tracked recon memo:
 
 ```http
-GET /download.php?file=public_docs/%2e%2e/logs/quote-migration-2026-02.log HTTP/1.1
+GET /download.php?file=public_docs/VC-2026-0017.txt HTTP/1.1
 Host: localhost:8098
 Cookie: PHPSESSID=...
 ```
 
-The log no longer contains the flag directly. It contains the values needed to confirm the recon checkpoint:
+The memo does not contain the flag directly. It contains the values needed to confirm the recon checkpoint:
 
 ```text
 checkpoint: violet-recon-patience
@@ -89,7 +89,7 @@ The response returns:
 FLAG{violet_recon_requires_patience}
 ```
 
-This also confirms that `partner_checkout` requires quote and reservation state before sync. The flag is obtained through interaction, not by grepping the repository.
+This also confirms that `partner_checkout` requires quote and reservation state before sync. The flag is obtained through interaction, not by grepping the repository. The ignored `app/storage/logs/` directory may contain local runtime logs, but it is not required for the intended solution.
 
 ## 3. Create a quote
 
@@ -360,13 +360,13 @@ Expected:
 7. Header confusion: `X-Violet-Channel: partner_checkout` changes selected endpoint behavior.
 8. Cache/state confusion: quote/reservation channel state is reused after sync and hold.
 9. Token confusion: `public_token` is trusted as stronger proof than it should be.
-10. Info disclosure: headers, JS constants, tickets, docs, and logs expose partial clues.
+10. Info disclosure: headers, JS constants, tickets, public docs, and response differences expose partial clues.
 11. Reflected XSS: `search.php?q=` filters common payloads but reflects into JS string context.
 12. Stored XSS: `reviews.php` filters body and attributes differently; title/display fields can break attribute context.
 13. HTTP parameter pollution: `apply_coupon.php` parses first vs last `coupon` differently.
 14. Mass assignment: `create_reservation.php` accepts extra fields like `channel`, `requested_status`, and `partner_hint`.
 15. Predictable documents: `documents.php?doc=VC-2026-0007` reveals financing memo patterns.
-16. Limited LFI/path normalization: `download.php` allows a safe log read via encoded sibling traversal.
+16. Limited download/path behavior: `download.php` exposes approved public document mirrors and helps confirm document-based recon.
 17. SQL-like ordering bug: `cars.php?sort=` blocks obvious SQLi but accepts hidden sort keys.
 18. Controlled SSRF-like behavior: `api/vehicle_inspection.php` resolves only safe Violet aliases.
 19. Weak open redirect: `redirect.php?next=` allows broad relative redirects.
