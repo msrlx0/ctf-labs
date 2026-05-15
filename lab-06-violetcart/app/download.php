@@ -19,7 +19,12 @@ if ($file === '' || preg_match($blocked, $file) || preg_match($blocked, $decoded
     exit;
 }
 
-if (!str_starts_with($file, 'public_docs/')) {
+$decodedOnce = str_replace('\\', '/', $decodedOnce);
+if (!str_contains($decodedOnce, '/') && preg_match('/^VC-2026-[0-9]{4}\.txt$/', $decodedOnce)) {
+    $decodedOnce = 'public_docs/' . $decodedOnce;
+}
+
+if (!str_starts_with($decodedOnce, 'public_docs/')) {
     http_response_code(403);
     echo 'Only public document mirrors are downloadable.';
     exit;

@@ -231,6 +231,52 @@ The script assumes `http://localhost:8098`, uses only curl and simple shell tool
 - Curl coverage: complete.
 - Final-chain safety: must not expose Flag 2, Flag 3, Flag 4, seller approval, staff coupon application, or final order state.
 
+## Main Chain Regression Validation
+
+Start from a fresh database and rebuilt containers:
+
+```bash
+docker compose down -v
+docker compose up -d --build
+sleep 7
+curl -I http://localhost:8098
+```
+
+Run the maintainer regression script:
+
+```bash
+chmod +x scripts/validate-main-chain.sh
+./scripts/validate-main-chain.sh
+```
+
+Expected result:
+
+```text
+PASS: main chain regression validation passed
+```
+
+The script validates:
+
+- home page HTTP 200 and VioletCart headers;
+- public recon memo discovery through `/documents.php` and `/download.php?file=VC-2026-0017.txt`;
+- wrong and correct `reconCheckpoint` behavior;
+- quote and reservation creation with extracted IDs/tokens;
+- legacy sync negative paths for missing/public channel;
+- legacy sync positive path with partner context;
+- seller reservation denial without partner context;
+- seller reservation access with partner context;
+- seller review approval;
+- `PURPLE-STAFF` denial without partner header and with explicit public header;
+- duplicate coupon parser behavior in partner context;
+- final partner settlement confirmation with non-zero `order_id`;
+- duplicate final confirmation remains stable and does not expose extra seller internals.
+
+By default, the script prints PASS/FAIL summaries and does not dump full responses containing later-stage flags. Maintainers can run `DEBUG=1 ./scripts/validate-main-chain.sh` to print raw responses during development.
+
+Duplicate final confirmation is currently accepted and creates another confirmed order for the same reservation. This is intentional for validation stability in the lab: it demonstrates missing idempotency controls, but it should not expose extra data or bypass the already-required chain.
+
+Important release note: this script is a maintainer/development regression tool and teaches the full intended path. Do not publish it to the public main branch unless the public release policy explicitly allows solution-bearing scripts.
+
 ## Final safety checks
 
 ```bash

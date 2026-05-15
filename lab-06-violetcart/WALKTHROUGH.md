@@ -450,3 +450,20 @@ curl 'http://localhost:8098/search.php?q=%27%3Bwindow.violetProof%3D1%3BvioletSe
 9. Weak redirect: `/redirect.php?next=` blocks obvious external domains and scheme-relative URLs, but accepts relative internal routes. This demonstrates flawed routing trust without creating a useful phishing primitive or flag leak.
 
 10. Query enumeration: `/api/query.php` blocks obvious sensitive query names but allows safe names such as `quoteMeta`, `channelPolicy`, and `inspectionProfile`. Wrong recon checkpoint values fail; exact checkpoint/trace returns only the first-stage flag. Later flags remain behind the main chain.
+
+## Main Chain Regression Script
+
+`scripts/validate-main-chain.sh` verifies the full intended path from a fresh database using curl only. It is a regression companion to this manual walkthrough: the walkthrough explains why each step matters, while the script proves the implementation still accepts and rejects the expected requests after hardening changes.
+
+Run it after rebuilding the lab:
+
+```bash
+docker compose down -v
+docker compose up -d --build
+sleep 7
+./scripts/validate-main-chain.sh
+```
+
+By default it prints PASS/FAIL lines and avoids dumping full responses that contain later-stage flags. `DEBUG=1 ./scripts/validate-main-chain.sh` is available for maintainers who need raw responses while debugging.
+
+Do not publish this script in a public release unless the release intentionally includes solution automation. It exposes the chain shape, endpoint order, required headers, and expected state transitions.
