@@ -75,6 +75,8 @@ guest / guest123
 
 Burp or a similar proxy is strongly recommended. Compare near-identical requests, including duplicate parameters, custom headers, JSON bodies with extra fields, and requests repeated after state changes. Some filters are intentionally strong, so common payloads may fail even when a context-specific issue still exists.
 
+When testing secondary issues, focus on context instead of memorized payloads. Identify where your input lands, compare frontend behavior with backend responses, watch headers, and use Repeater to change one thing at a time. Duplicate parameters, extra JSON fields, and revisiting old clues after state changes are often more useful than brute force.
+
 ## If you are stuck
 
 Ask what changed:

@@ -14,7 +14,7 @@ page_header('Search');
   <h1>Search vehicles</h1>
   <form method="get">
     <label for="q">Query</label>
-    <input id="q" name="q" value="<?= e($q) ?>">
+    <input id="q" name="q" value="<?= e($filtered) ?>">
     <button type="submit">Search</button>
   </form>
   <p class="muted" data-search-proof>Search UI ready.</p>

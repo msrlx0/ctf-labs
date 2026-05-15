@@ -422,3 +422,31 @@ The inspection endpoint is a controlled SSRF-like teaching aid, not a network cl
 The sort bug is an order-by/key exposure issue. Obvious SQL injection strings are filtered, while safe-looking hidden sort keys can change ordering or produce subtle catalog errors. It should never dump data or expose flags.
 
 Common XSS payloads fail because the filters target tags, event names, JavaScript URLs, browser dialogs, and cookie/document primitives. The intended proofs require noticing the exact sink: JavaScript string context in search, and unescaped attribute context in reviews.
+
+## Secondary Vulnerability Notes
+
+Run `scripts/validate-secondary-vulns.sh` for a curl-based maintainer pass. It proves blocked behavior, safe accepted behavior, and final-chain safety for the secondary bugs. XSS execution still needs Burp/browser validation because curl can only inspect the returned sinks.
+
+1. Reflected XSS: `/search.php?q=` reflects the filtered query into a JavaScript string. Common tag/event/dialog/cookie payloads fail because `violet_strong_filter()` replaces dangerous words and angle brackets. Students should notice the quote-delimited JS string and use a harmless local proof such as setting `window.violetProof` or updating the existing search notice. Curl can confirm the marker appears; a browser proves execution. It does not read cookies or expose flags.
+
+```bash
+curl 'http://localhost:8098/search.php?q=%27%3Bwindow.violetProof%3D1%3BvioletSearchNotice(%27proof%27)%3B%2F%2F'
+```
+
+2. Stored XSS: `/reviews.php` filters body content strongly and sanitizes title/display attributes differently. Common script, image, SVG, and event-handler payloads are filtered. Students should inspect the rendered `data-review-*` attributes and use a harmless attribute-context proof that calls `violetReviewProof`. Curl can confirm stored markup; browser/Burp proves the local event. Review content has no access to checkout state or flags.
+
+3. HTTP parameter pollution: `/api/apply_coupon.php` reads duplicate `coupon` values differently for frontend and backend views. Common single `PURPLE-STAFF` requests fail without active partner context. After the main state gates, `coupon=WELCOME10&coupon=PURPLE-STAFF` shows the parser mismatch. It applies only because seller approval, partner state, and partner header already exist.
+
+4. Mass assignment: `/api/create_reservation.php` accepts `channel`, `requested_status`, and `partner_hint`. These fields create intermediate clues like `seller_review_requested`, but they do not create `internal_reservation`, approve seller review, apply coupons, or return flags. Students should treat the response as a state clue, not a shortcut.
+
+5. Predictable documents: `/documents.php` and `/download.php?file=public_docs/...` expose realistic document IDs. `VC-2026-0017.txt` carries checkpoint and trace values; it does not carry the flag. The QA placeholder in neighboring docs is explicitly fake. Students should correlate document IDs with the query registry.
+
+6. Limited LFI/path normalization: `/download.php?file=` blocks obvious traversal, encoded traversal, wrappers, absolute paths, and system-file probes. Safe public documents still download. The point is the public mirror and predictable memo names, not source disclosure.
+
+7. Filtered ORDER BY issue: `/cars.php?sort=` blocks obvious SQLi probes and falls back safely. Normal sort values work, while safe-looking hidden keys can produce `X-Violet-Sort-Warning` or subtle ordering changes. Students should compare responses, not expect a database dump.
+
+8. Controlled SSRF-like behavior: `/api/vehicle_inspection.php` blocks localhost, loopback, metadata, and wrapper targets. It never performs external network fetches. App-controlled aliases such as `violet://inspection/VCORI2024BE` return minor inspection status clues only.
+
+9. Weak redirect: `/redirect.php?next=` blocks obvious external domains and scheme-relative URLs, but accepts relative internal routes. This demonstrates flawed routing trust without creating a useful phishing primitive or flag leak.
+
+10. Query enumeration: `/api/query.php` blocks obvious sensitive query names but allows safe names such as `quoteMeta`, `channelPolicy`, and `inspectionProfile`. Wrong recon checkpoint values fail; exact checkpoint/trace returns only the first-stage flag. Later flags remain behind the main chain.

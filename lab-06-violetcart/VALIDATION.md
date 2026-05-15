@@ -130,6 +130,107 @@ Use this checklist to confirm every intended issue is testable, clue-backed, and
 
 For all secondary issues, confirm the expected impact is a clue, local proof, or state observation only. None should create seller approval, apply the staff coupon without all gates, or return the final flag.
 
+## Secondary Vulnerability Validation
+
+Run the practical secondary validation script after Docker is serving the lab:
+
+```bash
+chmod +x scripts/validate-secondary-vulns.sh
+./scripts/validate-secondary-vulns.sh
+```
+
+The script assumes `http://localhost:8098`, uses only curl and simple shell tools, creates its own quote/reservation state where needed, and avoids external callbacks. It does not hardcode final flags. The recon checkpoint test checks for a `flag` key only to prove the first-stage query behavior.
+
+### 1. Reflected XSS with strong filters
+
+- Endpoint: `/search.php?q=`
+- Blocked/common test: script tags, image/svg event handlers, JavaScript URLs, `alert`, and `document.cookie` should be filtered or absent from dangerous sinks.
+- Intended behavior: a context-aware JavaScript string break can leave a harmless marker such as `window.violetProof`.
+- Expected impact: local UI proof only.
+- Curl coverage: enough to prove filtering and reflection context. Browser/Burp validation is required to prove actual JavaScript execution.
+- Final-chain safety: must not expose flags, cookies, seller approval, coupon application, or order confirmation.
+
+### 2. Stored XSS with strong filters
+
+- Endpoint: `/reviews.php`
+- Blocked/common test: common script/image/svg/event-handler payloads in review fields should be filtered.
+- Intended behavior: title/display attributes are sanitized differently from the body, allowing a context-aware attribute marker.
+- Expected impact: harmless local proof such as calling `violetReviewProof`.
+- Curl coverage: enough to submit reviews and verify stored markup. Browser/Burp validation is required to prove focus/event execution.
+- Final-chain safety: review content must not expose flags or affect checkout state.
+
+### 3. HTTP Parameter Pollution
+
+- Endpoint: `/api/apply_coupon.php`
+- Blocked/common test: `PURPLE-STAFF` without a partner header, or with `X-Violet-Channel: public_checkout`, must fail.
+- Intended behavior: after quote, reservation, legacy sync, and seller approval, duplicate coupons show `frontend_seen=WELCOME10` and `backend_applied=PURPLE-STAFF`.
+- Expected impact: parser inconsistency plus gated staff coupon application.
+- Curl coverage: complete.
+- Final-chain safety: does not approve seller review or confirm an order by itself.
+
+### 4. Mass Assignment
+
+- Endpoint: `/api/create_reservation.php`
+- Blocked/common test: extra fields must not return any flag, seller approval, or internal reservation.
+- Intended behavior: `channel`, `requested_status`, and `partner_hint` partially influence channel/status clues.
+- Expected impact: misleading intermediate state and context hints.
+- Curl coverage: complete.
+- Final-chain safety: must not skip legacy sync, seller review, coupon gating, or final order checks.
+
+### 5. Predictable Documents
+
+- Endpoints: `/documents.php`, `/download.php?file=`
+- Blocked/common test: public documents must not contain real flags.
+- Intended behavior: predictable IDs reveal `VC-2026-0017`, checkpoint, trace, and workflow vocabulary.
+- Expected impact: recon clues only.
+- Curl coverage: complete.
+- Final-chain safety: Flag 1 still requires the exact query confirmation; later flags are not in public documents.
+
+### 6. Limited LFI / Path Normalization
+
+- Endpoint: `/download.php?file=`
+- Blocked/common test: traversal, encoded traversal, `/etc/passwd`, PHP wrappers, `file://`, and `data://` must be denied.
+- Intended behavior: safe files under `public_docs` remain downloadable.
+- Expected impact: confirms public document mirror behavior.
+- Curl coverage: complete.
+- Final-chain safety: must not read PHP source, DB credentials, system files, or flags.
+
+### 7. Filtered SQL / ORDER BY Issue
+
+- Endpoint: `/cars.php?sort=`
+- Blocked/common test: `union select`, `sleep`, comments, quotes, `or 1=1`, and benchmark probes should not produce raw SQL errors or dumps.
+- Intended behavior: normal sort keys work; hidden safe-looking sort keys can produce warnings or ordering clues.
+- Expected impact: subtle catalog behavior disclosure.
+- Curl coverage: enough for blocked payloads and hidden-key warning. Burp/manual comparison is useful for ordering analysis.
+- Final-chain safety: must not dump the database or reveal flags.
+
+### 8. Controlled SSRF-like Behavior
+
+- Endpoint: `/api/vehicle_inspection.php`
+- Blocked/common test: localhost, loopback, metadata IPs, `file://`, `gopher://`, and similar targets are blocked.
+- Intended behavior: app-controlled aliases like `violet://inspection/<VIN>` return seeded inspection status.
+- Expected impact: minor seller-review/partner-hold clue.
+- Curl coverage: complete.
+- Final-chain safety: no outbound network request, file read, metadata leak, or flags.
+
+### 9. Weak Open Redirect
+
+- Endpoint: `/redirect.php?next=`
+- Blocked/common test: `http://evil.com`, `https://evil.com`, `//evil.com`, and backslash tricks fall back safely.
+- Intended behavior: relative redirects show internal routing assumptions.
+- Expected impact: weak relative redirect behavior, not phishing.
+- Curl coverage: complete for redirect headers.
+- Final-chain safety: no flags and no state change.
+
+### 10. Query Endpoint Enumeration
+
+- Endpoint: `/api/query.php`
+- Blocked/common test: `debugFlags`, `sellerNotes`, `internalReservation`, `flags`, `admin`, and `password` are blocked.
+- Intended behavior: `quoteMeta`, `channelPolicy`, and `inspectionProfile` return safe clues; wrong recon checkpoint fails; exact recon checkpoint returns only Flag 1.
+- Expected impact: safe query discovery and first-stage recon confirmation.
+- Curl coverage: complete.
+- Final-chain safety: must not expose Flag 2, Flag 3, Flag 4, seller approval, staff coupon application, or final order state.
+
 ## Final safety checks
 
 ```bash

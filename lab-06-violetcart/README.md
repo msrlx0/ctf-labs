@@ -80,6 +80,8 @@ You will need to inspect:
 
 Some paths are honest rabbit holes. They are useful for learning what is not the answer.
 
+Advanced secondary vulnerabilities are present for manual testing practice. They are designed to be safe, local, and context-dependent; common payloads may fail, and careful request comparison is expected.
+
 ## Public release note
 
 `WALKTHROUGH.md` is a maintainer-only solution file during development. The public main branch should not include the real walkthrough or should replace it with a spoiler warning stub before release.
