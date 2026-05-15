@@ -6,7 +6,7 @@ Difficulty: **Impossible, but fair**.
 
 Port: **8098**.
 
-Status: **Development-ready / maintainer validation required**.
+Status: **Public-release snapshot**.
 
 ## Story
 
@@ -84,7 +84,7 @@ Advanced secondary vulnerabilities are present for manual testing practice. They
 
 ## Public release note
 
-`WALKTHROUGH.md` is a maintainer-only solution file during development. The public main branch should not include the real walkthrough or should replace it with a spoiler warning stub before release.
+The official solution walkthrough is not included in the public release. `WALKTHROUGH.md` is a public-safe placeholder.
 
 `README.md` and `STUDENT-GUIDE.md` are intended to remain public-safe and must not contain flags or exact solution steps.
 

@@ -6,9 +6,9 @@ These notes are for development and release management. They are not a student w
 
 `WALKTHROUGH.md` is private/development-only. It contains solution detail and should not be published as-is to the public main branch.
 
-`scripts/validate-main-chain.sh` is maintainer-only because it verifies the complete intended chain and reveals the shape of the solution. Keep it in a private branch or remove it before public release.
+The private full-path regression script is maintainer-only because it verifies the complete intended path and reveals the shape of the solution. Keep it in a private branch or remove it before public release.
 
-`scripts/validate-secondary-vulns.sh` is mostly safe from a final-flag perspective, but it still reveals methodology, payload style, and intended bug classes. Treat it as optional public material only if that matches the release policy.
+The private secondary-vulnerability regression script is mostly safe from a final-flag perspective, but it still reveals methodology, payload style, and intended bug classes. Treat it as optional public material only if that matches the release policy.
 
 `VALIDATION.md` is useful for maintainers, but it describes intended behavior in enough detail to reduce challenge difficulty. Review it before publishing.
 

@@ -163,7 +163,7 @@ INSERT INTO support_tickets (subject, body, visibility, status) VALUES
 ('Admin portal QA', 'Admin panel is disabled during the migration. A QA placeholder flag in old admin text is not a challenge flag.', 'public', 'closed');
 
 INSERT INTO seller_notes (seller_ref, internal_reservation, note) VALUES
-('SEL-VIOLET-104', 'R-1042-V', 'Old sample. Not connected to a live quote.'),
+('SEL-VIOLET-104', 'R-2042-V', 'Old sample. Not connected to a live quote.'),
 ('SEL-VIOLET-109', 'R-1047-V', 'Partner review requires X-Violet-Channel partner_checkout. Public channel should remain forbidden.');
 
 INSERT INTO public_documents (doc_code, title, body, file_name) VALUES

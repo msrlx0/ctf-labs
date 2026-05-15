@@ -59,7 +59,7 @@ Use the private maintainer flag list outside this repository for exact literal c
 Broad public scans:
 
 ```bash
-grep -Rni "FLAG{" README.md STUDENT-GUIDE.md WALKTHROUGH.md WALKTHROUGH.public.md PUBLIC-RELEASE-CHECKLIST.md MAINTAINER-NOTES.md VALIDATION.md app database scripts || true
+grep -Rni 'FLAG[{]' README.md STUDENT-GUIDE.md WALKTHROUGH.md WALKTHROUGH.public.md PUBLIC-RELEASE-CHECKLIST.md MAINTAINER-NOTES.md VALIDATION.md app database scripts || true
 grep -Rni "placeholder\|fake QA\|not a challenge flag" README.md STUDENT-GUIDE.md WALKTHROUGH.md WALKTHROUGH.public.md PUBLIC-RELEASE-CHECKLIST.md MAINTAINER-NOTES.md VALIDATION.md app database scripts || true
 ```
 

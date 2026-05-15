@@ -38,20 +38,21 @@ test -f scripts/README.md
 Confirm maintainer automation is not present in the public release:
 
 ```bash
-test ! -f scripts/validate-main-chain.sh
-test ! -f scripts/validate-secondary-vulns.sh
+find scripts -maxdepth 1 -type f ! -name README.md -print
 ```
+
+Expected: only `scripts/README.md` is present.
 
 ## Public Leak Checks
 
 Run broad public scans:
 
 ```bash
-grep -Rni "FLAG{" README.md STUDENT-GUIDE.md WALKTHROUGH.md WALKTHROUGH.public.md PUBLIC-RELEASE-CHECKLIST.md MAINTAINER-NOTES.md VALIDATION.md app database scripts || true
+grep -Rni 'FLAG[{]' README.md STUDENT-GUIDE.md WALKTHROUGH.md WALKTHROUGH.public.md PUBLIC-RELEASE-CHECKLIST.md MAINTAINER-NOTES.md VALIDATION.md app database scripts || true
 grep -Rni "TODO\|FIXME\|var_dump\|print_r\|die(" app database README.md STUDENT-GUIDE.md WALKTHROUGH.md WALKTHROUGH.public.md PUBLIC-RELEASE-CHECKLIST.md MAINTAINER-NOTES.md VALIDATION.md scripts || true
 ```
 
-The only acceptable `FLAG{...}` hit in public-facing files is the clearly labeled fake QA placeholder. It must be marked as fake, placeholder, or not a challenge flag.
+The only acceptable challenge-flag-pattern hit in public-facing files is the clearly labeled fake QA placeholder. It must be marked as fake, placeholder, or not a challenge flag.
 
 ## Basic Page Smoke Test
 
