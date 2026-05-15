@@ -73,8 +73,10 @@ Validate each behavior with Burp/Repetitor or curl equivalents.
 8. Open `/seller/reservation.php?ref=<internal>` without header and confirm 403.
 9. Repeat with `X-Violet-Channel: partner_checkout`; confirm seller context and Flag 3.
 10. Approve through `/seller/review.php`.
-11. Apply `PURPLE-STAFF` in partner context, including duplicate coupon variant.
-12. Confirm order with `payment_method=partner_settlement`; confirm final flag.
+11. Confirm `PURPLE-STAFF` fails without `X-Violet-Channel: partner_checkout`, even after seller approval.
+12. Confirm `PURPLE-STAFF` fails with `X-Violet-Channel: public_checkout`.
+13. Apply `PURPLE-STAFF` in active partner context, including duplicate coupon variant.
+14. Confirm order with `payment_method=partner_settlement`; confirm final flag and non-zero `order_id`/realistic `order_ref`.
 
 ### Vulnerability checklist
 
@@ -82,7 +84,7 @@ Validate each behavior with Burp/Repetitor or curl equivalents.
 - Cross-object IDOR cannot be solved by a blind `id=1` request.
 - Seller access changes only with valid internal reservation and partner header.
 - Public checkout order remains safe in UI.
-- Staff coupon fails before seller approval.
+- Staff coupon fails before seller approval and without the active partner checkout header.
 - Legacy sync returns realistic staged errors.
 - Header context changes only selected endpoints.
 - Quote/reservation state changes after legacy sync.

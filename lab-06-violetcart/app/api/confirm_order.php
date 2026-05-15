@@ -37,13 +37,15 @@ $total = (int)ceil($price * 0.60);
 
 $stmt = db()->prepare('INSERT INTO orders (user_id, quote_id, reservation_id, car_id, payment_method, status, total_cents) VALUES (?, ?, ?, ?, ?, "confirmed", ?)');
 $stmt->execute([$user['id'] ?? null, $quoteId, $reservationId, (int)$reservation['car_id'], $paymentMethod, $total]);
+$orderId = (int)db()->lastInsertId();
 
 $stmt = db()->prepare('UPDATE reservations SET status = "ordered" WHERE id = ?');
 $stmt->execute([$reservationId]);
 
 json_response([
     'confirmed' => true,
-    'order_id' => (int)db()->lastInsertId(),
+    'order_id' => $orderId,
+    'order_ref' => 'VC-ORD-' . (9000 + $orderId),
     'status' => 'confirmed',
     'payment_method' => $paymentMethod,
     'total_cents' => $total,
