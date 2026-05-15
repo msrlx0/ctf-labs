@@ -24,6 +24,54 @@ Resultado esperado:
 - servico `blackgate` em execucao;
 - porta `8096:3000`.
 
+## Manual validation without curl
+
+Esta secao valida a experiencia publica e a visibilidade por role usando navegador e, se necessario, proxy/repeater. Ela nao valida a cadeia completa de flags; a cadeia tecnica completa fica na secao de terminal.
+
+### Manual validation checklist
+
+1. Acesse `http://localhost:8096`.
+2. Verifique que a tela de login expoe somente a credencial inicial:
+
+```text
+guest / guest123
+```
+
+3. Entre como `guest`.
+4. Confirme que o menu mostra somente:
+
+```text
+Dashboard
+Tickets
+Assets
+Logout
+```
+
+5. Abra Dashboard, Tickets e Assets.
+6. Confirme que a UI de `guest` nao mostra flags, payloads finais, credenciais internas, endpoints internos finais, links de API em Tickets ou links de API em Assets.
+7. Tente acessar diretamente `/context`, `/gateway`, `/legacy` e `/files-vault` como `guest`.
+8. Confirme que essas rotas retornam acesso restrito para a conta inicial.
+9. Entre como `analyst` em ambiente de validacao interna.
+10. Confirme que o menu mostra Dashboard, Tickets, Assets, Context e Logout.
+11. Abra Context como `analyst` e confirme que a pagina e limitada, sem header operacional, payload, endpoint ofensivo ou instrucao de exploracao.
+12. Entre como `operator` em ambiente de validacao interna.
+13. Confirme que o menu mostra Dashboard, Context, Gateway, Legacy, Files Vault, Tickets, Assets, Health e Logout.
+14. Navegue pelas telas de operator e confirme que elas continuam profissionais e sem flags renderizadas diretamente na UI.
+15. Verifique `robots.txt`, sitemap/rotas publicas e client config: eles podem ajudar no reconhecimento, mas nao devem entregar endpoint final, payload final ou flag final.
+
+### Ausencia de spoilers em superficie publica
+
+Validar manualmente que README, Student Guide, tela de login, dashboard de guest, tickets de guest, assets de guest, JS publico e configuracao publica nao entregam:
+
+- flags;
+- credenciais internas;
+- payload final;
+- endpoint final;
+- identificadores finais de review/reconciliation;
+- comando ou request pronto que finalize o boss.
+
+## Terminal validation checklist
+
 ## Health e recon publico
 
 ```bash

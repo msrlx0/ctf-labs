@@ -1,12 +1,10 @@
-# Student Guide - Lab 05 BlackGate
+# Student Guide - Lab 5 BlackGate
 
 ## Introducao
 
-Voce recebeu acesso comum ao **BlackGate Operations Console**, uma plataforma corporativa usada para controlar acessos internos, tickets de seguranca, ativos monitorados e alertas operacionais.
+Voce recebeu a credencial inicial de uma conta comum no **BlackGate Operations Console**. A aplicacao simula uma plataforma corporativa com tickets, ativos, contexto operacional, gateway, componentes legados e fluxos de aprovacao.
 
-Na **Fase 9 - Final Admin Approval / Boss Flag**, o objetivo e correlacionar reconhecimento, contexto operacional, gateway interno simulado, Files Vault, realm legado de manutencao, workflow de reports, diagnostics do worker e estado final de aprovacao. A fase inclui decoys, respostas ambiguas e diferencas importantes entre identidade publica, contexto operator e manutencao legada.
-
-Ainda nao existe command injection real, upload, Redis, worker separado, shell ou exploracao de sistema operacional.
+O lab comeca pequeno de proposito. A primeira tela nao mostra tudo, o menu nao entrega todos os caminhos e algumas respostas parecem incompletas ate serem comparadas com outras superficies.
 
 ## Escopo
 
@@ -16,152 +14,94 @@ O unico alvo autorizado e:
 http://localhost:8096
 ```
 
-Execute o lab somente localmente com Docker.
+Use o lab apenas localmente com Docker.
 
-## O que observar
+## Credencial inicial
 
-- Tela de login e credencial inicial.
-- Cookie de sessao apos autenticacao.
-- Papel do usuario logado.
-- Menus disponiveis para a role atual.
-- Pagina `/context` quando sua role permitir.
-- Cards do dashboard.
-- Tickets com nomes de servicos e revisoes pendentes.
-- Inventario de ativos internos ficticios.
-- Arquivo JavaScript publico.
-- Comentarios discretos no HTML.
-- Endpoints publicos de status, versao e configuracao.
-- Diferencas entre interface, sessao, contexto operacional, gateway e APIs JSON.
-- Estados de migracao que aparecem em mais de uma camada.
+```text
+guest / guest123
+```
 
-## Primeiros passos sugeridos
+## Como estudar
 
-1. Acesse `http://localhost:8096`.
-2. Faca login com uma conta comum.
-3. Navegue por `/dashboard`, `/tickets` e `/assets`.
-4. Se a sua role mostrar `/context`, revise a pagina sem assumir que ela representa privilegio operacional.
-5. Observe arquivos estaticos, comentarios, cookies e respostas JSON.
-6. Relacione textos do dashboard com tickets, assets e contexto disponivel.
+Use o navegador como ponto de partida. Um proxy HTTP com repeater ajuda muito, porque o lab foi feito para observar requisicoes, repetir testes, alterar pequenas partes e comparar respostas.
 
-## Phase 2 Recon Tips
+Ferramentas recomendadas:
 
-Procure sinais de enumeracao em:
+- navegador;
+- proxy HTTP;
+- repeater;
+- inspetor de rede;
+- decoder local;
+- anotacoes manuais.
 
-- arquivos estaticos;
-- politicas publicas;
-- status e versao;
-- configuracao exposta;
-- mapas parciais de rotas;
-- diagnosticos limitados.
+Evite transformar o estudo em uma sequencia de comandos prontos. O valor do lab esta em perceber a conexao entre as pistas.
 
-## Phase 3 - Weak Token / Role Escalation
+## O que observar primeiro
 
-Dicas sem spoiler:
+1. Entre com a conta `guest`.
+2. Observe que o menu inicial e limitado.
+3. Abra Dashboard, Tickets e Assets.
+4. Anote nomes, estados, mensagens e diferencas de linguagem.
+5. Compare o que aparece na interface com o que aparece nas respostas HTTP.
+6. Teste rotas obvias e observe status codes diferentes.
+7. Procure diferencas entre dados visiveis, dados parciais e dados ausentes.
 
-- Relacione usuario autenticado, role e contexto operacional.
-- Procure referencias a contexto em superficies publicas e autenticadas.
-- Diagnosticos limitados podem mudar conforme metadados enviados.
-- Procure rotas relacionadas a compatibilidade.
-- Observe se tokens de contexto parecem opacos ou estruturados.
-- Diferencie role da sessao e role do contexto legado.
+## Visibilidade por papel
 
-## Phase 4 - Gateway Trust / SSRF Setup
+A interface muda conforme a visao disponivel:
 
-Dicas sem spoiler:
+- `guest` ve Dashboard, Tickets e Assets.
+- `analyst` ve Dashboard, Tickets, Assets e um Context limitado.
+- `operator` ve a superficie operacional mais ampla.
 
-- Reaproveite descobertas da Fase 3.
-- Contexto operacional pode influenciar workflows de compatibilidade.
-- Relacione gateway, assets e metadados.
-- Observe hostnames internos e estados de manutencao.
-- Valide sinais simples antes de assumir acesso amplo.
-- Nem todo host ou path interno responde igual.
-- Pense em SSRF controlado/simulado: o gateway resolve upstreams internos permitidos sem request real para internet.
-- Hosts externos devem ser bloqueados.
+Essa diferenca e uma pista importante. Ver um menu a mais nao significa que a fase esta resolvida. O lab diferencia identidade publica, sessao web, contexto operacional e fluxos internos.
 
-## Phase 5 - Files Vault / Controlled File Read
+## Mentalidade do lab
 
-Dicas sem spoiler:
+O BlackGate e um labirinto manual. Em cada fase, tente responder:
 
-- Reaproveite o contexto operator da Fase 3.
-- Reaproveite o fluxo de gateway da Fase 4.
-- Comece por sinais de metadata antes de tentar documentos.
-- Observe diferencas entre catalogo, download nomeado e leitura legada.
-- Observe diferenca entre nome de arquivo e path completo.
-- Procure pistas de migracao e compatibilidade.
-- Pense em normalizacao de path.
-- Valide caminhos publicos antes de tentar algo fora do catalogo.
-- Uma resposta publica bem-sucedida costuma ensinar o formato da proxima tentativa.
+- O que mudou na resposta?
+- O status code faz sentido?
+- A mensagem parece generica ou especifica?
+- A interface esta escondendo algo que a API ainda deixa inferir?
+- O dado encontrado e atual, legado, falso ou parcial?
+- Esta pista se conecta a tickets, assets, contexto, gateway, legado ou aprovacao?
 
-## Phase 6 - Credential Reuse / Legacy Panel
+Nem todo caminho obvio e util. Algumas pistas sao falsas, antigas ou incompletas. `robots.txt`, sitemap, mapas de rotas e configuracoes publicas ajudam no reconhecimento, mas nao entregam necessariamente o caminho real.
 
-Dicas sem spoiler:
+## Dicas sem spoiler
 
-- Nem toda credencial encontrada e util.
-- Nem todo login usa o mesmo realm.
-- O login publico e o painel legado nao compartilham identidade.
-- Arquivos de migracao podem conter entradas antigas, falsas ou desativadas.
-- Diferencie public console, gateway context e legacy maintenance realm.
-- Se um endpoint diz `interactive login disabled`, procure o fluxo de manutencao.
-- Preserve query strings ao atravessar camadas intermediarias.
-- Encode URLs internas quando houver parametros.
-- Mensagens de erro parecidas podem apontar para realms diferentes.
-
-## Phase 7 - Report Workflow Abuse / Queue Preparation
-
-Dicas sem spoiler:
-
-- Nem todo template listado e tudo que existe.
-- Workflows legados podem ter modos de migracao.
-- Diferencie preview, create e queue.
-- Leia notas internas com atencao.
-- Combinacoes erradas podem parecer sucesso parcial.
-- Jobs aceitos nem sempre sao processados imediatamente.
-- Um workflow pode aceitar configuracoes que nao renderiza de forma sincrona.
-- Arquivos antigos podem explicar a diferenca entre fila padrao, fila legada e fila de manutencao.
-
-## Phase 8 - Maintenance Worker Processing Abuse
-
-Dicas sem spoiler:
-
-- Jobs aceitos podem nao ser processados pelo mesmo modulo que os criou.
-- Worker review metadata importa.
-- Acoes basicas nem sempre mostram impacto.
-- Diferencie status, diagnostics e processing.
-- Prefixos de acao podem ter comportamento diferente de acoes exatas.
-- Arquivos internos podem fragmentar a pista.
-- A fila correta nao significa que todo diagnostico sera renderizado.
-- Bloqueios explicitos costumam ser mais confiaveis que mensagens de sucesso parcial.
-
-## Phase 9 - Final Admin Approval / Boss Flag
-
-Dicas sem spoiler:
-
-- Nem todo admin e um finalizer valido.
-- Estados de aprovacao podem depender de worker traces.
-- Queue reference, review code e trace marker precisam fazer sentido juntos.
-- Reconciliation e finalization sao etapas diferentes.
-- Public identity, operator context e maintenance realm tem papeis diferentes.
-- Decoys de finalizer sao esperados.
-- Arquivos internos podem explicar formato sem entregar a URL final.
-- Uma etapa pode produzir contexto que so fica util quando comparado com outra superficie.
-
-## Dicas leves de enumeracao
-
-- Nem toda pista aparece como link no menu.
-- Tickets operacionais costumam citar nomes de servicos importantes.
-- Ativos internos podem revelar fronteiras de confianca.
-- Arquivos JavaScript publicos podem conter metadados de frontend.
-- Um endpoint de health raramente e sensivel sozinho, mas ajuda a validar servico, versao e escopo.
-- Observe diferencas entre identidade publica, sessao web e contexto operacional.
-- Observe diferenca entre 400, 401, 403 e 404 nas APIs.
-- Mensagens de erro para path ausente, path bloqueado e documento inexistente podem nao significar a mesma coisa.
-- Nao confie no primeiro bloco de credenciais encontrado em arquivo antigo.
+- Comece pelo que o `guest` realmente ve.
+- Compare visoes quando o lab sugerir papeis ou contextos diferentes.
+- Observe diferencas entre sessao web e contexto operacional.
+- Leia tickets e assets como pistas, nao apenas como conteudo decorativo.
+- Use o repeater para testar uma hipotese por vez.
+- Preserve evidencias: nomes internos, mensagens de erro, status codes e campos recorrentes.
+- Desconfie de credenciais antigas ou blocos muito obvios.
+- Diferencie caminhos publicos, caminhos operacionais e caminhos legados.
+- Quando uma resposta disser que algo esta bloqueado, compare com outro caminho antes de concluir que acabou.
+- Se uma etapa produzir um identificador, guarde-o; ele pode fazer sentido apenas mais tarde.
 
 ## O que evitar
 
 - Nao rode scanners barulhentos.
-- Nao tente atacar sistemas fora do Docker local.
-- Nao assuma que a conta administrativa esta disponivel como atalho.
-- Nao trate nomes internos como alvos externos reais.
-- Nao tente command injection real, upload, Redis, worker separado ou shell; essas cadeias nao fazem parte deste lab.
-- Nao trate credenciais de CTF como credenciais reais.
+- Nao ataque sistemas fora do Docker local.
+- Nao assuma que a conta inicial deve ter todos os menus.
+- Nao procure shell, upload, Redis, banco externo ou command injection real.
+- Nao trate hostnames internos do cenario como alvos reais.
+- Nao pule direto para o walkthrough se quiser praticar a cadeia.
+
+## Quando travar
+
+Volte para as evidencias:
+
+- tickets visiveis;
+- assets visiveis;
+- respostas JSON publicas;
+- headers e cookies;
+- diferencas entre 400, 401, 403 e 404;
+- nomes que aparecem em mais de um lugar;
+- mensagens que parecem vagas demais para serem acidentais.
+
+O caminho final exige correlacao. Uma pista isolada raramente basta.

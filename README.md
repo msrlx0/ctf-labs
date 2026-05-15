@@ -44,7 +44,7 @@ cd ctf-labs
 | [lab-02-neonvault](./lab-02-neonvault/) | Cyberpunk Identity Grid: Blind SQLi, JWT, SSRF, SSTI, Upload Bypass, Logs SQLi, IDOR e Path Traversal | 8092 | Finalizado |
 | [lab-03-netaudit](./lab-03-netaudit/) | Investigação manual web/infra: debug, request tampering, command injection, logs, traversal e abuso de endpoint interno | ver README do lab | Finalizado |
 | [lab-04-sentinelcore](./lab-04-sentinelcore/) | Cadeia hard de SOC/IR: BOLA, mass assignment, JWT, SSRF, serviços internos, worker e file read | 8094 | Finalizado |
-| [lab-05-blackgate](./lab-05-blackgate/) | Boss Final corporativo: acesso, auditoria, tickets, ativos e operações internas | 8096 | Completo |
+| [Lab 5 — BlackGate](./lab-05-blackgate/) | Dificuldade: Boss Final / Hard; cadeia corporativa manual de acesso, auditoria, tickets e ativos | 8096 | Completo |
 
 ## Como rodar um lab
 

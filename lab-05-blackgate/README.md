@@ -1,26 +1,22 @@
-# Lab 5 - BlackGate
+# Lab 5 — BlackGate
 
-Nome: **Lab 5 - BlackGate**.
-
-**BlackGate** e um laboratorio CTF local sobre uma plataforma corporativa de acesso, auditoria e operacoes internas. A aplicacao simula uma console moderna usada para controlar tickets de seguranca, ativos internos, alertas operacionais e revisoes de acesso.
+Nome: **Lab 5 — BlackGate**.
 
 Dificuldade: **Boss Final / Hard**.
 
-Status: **Completo - Fase 9 / Final Admin Approval / Boss Flag**.
+Porta: **8096**.
 
-Porta publica:
+Status: **Completo**.
 
-```text
-http://localhost:8096
-```
+BlackGate e um laboratorio CTF local sobre uma console corporativa de acesso, auditoria, tickets, ativos e operacoes internas. O lab foi desenhado como uma cadeia manual de exploracao: o aluno comeca com acesso limitado, observa a aplicacao, compara respostas, enumera superficies, testa hipoteses e correlaciona pistas ate reconstruir o caminho completo.
 
-Nesta fase final, o lab fecha a cadeia com um fluxo de aprovacao administrativa simulado. O objetivo e correlacionar sessao publica, contexto operacional, gateway interno, realm legado, reports, worker diagnostics e estado de aprovacao sem receber um mapa completo da aplicacao.
-
-Tudo continua local e controlado em memoria.
+Este lab nao foi pensado para ser resolvido copiando uma sequencia de comandos. A experiencia principal e no navegador, com apoio de proxy HTTP, repeater, inspecao de respostas e tentativa controlada.
 
 ## Aviso de uso local
 
 Este laboratorio e intencionalmente vulneravel e foi criado apenas para estudo local e educacional. Nao exponha os containers na internet. Nao use payloads, tecnicas ou comandos deste lab contra sistemas reais, terceiros ou ambientes sem permissao explicita.
+
+Tudo roda localmente e de forma simulada.
 
 ## Como subir
 
@@ -31,7 +27,7 @@ cd lab-05-blackgate
 docker compose up --build
 ```
 
-Depois acesse:
+Depois acesse no navegador:
 
 ```text
 http://localhost:8096
@@ -49,76 +45,50 @@ docker compose down
 guest / guest123
 ```
 
-A conta administrativa existe no cenario, mas nao e documentada nem liberada como atalho.
+## Experiencia esperada
 
-## Objetivo educacional
+O aluno inicia com uma conta comum e uma visao limitada da aplicacao. Ao longo do lab, diferentes papeis e contextos revelam superficies distintas, mas nenhuma tela inicial entrega o mapa completo.
 
-- Reconhecer uma aplicacao corporativa interna.
-- Enumerar rotas publicas e metadados expostos.
-- Entender diferencas entre sessao web, role e contexto operacional.
-- Entender riscos de tokens legados fracos.
-- Explorar confianca de gateway de forma simulada e segura.
-- Inferir servicos internos permitidos sem fazer request real para a internet.
-- Investigar diferencas entre catalogo, registros nomeados e referencias legadas.
-- Entender riscos de canonicalizacao fraca em fluxos de compatibilidade.
-- Diferenciar identidade publica, contexto de gateway e realm legado de manutencao.
-- Reconhecer decoys e credenciais obsoletas em arquivos de migracao.
-- Identificar abuso de workflow legado de reports sem execucao real de worker.
-- Diferenciar preview, criacao de job, fila e processamento assincrono.
-- Avaliar validacao fraca de acoes de diagnostico em um processador simulado.
-- Correlacionar estado de aprovacao, revisao de manutencao e finalizacao administrativa simulada.
+A resolucao exige:
 
-## Funcionalidades atuais
+- observar o que aparece e o que nao aparece na interface;
+- comparar tickets, assets, mensagens e status codes;
+- diferenciar sessao web, role visivel e contexto operacional;
+- usar um proxy HTTP ou repeater para testar hipoteses com cuidado;
+- reconhecer pistas falsas, dados incompletos e caminhos que parecem obvios mas nao levam ao fim;
+- correlacionar informacoes entre varias camadas antes de avancar.
 
-- Login com sessao.
-- Logout.
-- Dashboard autenticado.
-- Paginas operacionais autenticadas com visibilidade por role.
-- Lista de tickets de seguranca.
-- Inventario de ativos internos ficticios.
-- Endpoint `/health` com status JSON.
-- Endpoints publicos de recon e metadados limitados.
-- Diagnostico limitado.
-- APIs autenticadas para tickets e assets.
-- Controles operacionais simulados.
-- Gateway simulado para upstreams internos em allowlist.
-- Files Vault simulado com metadata, catalogo e leitura controlada por path.
-- Legacy Panel simulado com autenticacao de manutencao separada e decoys.
-- Workflow legado de reports com templates, previews e fila simulada em memoria.
-- Maintenance worker simulado em modo review, sem processo externo ou shell.
-- Final approval review simulado, restrito ao fluxo interno de manutencao.
-- Pagina publica de politica de seguranca ficticia.
-- CSS proprio com identidade visual amarela e tema BlackGate.
+## Visibilidade por papel
 
-## Rotas principais
+A interface muda conforme a visao disponivel:
 
-```text
-/login
-/dashboard
-/tickets
-/assets
-/health
-/robots.txt
-/.well-known/security.txt
-/security-policy
-/api/status
-/api/version
-/api/routes
-/api/client-config
-/api/tickets/:id
-/api/assets/:hostname
-/debug/ping
-/logout
-```
+- `guest`: Dashboard, Tickets e Assets.
+- `analyst`: Dashboard, Tickets, Assets e Context limitado.
+- `operator`: Dashboard, Context, Gateway, Legacy, Files Vault, Tickets, Assets e Health.
 
-Rotas operacionais adicionais permanecem no lab, mas nao sao expostas para a conta inicial.
+A conta inicial publica e apenas `guest`. As demais visoes fazem parte da progressao do lab e nao devem ser tratadas como atalho inicial.
 
-## Observacoes
+## Escopo educacional
 
-A Fase 9 introduz a etapa final de aprovacao administrativa simulada. Ela nao implementa command injection real, upload, Redis, worker separado, shell, endpoint admin real, pivot real, banco externo, leitura de filesystem real ou chamadas externas. Todo o fluxo final e uma simulacao controlada em memoria.
+O BlackGate exercita:
 
-## Completion status
+- reconhecimento manual de aplicacao corporativa;
+- enumeracao de rotas e metadados;
+- diferencas entre interface, APIs e contexto operacional;
+- analise de respostas e status codes;
+- confianca entre componentes simulados;
+- validacao de hipoteses com proxy/repeater;
+- correlacao entre pistas parciais;
+- identificacao de decoys e mensagens ambiguas;
+- progressao manual por fases ate o boss final.
 
-- Phase 1 to Phase 9 completed.
-- Final boss chain available.
-- Public release ready after validation.
+## O que nao existe aqui
+
+O lab nao implementa exploracao real de sistema operacional, shell, upload, Redis, banco externo, pivot real ou chamadas externas para a internet. Os fluxos internos sao simulados em memoria para treinamento local.
+
+## Documentacao
+
+- `README.md`: descricao publica sem spoilers criticos.
+- `STUDENT-GUIDE.md`: orientacao de estudo sem entregar a solucao.
+- `WALKTHROUGH.md`: passo a passo completo com spoilers.
+- `VALIDATION.md`: checklist manual e tecnico para validar o lab.
