@@ -90,6 +90,15 @@ STUDENT-GUIDE.md
 WALKTHROUGH.md
 ```
 
+### Lab 6 - VioletCart
+
+```bash
+cd lab-06-violetcart
+docker compose up --build
+```
+
+VioletCart roda na porta `8098` e tem dificuldade Impossible. A validacao publica deve usar apenas checks de smoke e seguranca publica do `VALIDATION.md` local, sem flags, cadeia de exploit ou automacao privada.
+
 ## Checklist antes de publicar
 
 - [ ] `README.md` raiz atualizado.
