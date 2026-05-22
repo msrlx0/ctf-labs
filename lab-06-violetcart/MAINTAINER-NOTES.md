@@ -1,0 +1,39 @@
+# Maintainer Notes - VioletCart
+
+These notes are for development and release management. They are not a student walkthrough.
+
+## Private Materials
+
+`WALKTHROUGH.md` in this public snapshot is a placeholder. Any private solution walkthrough should remain outside the public release or in private branch history.
+
+The private full-path regression script is maintainer-only because it verifies the complete intended path and reveals the shape of the solution. Keep it in a private branch or remove it before public release.
+
+The private secondary-vulnerability regression script is mostly safe from a final-flag perspective, but it still reveals methodology, payload style, and intended bug classes. Treat it as optional public material only if that matches the release policy.
+
+`VALIDATION.md` is public-safe smoke validation. Keep full-path regression details outside this repository or in private branch history.
+
+## Public Release Preparation
+
+Before merging further public updates:
+
+- preserve this development state in a private branch or tag;
+- keep `WALKTHROUGH.md` as the public placeholder;
+- keep full-chain validation scripts out of the public release;
+- keep secondary validation methodology private unless release policy changes;
+- run the public leak checks in `PUBLIC-RELEASE-CHECKLIST.md`;
+- rebuild Docker and smoke test port `8098`.
+
+Suggested private preservation:
+
+```bash
+git branch private/lab-06-violetcart-maintainer
+git tag private/lab-06-violetcart-maintainer-pre-public
+```
+
+Push private refs only to a private remote.
+
+## Public Snapshot Note
+
+The public release intentionally omits full solution automation. Maintainer-only walkthrough content and validation scripts must be kept in the development branch history or a private copy.
+
+To continue private development with the complete maintainer materials, use the `lab-06-violetcart` branch history before the public-sanitization commit or restore them from a private maintainer branch/tag.

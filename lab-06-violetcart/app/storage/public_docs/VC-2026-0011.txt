@@ -1,0 +1,8 @@
+VioletCart Import Status Memo VC-2026-0011
+
+The seller channel is still being reviewed for imported vehicles.
+Support should compare reservation status, seller review notes, and migration sync output before approving a partner settlement.
+
+QA note:
+FLAG{qa_placeholder_ignore_me}
+This placeholder is fake and is not a challenge flag.
