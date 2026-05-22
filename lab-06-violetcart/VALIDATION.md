@@ -33,6 +33,8 @@ test -f WALKTHROUGH.public.md
 test -f PUBLIC-RELEASE-CHECKLIST.md
 test -f MAINTAINER-NOTES.md
 test -f scripts/README.md
+test -f .dockerignore
+git ls-files app/storage/public_docs/VC-2026-0017.txt
 ```
 
 Confirm maintainer automation is not present in the public release:
@@ -42,6 +44,14 @@ find scripts -maxdepth 1 -type f ! -name README.md -print
 ```
 
 Expected: only `scripts/README.md` is present.
+
+Confirm local operations logs are not part of the public Docker context:
+
+```bash
+grep -n 'app/storage/logs' .dockerignore
+```
+
+Expected: `app/storage/logs/` is excluded. Public solving should rely on tracked public documents, not private or ignored log files.
 
 ## Public Leak Checks
 

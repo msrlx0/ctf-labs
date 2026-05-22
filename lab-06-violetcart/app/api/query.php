@@ -27,7 +27,7 @@ switch ($query) {
             'query' => $query,
             'public_checkout' => ['quote simulation', 'buyer reservation', 'public promotion'],
             'partner_checkout' => ['reservation context', 'seller review state', 'settlement policy'],
-            'note' => 'Policy names describe lanes; they do not initialize state.'
+            'note' => 'Policy names describe lanes; coupon policy aliases are documented separately and do not initialize state.'
         ], 200, ['X-Violet-Trace' => 'query-channel-policy']);
         break;
     case 'documentIndex':

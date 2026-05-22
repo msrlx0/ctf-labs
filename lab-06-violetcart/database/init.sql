@@ -170,7 +170,7 @@ INSERT INTO public_documents (doc_code, title, body, file_name) VALUES
 ('VC-2026-0007', 'Financing memo: public quote token behavior', 'Public quote tokens start with vc_quote_. Seller-assisted reservations use internal R-####-V references after migration sync. Public document mirrors were kept for support during import review.', 'VC-2026-0007.txt'),
 ('VC-2026-0011', 'Import status memo: seller review queues', 'Seller review state may lag behind public reservation state. QA placeholders are fake and not challenge flags.', 'VC-2026-0011.txt'),
 ('VC-2026-0017', 'Partner checkout recon memo', 'Migration marker for partner checkout recon. Public checkout does not expose partner context directly; checkpoint confirmation requires matching migration values.', 'VC-2026-0017.txt'),
-('VC-2026-0020', 'Coupon policy memo', 'WELCOME10 remains public. Staff settlement coupons belong to seller-assisted review and should not be accepted before approval state exists.', NULL);
+('VC-2026-0020', 'Coupon policy memo', 'WELCOME10 remains public. Staff settlement policy PURPLE-STAFF belongs to seller-assisted review, and payment method alias partner_settlement is reserved for settled partner holds. Policy aliases are not proof of approval state.', NULL);
 
 INSERT INTO reviews (car_id, display_name, title, body, rating) VALUES
 (1, 'Aria', 'Quietly brutal', 'The Violet GT-R feels like a private jet with launch control.', 5),

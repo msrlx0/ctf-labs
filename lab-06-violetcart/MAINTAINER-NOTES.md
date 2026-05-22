@@ -10,16 +10,16 @@ The private full-path regression script is maintainer-only because it verifies t
 
 The private secondary-vulnerability regression script is mostly safe from a final-flag perspective, but it still reveals methodology, payload style, and intended bug classes. Treat it as optional public material only if that matches the release policy.
 
-`VALIDATION.md` is useful for maintainers, but it describes intended behavior in enough detail to reduce challenge difficulty. Review it before publishing.
+`VALIDATION.md` is public-safe smoke validation. Keep full-path regression details outside this repository or in private branch history.
 
 ## Public Release Preparation
 
-Before merging to public main:
+Before merging further public updates:
 
 - preserve this development state in a private branch or tag;
-- replace the private walkthrough with `WALKTHROUGH.public.md`;
-- remove the full-chain validation script from the public release;
-- decide whether secondary validation methodology should be public;
+- keep `WALKTHROUGH.md` as the public placeholder;
+- keep full-chain validation scripts out of the public release;
+- keep secondary validation methodology private unless release policy changes;
 - run the public leak checks in `PUBLIC-RELEASE-CHECKLIST.md`;
 - rebuild Docker and smoke test port `8098`.
 

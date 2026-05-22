@@ -1,6 +1,7 @@
 const VioletCheckout = {
   flow: "public_checkout",
   migrationMirror: "reservation-context-required",
+  migrationSyncPath: "/legacy/quote-sync.php",
   staffCouponMode: "seller-review-state-required",
   quoteStorageKey: "violet:lastQuote",
   reservationStorageKey: "violet:lastReservation",

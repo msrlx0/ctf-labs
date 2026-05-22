@@ -12,6 +12,7 @@ This checklist describes the public-safe release state for `lab-06-violetcart`.
 - `README.md` and `STUDENT-GUIDE.md` remain high-level and public-safe.
 - Fake QA placeholder material remains clearly marked fake or not a challenge flag.
 - Phase 9 public UI polish keeps marketplace language subtle and does not add solution sequencing.
+- Phase 10 dry-run audit keeps ignored local logs out of the Docker build context and confirms the tracked recon memo is sufficient.
 
 ## Keep In Public Release
 
@@ -23,6 +24,7 @@ This checklist describes the public-safe release state for `lab-06-violetcart`.
 - `PUBLIC-RELEASE-CHECKLIST.md`
 - `MAINTAINER-NOTES.md`
 - `Dockerfile`
+- `.dockerignore`
 - `docker-compose.yml`
 - `app/`
 - `database/`
@@ -56,6 +58,8 @@ Expected:
 ## Public Leak Checks
 
 Use the private maintainer flag list outside this repository for exact literal checks. Public files should not contain real challenge flags.
+
+Confirm `app/storage/public_docs/VC-2026-0017.txt` is tracked and contains clue material only. `app/storage/logs/` must not be required for solving and should remain excluded from Docker context by `.dockerignore`.
 
 Broad public scans:
 
