@@ -36,7 +36,7 @@ page_header('Catalog');
 <section class="panel">
   <p class="eyebrow">Catalog</p>
   <h1>VioletCart vehicles</h1>
-  <p class="muted">Sort behavior changed during the seller channel migration. Public keys are stable; partner-only keys may not render cleanly.</p>
+  <p class="muted">Inventory blends public checkout listings with imports that may need seller-assisted review. Public sort keys are stable; operational keys can behave differently during migration.</p>
   <?php flash($sortError, 'error'); ?>
   <div class="pill-row">
     <a class="pill" href="/cars.php?sort=price">Price</a>
@@ -53,8 +53,11 @@ page_header('Catalog');
       <div class="car-body">
         <h2><?= e($car['name']) ?></h2>
         <p class="muted"><?= e($car['description']) ?></p>
+        <strong class="price-line"><?= money((int)$car['price_cents']) ?></strong>
         <div class="car-meta">
-          <span class="pill"><?= money((int)$car['price_cents']) ?></span>
+          <span class="pill"><?= e((string)$car['year']) ?></span>
+          <span class="pill"><?= number_format((int)$car['mileage']) ?> mi</span>
+          <span class="pill"><?= e($car['color']) ?></span>
           <span class="pill"><?= e($car['inspection_status']) ?></span>
           <span class="pill"><?= e($car['import_status']) ?></span>
         </div>

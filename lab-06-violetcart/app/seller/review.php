@@ -6,7 +6,7 @@ $internal = (string)input_value('internal_reservation', '');
 $decision = (string)input_value('decision', '');
 
 if ($channel !== 'partner_checkout') {
-    json_response(['error' => 'seller_channel_required', 'message' => 'Seller review updates require partner checkout channel.'], 403, ['X-Violet-Trace' => 'seller-review-public-denied']);
+    json_response(['error' => 'seller_review_context_unavailable', 'message' => 'Seller review updates require a partner checkout context.'], 403, ['X-Violet-Trace' => 'seller-review-public-denied']);
 }
 
 $stmt = db()->prepare('SELECT * FROM reservations WHERE internal_reservation = ?');
@@ -17,7 +17,7 @@ if (!$reservation) {
 }
 
 if ($decision !== 'approve') {
-    json_response(['reviewed' => false, 'message' => 'Only approve is enabled in the local seller review simulation.'], 409);
+    json_response(['reviewed' => false, 'message' => 'Requested seller decision is unavailable in this local review queue.'], 409);
 }
 
 $stmt = db()->prepare('UPDATE reservations SET seller_status = "approved", status = "seller_approved", channel = "partner_checkout" WHERE id = ?');
@@ -30,5 +30,5 @@ json_response([
     'reviewed' => true,
     'internal_reservation' => $internal,
     'seller_status' => 'approved',
-    'next' => 'Return to checkout and apply the partner settlement coupon.'
+    'review_note' => 'Seller approval is recorded; settlement policy is evaluated by checkout state.'
 ], 200, ['X-Violet-Trace' => 'seller-review-approved']);

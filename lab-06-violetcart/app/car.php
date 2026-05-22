@@ -19,8 +19,11 @@ page_header($car['name']);
     <p class="eyebrow">Vehicle detail</p>
     <h1><?= e($car['name']) ?></h1>
     <p><?= e($car['description']) ?></p>
+    <strong class="price-line"><?= money((int)$car['price_cents']) ?></strong>
     <div class="pill-row">
-      <span class="pill"><?= money((int)$car['price_cents']) ?></span>
+      <span class="pill"><?= e((string)$car['year']) ?></span>
+      <span class="pill"><?= number_format((int)$car['mileage']) ?> mi</span>
+      <span class="pill"><?= e($car['color']) ?></span>
       <span class="pill">VIN <?= e($car['vin']) ?></span>
       <span class="pill"><?= e($car['import_status']) ?></span>
     </div>
@@ -29,10 +32,22 @@ page_header($car['name']);
       <a class="button secondary" href="/documents.php?doc=VC-2026-0007">Financing memo</a>
     </div>
   </div>
-  <div class="panel">
-    <h2>Inspection</h2>
-    <p class="muted">Inspection jobs are reviewed by internal aliases during the import workflow.</p>
-    <div class="code">vin=<?= e($car['vin']) . "\n" ?>seller_ref=<?= e($car['seller_ref']) . "\n" ?>status=<?= e($car['inspection_status']) ?></div>
+  <div class="hero-showcase">
+    <div class="vehicle-visual large" aria-hidden="true"></div>
+    <div class="panel">
+      <h2>Inspection summary</h2>
+      <p class="muted">Inspection jobs are tracked by vehicle alias during import review. Approval for purchase can still depend on reservation and seller context.</p>
+      <div class="code">vin=<?= e($car['vin']) . "\n" ?>seller_ref=<?= e($car['seller_ref']) . "\n" ?>status=<?= e($car['inspection_status']) ?></div>
+    </div>
   </div>
+</section>
+<section class="grid">
+  <div class="metric"><span>Inspection</span><strong><?= e($car['inspection_status']) ?></strong><small class="muted">Vehicle readiness</small></div>
+  <div class="metric"><span>Import status</span><strong><?= e($car['import_status']) ?></strong><small class="muted">Operations queue</small></div>
+  <div class="metric"><span>Seller desk</span><strong><?= (int)$car['partner_only'] === 1 ? 'Required' : 'Optional' ?></strong><small class="muted">Per listing policy</small></div>
+</section>
+<section class="panel">
+  <h2>Reservation notes</h2>
+  <p class="muted">Public checkout can create buyer-visible reservations. Seller-assisted review uses a separate operations reference when a listing is moved into partner settlement.</p>
 </section>
 <?php page_footer(); ?>

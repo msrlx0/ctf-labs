@@ -5,15 +5,15 @@ header('X-Violet-Legacy: quote-sync');
 $channel = $_SERVER['HTTP_X_VIOLET_CHANNEL'] ?? (string)input_value('channel', '');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    json_response(['error' => 'method_not_allowed', 'message' => 'Quote sync accepts migration POST requests only.'], 405, ['Allow' => 'POST']);
+    json_response(['error' => 'method_not_allowed', 'message' => 'Migration sync accepts POST requests only.'], 405, ['Allow' => 'POST']);
 }
 
 if ($channel === '') {
-    json_response(['error' => 'missing_channel', 'message' => 'Legacy sync requires a checkout channel.'], 400, ['X-Violet-Trace' => 'quote-sync-missing-channel']);
+    json_response(['error' => 'missing_channel', 'message' => 'Checkout channel context is missing.'], 400, ['X-Violet-Trace' => 'quote-sync-missing-channel']);
 }
 
 if ($channel !== 'partner_checkout') {
-    json_response(['error' => 'unsupported_public_flow', 'message' => 'Public checkout cannot perform seller channel sync.'], 409, ['X-Violet-Trace' => 'quote-sync-public-flow']);
+    json_response(['error' => 'unsupported_public_flow', 'message' => 'Public checkout cannot initialize seller channel sync.'], 409, ['X-Violet-Trace' => 'quote-sync-public-flow']);
 }
 
 $quoteId = (int)input_value('quote_id', 0);
@@ -22,16 +22,16 @@ $publicToken = (string)input_value('public_token', '');
 
 $quote = find_quote($quoteId);
 if (!$quote) {
-    json_response(['error' => 'quote_not_ready', 'message' => 'Quote is not ready for legacy sync.'], 409, ['X-Violet-Trace' => 'quote-sync-quote-missing']);
+    json_response(['error' => 'quote_not_ready', 'message' => 'Quote context is not ready for migration sync.'], 409, ['X-Violet-Trace' => 'quote-sync-quote-missing']);
 }
 
 $reservation = find_reservation($reservationId);
 if (!$reservation) {
-    json_response(['error' => 'reservation_context_missing', 'message' => 'Reservation context is required before seller sync.'], 409, ['X-Violet-Trace' => 'quote-sync-reservation-missing']);
+    json_response(['error' => 'reservation_context_missing', 'message' => 'Reservation context is required before seller review can be mirrored.'], 409, ['X-Violet-Trace' => 'quote-sync-reservation-missing']);
 }
 
 if (!hash_equals((string)$quote['public_token'], $publicToken) || (int)$reservation['quote_id'] !== $quoteId) {
-    json_response(['error' => 'context_mismatch', 'message' => 'Quote token and reservation context do not match.'], 403, ['X-Violet-Trace' => 'quote-sync-context-mismatch']);
+    json_response(['error' => 'context_mismatch', 'message' => 'Quote token and reservation context do not describe the same hold.'], 403, ['X-Violet-Trace' => 'quote-sync-context-mismatch']);
 }
 
 $internal = $reservation['internal_reservation'] ?: internal_reservation_for($reservationId);
@@ -54,7 +54,7 @@ json_response([
     'internal_reservation' => $internal,
     'seller_status' => 'pending',
     'flag' => flag_value('legacy_sync'),
-    'next' => '/seller/reservation.php?ref=' . $internal
+    'review_note' => 'Seller desk reference is mirrored for operations visibility.'
 ], 200, [
     'X-Violet-Trace' => 'quote-sync-partner-context',
     'X-Violet-Channel' => 'partner_checkout'

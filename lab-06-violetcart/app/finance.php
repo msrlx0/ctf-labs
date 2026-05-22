@@ -4,10 +4,11 @@ $carId = (int)($_GET['car_id'] ?? 1);
 $cars = db()->query('SELECT id, name, price_cents FROM cars ORDER BY seller_priority DESC')->fetchAll();
 page_header('Finance');
 ?>
-<section class="form-card">
+<section class="two-col">
+<div class="form-card">
   <p class="eyebrow">Finance simulation</p>
   <h1>Create a public quote</h1>
-  <p class="muted">The browser creates a public quote first. Reservation and seller review state are separate migration steps.</p>
+  <p class="muted">Build a buyer-facing payment estimate before reserving inventory. Seller-assisted review is tracked separately from this public quote.</p>
   <form id="quote-form">
     <label for="car_id">Vehicle</label>
     <select id="car_id" name="car_id">
@@ -28,6 +29,16 @@ page_header('Finance');
     <button type="submit">Create quote</button>
   </form>
   <pre class="code" data-violet-status>Quote output will appear here.</pre>
+</div>
+<aside class="panel">
+  <p class="eyebrow">Underwriting notes</p>
+  <h2>Reservation context matters</h2>
+  <ul class="step-list">
+    <li><b>1</b><span>Public quotes capture vehicle, term, down payment, and a buyer-visible token.</span></li>
+    <li><b>2</b><span>Reservations pair a quote with a held vehicle before checkout services evaluate promotions.</span></li>
+    <li><b>3</b><span>Imported or partner-held listings may need seller review state before settlement policy changes.</span></li>
+  </ul>
+</aside>
 </section>
 <script src="/assets/js/checkout-violet.js"></script>
 <script>

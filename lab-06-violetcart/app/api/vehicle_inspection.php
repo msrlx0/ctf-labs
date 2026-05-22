@@ -3,11 +3,11 @@ require_once __DIR__ . '/../includes/helpers.php';
 
 $inspectionUrl = (string)input_value('inspection_url', '');
 if ($inspectionUrl === '') {
-    json_response(['error' => 'inspection_url_required', 'message' => 'Inspection URL is required.'], 400);
+    json_response(['error' => 'inspection_url_required', 'message' => 'Inspection alias is required.'], 400);
 }
 
 if (preg_match('/(localhost|127\.0\.0\.1|0\.0\.0\.0|::1|file:|gopher:|dict:|169\.254\.169\.254|169\.254|metadata)/i', $inspectionUrl)) {
-    json_response(['error' => 'inspection_target_blocked', 'message' => 'Inspection target is not allowed.'], 403, ['X-Violet-Trace' => 'inspection-blocked-target']);
+    json_response(['error' => 'inspection_target_blocked', 'message' => 'Inspection target is outside the approved alias registry.'], 403, ['X-Violet-Trace' => 'inspection-blocked-target']);
 }
 
 $vin = null;
@@ -18,7 +18,7 @@ if (preg_match('/^violet:\/\/inspection\/([A-Z0-9-]+)$/', $inspectionUrl, $m)) {
 }
 
 if (!$vin) {
-    json_response(['error' => 'inspection_alias_only', 'message' => 'Only Violet inspection aliases are supported in the lab.'], 400, ['X-Violet-Trace' => 'inspection-alias-required']);
+    json_response(['error' => 'inspection_alias_only', 'message' => 'Only Violet inspection aliases are supported by this public service.'], 400, ['X-Violet-Trace' => 'inspection-alias-required']);
 }
 
 $stmt = db()->prepare('SELECT * FROM inspection_jobs WHERE vin = ? ORDER BY id DESC LIMIT 1');
@@ -32,5 +32,5 @@ json_response([
     'vin' => $vin,
     'status' => $job['status'],
     'result' => $job['result'],
-    'note' => 'Inspection status is advisory; checkout still depends on reservation and seller context.'
+    'note' => 'Inspection status is advisory; checkout still depends on reservation and seller review context.'
 ], 200, ['X-Violet-Trace' => 'inspection-alias-resolved']);

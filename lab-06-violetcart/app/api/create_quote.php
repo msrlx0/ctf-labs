@@ -12,7 +12,7 @@ $stmt->execute([$carId]);
 $car = $stmt->fetch();
 if (!$car) {
     current_trace('quote-car-missing');
-    json_response(['error' => 'car_not_found', 'message' => 'Vehicle is not available for quote.'], 404);
+    json_response(['error' => 'vehicle_not_available', 'message' => 'Vehicle is not available for a public quote.'], 404);
 }
 
 $principal = max(0, (int)$car['price_cents'] - $down);
@@ -28,7 +28,7 @@ $stmt->execute([
     $down,
     $monthly,
     $cacheKey,
-    $car['partner_only'] ? 'seller review likely required' : null,
+    $car['partner_only'] ? 'seller review state may be required' : null,
 ]);
 
 $quoteId = (int)db()->lastInsertId();
@@ -46,7 +46,7 @@ json_response([
     'monthly_cents' => $monthly,
     'status' => 'quoted',
     'flow' => 'public_checkout',
-    'next' => '/api/create_reservation.php'
+    'reservation_note' => 'A quote is not a hold until reservation context is created.'
 ], 200, [
     'X-Violet-Flow' => 'public_checkout',
     'X-Violet-Legacy' => 'disabled',

@@ -6,7 +6,12 @@ page_header('Support');
 <section class="panel">
   <p class="eyebrow">Support desk</p>
   <h1>Migration tickets</h1>
-  <p class="muted">Support notes are edited for buyers, but older wording may still reflect internal workflow names.</p>
+  <p class="muted">Buyer-visible tickets are summarized from operations notes. Older wording may mention workflow names, but support visibility is not the same as settlement approval.</p>
+  <div class="status-row">
+    <span class="badge good">Public queue</span>
+    <span class="badge">Migration window</span>
+    <span class="badge warn">Context-sensitive</span>
+  </div>
   <div class="table-wrap">
     <table>
       <thead><tr><th>ID</th><th>Subject</th><th>Status</th><th>Note</th></tr></thead>

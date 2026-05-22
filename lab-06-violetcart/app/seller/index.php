@@ -5,7 +5,7 @@ page_header('Seller');
 <section class="panel">
   <p class="eyebrow">Seller desk</p>
   <h1>Seller workflow</h1>
-  <p class="muted">Seller reservations are not public reservations. The desk expects partner checkout context and an internal reservation reference.</p>
+  <p class="muted">Seller reservations are operations records, not buyer-facing reservation IDs. The desk opens only when review context and an internal reference line up.</p>
   <form action="/seller/reservation.php" method="get">
     <label for="ref">Internal reservation</label>
     <input id="ref" name="ref" placeholder="R-####-V">

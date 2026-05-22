@@ -9,7 +9,7 @@ page_header('Account');
 <section class="panel">
   <p class="eyebrow">Account</p>
   <h1><?= e($user['display_name']) ?></h1>
-  <p class="muted">Role: <?= e($user['role']) ?>. Checkout state may differ from seller state during migration.</p>
+  <p class="muted">Role: <?= e($user['role']) ?>. Public quote history is shown here; seller review state may lag or live in a separate operations queue.</p>
 </section>
 <section class="panel">
   <h2>Recent quotes</h2>

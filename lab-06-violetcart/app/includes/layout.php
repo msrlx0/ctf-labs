@@ -30,6 +30,7 @@ function page_header(string $title): void
       <a href="/support.php">Support</a>
       <a href="/reviews.php">Reviews</a>
       <a href="/documents.php">Documents</a>
+      <a href="/search.php">Search</a>
       <?php if ($user): ?>
         <a href="/account.php">Account</a>
         <a href="/orders.php">Orders</a>
@@ -52,6 +53,10 @@ function page_footer(): void
 {
     ?>
   </main>
+  <footer class="footer">
+    <strong>VioletCart</strong> keeps public reservations and seller-assisted reviews on separate migration tracks.
+    Public support notes may describe operational names without granting review state.
+  </footer>
   <script src="/assets/js/search.js"></script>
 </body>
 </html>

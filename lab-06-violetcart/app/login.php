@@ -35,6 +35,6 @@ page_header('Login');
     <input id="password" name="password" type="password" autocomplete="current-password" required>
     <button type="submit">Login</button>
   </form>
-  <p class="muted">Public training account: guest / guest123</p>
+  <p class="muted">Public training account: guest / guest123. Admin credentials are not part of the buyer checkout workflow.</p>
 </section>
 <?php page_footer(); ?>

@@ -4,7 +4,7 @@ These notes are for development and release management. They are not a student w
 
 ## Private Materials
 
-`WALKTHROUGH.md` is private/development-only. It contains solution detail and should not be published as-is to the public main branch.
+`WALKTHROUGH.md` in this public snapshot is a placeholder. Any private solution walkthrough should remain outside the public release or in private branch history.
 
 The private full-path regression script is maintainer-only because it verifies the complete intended path and reveals the shape of the solution. Keep it in a private branch or remove it before public release.
 

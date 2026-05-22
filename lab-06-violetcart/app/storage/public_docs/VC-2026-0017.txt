@@ -6,7 +6,7 @@ trace: quote-migration-2026-02
 
 Flow hint:
 public checkout does not expose partner context directly
-partner checkout requires quote + reservation context before sync
+partner checkout requires reservation context before migration sync is useful
 
 Operations note:
-The query registry can confirm completed migration checkpoints, but only when checkpoint and trace values agree.
+The query registry can confirm completed migration checkpoints, but only when the migration values agree.

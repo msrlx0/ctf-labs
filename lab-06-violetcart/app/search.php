@@ -12,6 +12,7 @@ page_header('Search');
 <section class="form-card">
   <p class="eyebrow">Search</p>
   <h1>Search vehicles</h1>
+  <p class="muted">Search uses the public catalog index. Operational review fields may appear elsewhere, but buyer search stays inventory-focused.</p>
   <form method="get">
     <label for="q">Query</label>
     <input id="q" name="q" value="<?= e($filtered) ?>">

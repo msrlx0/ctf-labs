@@ -11,6 +11,7 @@ This checklist describes the public-safe release state for `lab-06-violetcart`.
 - `VALIDATION.md` has been sanitized to public-safe smoke checks.
 - `README.md` and `STUDENT-GUIDE.md` remain high-level and public-safe.
 - Fake QA placeholder material remains clearly marked fake or not a challenge flag.
+- Phase 9 public UI polish keeps marketplace language subtle and does not add solution sequencing.
 
 ## Keep In Public Release
 

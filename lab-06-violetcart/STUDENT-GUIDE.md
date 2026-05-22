@@ -40,6 +40,7 @@ guest / guest123
 
 - Context matters more than a single parameter.
 - Public checkout and partner checkout are not the same thing.
+- Business wording matters, but it is context to correlate rather than a set of literal instructions.
 - A valid quote does not automatically mean a valid reservation.
 - A visible reference may not be the reference required by another workflow.
 - A coupon can be valid but still not useful in the current context.

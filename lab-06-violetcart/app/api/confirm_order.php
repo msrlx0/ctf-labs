@@ -10,24 +10,24 @@ $user = current_user();
 $quote = find_quote($quoteId);
 $reservation = find_reservation($reservationId);
 if (!$quote || !$reservation || (int)$reservation['quote_id'] !== $quoteId) {
-    json_response(['error' => 'checkout_context_missing', 'message' => 'Order confirmation requires paired quote and reservation.'], 400, ['X-Violet-Trace' => 'order-context-missing']);
+    json_response(['error' => 'checkout_context_missing', 'message' => 'Order confirmation requires paired quote and reservation context.'], 400, ['X-Violet-Trace' => 'order-context-missing']);
 }
 
 $partnerState = $channel === 'partner_checkout' || $quote['channel'] === 'partner_checkout' || $reservation['channel'] === 'partner_checkout';
 if (!$partnerState) {
-    json_response(['error' => 'unsupported_public_flow', 'message' => 'Public checkout cannot use partner settlement.'], 409, ['X-Violet-Trace' => 'order-public-flow']);
+    json_response(['error' => 'unsupported_public_flow', 'message' => 'Public checkout cannot initialize seller-assisted settlement.'], 409, ['X-Violet-Trace' => 'order-public-flow']);
 }
 
 if ($reservation['seller_status'] !== 'approved') {
-    json_response(['error' => 'seller_review_required', 'message' => 'Seller approval is required before partner settlement.'], 409, ['X-Violet-Trace' => 'order-seller-review-missing']);
+    json_response(['error' => 'seller_review_state_unavailable', 'message' => 'Seller review state is unavailable for settlement.'], 409, ['X-Violet-Trace' => 'order-seller-review-missing']);
 }
 
 if ($reservation['coupon_code'] !== 'PURPLE-STAFF') {
-    json_response(['error' => 'settlement_coupon_missing', 'message' => 'Partner settlement coupon has not been applied.'], 409, ['X-Violet-Trace' => 'order-coupon-missing']);
+    json_response(['error' => 'settlement_policy_incomplete', 'message' => 'Reservation discount policy is not ready for seller-assisted settlement.'], 409, ['X-Violet-Trace' => 'order-coupon-missing']);
 }
 
 if ($paymentMethod !== 'partner_settlement') {
-    json_response(['error' => 'payment_method_rejected', 'message' => 'Payment method does not match seller-assisted settlement.'], 409, ['X-Violet-Trace' => 'order-payment-method-rejected']);
+    json_response(['error' => 'payment_method_rejected', 'message' => 'Payment method does not match the settled reservation context.'], 409, ['X-Violet-Trace' => 'order-payment-method-rejected']);
 }
 
 $stmt = db()->prepare('SELECT price_cents FROM cars WHERE id = ?');

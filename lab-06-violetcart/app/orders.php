@@ -9,6 +9,7 @@ page_header('Orders');
 <section class="panel">
   <p class="eyebrow">Orders</p>
   <h1>Order history</h1>
+  <p class="muted">Confirmed orders appear after checkout state, seller review state, and settlement policy agree.</p>
   <div class="table-wrap">
     <table>
       <thead><tr><th>ID</th><th>Vehicle</th><th>Status</th><th>Payment</th><th>Total</th></tr></thead>

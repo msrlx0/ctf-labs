@@ -19,6 +19,7 @@ page_header('Reviews');
 <section class="form-card">
   <p class="eyebrow">Buyer reviews</p>
   <h1>Leave a review</h1>
+  <p class="muted">Reviews are moderated for obvious unsafe markup before display. The local renderer keeps a small proof marker for QA while buyer comments are triaged.</p>
   <?php flash($message); ?>
   <form method="post">
     <label for="car_id">Vehicle</label>
@@ -37,9 +38,15 @@ page_header('Reviews');
   </form>
   <p class="muted" data-review-proof>Review renderer idle.</p>
 </section>
-<section class="grid">
+<div class="section-head">
+  <div>
+    <p class="eyebrow">Recent experiences</p>
+    <h2>Marketplace reviews</h2>
+  </div>
+</div>
+<section class="review-grid">
   <?php foreach ($reviews as $review): ?>
-    <article class="panel" data-review-title="<?= $review['title'] ?>" data-reviewer="<?= $review['display_name'] ?>">
+    <article class="review-card" data-review-title="<?= $review['title'] ?>" data-reviewer="<?= $review['display_name'] ?>">
       <h2><?= e($review['title']) ?></h2>
       <p class="muted"><?= e($review['car_name']) ?> by <?= e($review['display_name']) ?> - <?= (int)$review['rating'] ?>/5</p>
       <p><?= $review['body'] ?></p>

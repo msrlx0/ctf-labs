@@ -12,7 +12,7 @@ $reservation = $stmt->fetch();
 if (!$reservation) {
     http_response_code(404);
     page_header('Seller reservation');
-    echo '<section class="panel"><h1>Reservation not found</h1><p class="muted">Seller desk references are created by legacy quote sync.</p></section>';
+    echo '<section class="panel"><h1>Reservation not found</h1><p class="muted">Seller desk references appear only after migration sync records a reviewable reservation.</p></section>';
     page_footer();
     exit;
 }
@@ -21,7 +21,7 @@ if ($channel !== 'partner_checkout') {
     http_response_code(403);
     header('X-Violet-Trace: seller-public-channel-denied');
     page_header('Seller reservation');
-    echo '<section class="panel"><h1>Forbidden</h1><p class="muted">Seller reservation exists, but this request is not in the partner checkout channel.</p></section>';
+    echo '<section class="panel"><h1>Review context unavailable</h1><p class="muted">The reservation exists, but this request still looks like a public checkout visit.</p></section>';
     page_footer();
     exit;
 }
@@ -32,7 +32,7 @@ page_header('Seller reservation');
 <section class="panel">
   <p class="eyebrow">Seller review</p>
   <h1><?= e($reservation['internal_reservation']) ?></h1>
-  <p class="muted">Partner checkout context accepted. This view is not reachable from public checkout alone.</p>
+  <p class="muted">Seller review context accepted. Public checkout state alone does not initialize this desk.</p>
   <div class="grid">
     <div class="metric"><span>Vehicle</span><strong><?= e($reservation['car_name']) ?></strong><small><?= e($reservation['seller_ref']) ?></small></div>
     <div class="metric"><span>Status</span><strong><?= e($reservation['status']) ?></strong><small><?= e($reservation['seller_status']) ?></small></div>

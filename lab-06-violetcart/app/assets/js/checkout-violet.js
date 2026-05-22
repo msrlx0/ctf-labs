@@ -1,7 +1,7 @@
 const VioletCheckout = {
   flow: "public_checkout",
-  legacySyncPath: "/legacy/quote-sync.php",
-  staffCouponMode: "partner-review-required",
+  migrationMirror: "reservation-context-required",
+  staffCouponMode: "seller-review-state-required",
   quoteStorageKey: "violet:lastQuote",
   reservationStorageKey: "violet:lastReservation",
 };
@@ -42,9 +42,38 @@ async function violetApplyCoupon(quoteId, reservationId, coupon) {
   return response.json();
 }
 
+function violetSavedJson(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "null");
+  } catch (error) {
+    return null;
+  }
+}
+
+function violetHydrateCheckoutForm() {
+  const quote = violetSavedJson(VioletCheckout.quoteStorageKey);
+  const reservation = violetSavedJson(VioletCheckout.reservationStorageKey);
+  const quoteId = document.getElementById("quote_id");
+  const publicToken = document.getElementById("public_token");
+  const reservationId = document.getElementById("reservation_id");
+
+  if (quote && quoteId && !quoteId.value) {
+    quoteId.value = quote.quote_id || "";
+  }
+  if (quote && publicToken && !publicToken.value) {
+    publicToken.value = quote.public_token || "";
+  }
+  if (reservation && reservationId && !reservationId.value) {
+    reservationId.value = reservation.reservation_id || "";
+  }
+}
+
 function violetCheckoutNotice(message) {
   const el = document.querySelector("[data-violet-status]");
   if (el) {
     el.textContent = message;
   }
 }
+
+window.VioletCheckout = VioletCheckout;
+window.violetHydrateCheckoutForm = violetHydrateCheckoutForm;

@@ -15,7 +15,7 @@ $blocked = '/(\.\.\/|\.\.\\\\|%2e%2e|\/etc\/passwd|^[a-z]+:\/\/|php:\/\/|data:\/
 
 if ($file === '' || preg_match($blocked, $file) || preg_match($blocked, $decodedOnce)) {
     http_response_code(400);
-    echo 'Invalid public document path.';
+    echo 'Invalid public document mirror request.';
     exit;
 }
 
@@ -26,7 +26,7 @@ if (!str_contains($decodedOnce, '/') && preg_match('/^VC-2026-[0-9]{4}\.txt$/', 
 
 if (!str_starts_with($decodedOnce, 'public_docs/')) {
     http_response_code(403);
-    echo 'Only public document mirrors are downloadable.';
+    echo 'Only approved public document mirrors are downloadable.';
     exit;
 }
 
@@ -36,7 +36,7 @@ $target = realpath(__DIR__ . '/storage/' . $decodedOnce);
 
 if (!$target || !$storageRoot || !$publicRoot) {
     http_response_code(404);
-    echo 'Document not found.';
+    echo 'Document mirror not found.';
     exit;
 }
 
@@ -44,7 +44,7 @@ $insidePublic = str_starts_with($target, $publicRoot);
 
 if (!$insidePublic) {
     http_response_code(403);
-    echo 'Document mirror denied.';
+    echo 'Document mirror denied by public storage policy.';
     exit;
 }
 

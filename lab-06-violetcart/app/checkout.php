@@ -2,10 +2,11 @@
 require_once __DIR__ . '/includes/layout.php';
 page_header('Checkout');
 ?>
-<section class="form-card">
+<section class="two-col">
+<div class="form-card">
   <p class="eyebrow">Checkout</p>
   <h1>Public checkout</h1>
-  <p class="muted">Normal checkout expects quote, reservation, coupon, then payment. Seller-assisted settlement is handled by a different context.</p>
+  <p class="muted">Use this workspace for buyer-visible reservation steps and public promotions. Partner settlement state is evaluated outside the public checkout lane.</p>
   <div class="grid">
     <div>
       <label for="quote_id">Quote ID</label>
@@ -25,9 +26,20 @@ page_header('Checkout');
     <button id="coupon-button" type="button">Apply WELCOME10</button>
   </div>
   <pre class="code" data-violet-status>Checkout response output.</pre>
+</div>
+<aside class="panel">
+  <p class="eyebrow">Reservation desk</p>
+  <h2>Public lane checkpoints</h2>
+  <ul class="step-list">
+    <li><b>Q</b><span>Quote context must match the public token issued by finance.</span></li>
+    <li><b>R</b><span>Reservation context is created before coupon services can compare checkout state.</span></li>
+    <li><b>C</b><span>WELCOME10 is a public offer. Staff settlement promotions require a different review state.</span></li>
+  </ul>
+</aside>
 </section>
 <script src="/assets/js/checkout-violet.js"></script>
 <script>
+violetHydrateCheckoutForm();
 document.getElementById("reserve-button").addEventListener("click", async () => {
   const quoteId = Number(document.getElementById("quote_id").value);
   const token = document.getElementById("public_token").value;
@@ -35,6 +47,7 @@ document.getElementById("reserve-button").addEventListener("click", async () => 
   if (reservation.reservation_id) {
     document.getElementById("reservation_id").value = reservation.reservation_id;
   }
+  violetHydrateCheckoutForm();
   violetCheckoutNotice(JSON.stringify(reservation, null, 2));
 });
 document.getElementById("coupon-button").addEventListener("click", async () => {

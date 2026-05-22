@@ -46,7 +46,7 @@ json_response([
     'car_id' => (int)$quote['car_id'],
     'status' => $status,
     'channel' => $channel,
-    'note' => 'Seller review state is not the same as public checkout state.'
+    'note' => 'Public reservation state is recorded separately from seller review state.'
 ], 200, [
     'X-Violet-Flow' => $channel,
     'X-Violet-Trace' => $status === 'seller_review_requested' ? 'reservation-massaged-review' : 'reservation-created'

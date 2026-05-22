@@ -1,8 +1,8 @@
 VioletCart Financing Memo VC-2026-0007
 
 Public checkout quotes use a public token beginning with vc_quote_.
-Seller assisted reservations use internal references in the R-####-V family.
+Seller-assisted reservations use internal references in the R-####-V family after migration sync mirrors the hold for operations.
 
 Old migration note:
-Some quote review traces moved to downloadable service logs during the partner checkout pilot.
-The public document mirror stores files under public_docs, but the legacy mirror kept sibling log paths during import.
+Some quote review traces moved to mirrored support files during the partner checkout pilot.
+The public document mirror stores approved files under public_docs. Older import tooling kept neighboring operations mirrors during review, which is why support tickets still mention mirror policy.

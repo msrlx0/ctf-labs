@@ -12,6 +12,8 @@ Status: **Public-release snapshot**.
 
 VioletCart is migrating from a public vehicle checkout flow to a seller-assisted partner checkout flow. The migration left behind inconsistent validation, legacy behavior, confusing state transitions, old support notes, and context-dependent responses.
 
+The public UI is styled as a dark violet premium vehicle marketplace with financing, reservation, inspection, support, document, review, and seller-desk surfaces.
+
 The lab is intentionally hard because the correct path is spread across pages, JavaScript, response headers, support tickets, public documents, seller workflow behavior, and repeated request comparison. It should not require brute force, internet access, external callbacks, malware, or destructive behavior.
 
 ## Run

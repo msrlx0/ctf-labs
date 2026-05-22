@@ -13,12 +13,16 @@ page_header('Documents');
 <section class="panel">
   <p class="eyebrow">Documents</p>
   <h1>Public financing documents</h1>
-  <p class="muted">Document IDs are assigned by finance operations and mirrored into public storage when approved.</p>
-  <div class="pill-row">
-    <?php foreach ($docs as $item): ?>
-      <a class="pill" href="/documents.php?doc=<?= e($item['doc_code']) ?>"><?= e($item['doc_code']) ?></a>
-    <?php endforeach; ?>
-  </div>
+  <p class="muted">Approved financing memos are mirrored for buyer support. Some migration checkpoints are visible here because support needs consistent language across public and partner queues.</p>
+</section>
+<section class="document-grid">
+  <?php foreach ($docs as $item): ?>
+    <a class="document-card" href="/documents.php?doc=<?= e($item['doc_code']) ?>">
+      <p class="eyebrow"><?= e($item['doc_code']) ?></p>
+      <h2><?= e($item['title']) ?></h2>
+      <p class="muted"><?= $item['file_name'] ? 'Download mirror available.' : 'Memo only.' ?></p>
+    </a>
+  <?php endforeach; ?>
 </section>
 <?php if ($doc): ?>
 <section class="panel">
