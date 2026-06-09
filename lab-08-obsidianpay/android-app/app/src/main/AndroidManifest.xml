@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- The app talks to the local lab API over HTTP. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+      Cleartext is permitted ONLY for the local lab hosts (see
+      res/xml/network_security_config.xml). This is intentional for a local
+      Android Emulator setup (http://10.0.2.2:8102) and must never be used in
+      production.
+
+      NOTE (instructor): exported components (Activities/Services/Receivers/
+      Providers) used as controlled vulnerabilities are a FUTURE phase. In this
+      phase only MainActivity is exported, because the launcher requires it.
+    -->
+    <application
+        android:allowBackup="true"
+        android:icon="@android:drawable/sym_def_app_icon"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ObsidianPay"
+        android:usesCleartextTraffic="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

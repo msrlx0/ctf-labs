@@ -1,0 +1,15 @@
+{
+  "name": "obsidianpay-mobile-api",
+  "version": "0.2.0-phase2",
+  "description": "Lab 08 - ObsidianPay Mobile API (Phase 2: richer mobile contracts + controlled backend vulnerabilities)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
