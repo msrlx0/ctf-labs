@@ -61,6 +61,17 @@ Com o backend no ar (`127.0.0.1:8102`):
    transferência e Configuração.
 7. Abra recibos e cartões (inclusive pelo campo "abrir por ID"), envie um sync
    de suporte, gere uma prévia de transferência.
+8. Toque em **QR Payment** e cole/digite um payload no formato do app, por ex.:
+   - `obsidianpay://transfer?toUserId=2001&amount=10&memo=lunch`
+   - `obsidianpay://support?topic=mobile&message=hello`
+   - `obsidianpay://receipt?id=1002`
+9. Em **Suporte**, abra o **Web Support** (portal de suporte em WebView).
+10. (Opcional) Dispare um deep link pelo terminal com `adb` — veja
+    [android-app/README.md](./android-app/README.md).
+
+> Os deep links e o QR Payment são recursos legítimos do app. Observe como a
+> entrada digitada/colada é interpretada e para onde leva. (Este guia não explica
+> como abusar disso; a investigação é sua.)
 
 > **Estado local/offline:** como um app real, o ObsidianPay guarda cache local
 > (sessão, perfil, config, recibos, cartões) para funcionar melhor. A Início tem

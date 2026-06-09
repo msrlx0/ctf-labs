@@ -76,6 +76,14 @@ class InsecureSessionStore(context: Context) {
 
     fun saveLastOpenedCard(cardId: String) = putAndTouch(Constants.KEY_LAST_OPENED_CARD, cardId)
 
+    fun saveLastDeepLink(rawUri: String, type: String) =
+        putAndTouch(Constants.KEY_LAST_DEEP_LINK, "$type | $rawUri")
+
+    fun saveLastQrPayload(payload: String, type: String) =
+        putAndTouch(Constants.KEY_LAST_QR_PAYLOAD, "$type | $payload")
+
+    fun saveLastWebViewUrl(url: String) = putAndTouch(Constants.KEY_LAST_WEBVIEW_URL, url)
+
     private fun putAndTouch(key: String, value: String) {
         prefs.edit()
             .putString(key, value)
@@ -124,6 +132,9 @@ class InsecureSessionStore(context: Context) {
         Constants.KEY_LAST_TRANSFER_PREVIEW to prefs.getString(Constants.KEY_LAST_TRANSFER_PREVIEW, null),
         Constants.KEY_LAST_OPENED_RECEIPT to prefs.getString(Constants.KEY_LAST_OPENED_RECEIPT, null),
         Constants.KEY_LAST_OPENED_CARD to prefs.getString(Constants.KEY_LAST_OPENED_CARD, null),
+        Constants.KEY_LAST_DEEP_LINK to prefs.getString(Constants.KEY_LAST_DEEP_LINK, null),
+        Constants.KEY_LAST_QR_PAYLOAD to prefs.getString(Constants.KEY_LAST_QR_PAYLOAD, null),
+        Constants.KEY_LAST_WEBVIEW_URL to prefs.getString(Constants.KEY_LAST_WEBVIEW_URL, null),
         Constants.KEY_DEBUG_LAST_SYNC to getLastSyncTimestamp().takeIf { it > 0 }?.toString(),
     )
 

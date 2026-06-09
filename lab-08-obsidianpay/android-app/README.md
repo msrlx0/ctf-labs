@@ -1,9 +1,9 @@
-# ObsidianPay — App Android (Fase 4)
+# ObsidianPay — App Android (Fase 5)
 
 App Android nativo (Kotlin + Jetpack Compose) que consome a API mobile do
-**Lab 08 — ObsidianPay Mobile**. A partir da Fase 4, o app mantém **cache
-local/offline** (SharedPreferences, SQLite e arquivos internos), como um app de
-carteira real faria.
+**Lab 08 — ObsidianPay Mobile**. Mantém cache local/offline (Fase 4) e, a partir
+da Fase 5, suporta **deep links**, uma tela **QR Payment** e um **Web Support**
+em WebView.
 
 > **Ambiente somente local.** O app só fala com o backend do lab em
 > `http://10.0.2.2:8102` (alias do emulador para o `127.0.0.1` do host).
@@ -105,6 +105,33 @@ estudo de armazenamento inseguro):
 
 Educacionalmente: vale observar **o que** o app persiste e **onde**. Este README
 não descreve extração nem exploração — isso faz parte do exercício.
+
+## Deep links, QR e Web Support (Fase 5)
+
+Deep links suportados (`MainActivity` os recebe):
+
+```
+obsidianpay://transfer?toUserId=2001&amount=10&memo=test
+obsidianpay://support?topic=mobile&message=hello
+obsidianpay://receipt?id=1002
+```
+
+Disparar por `adb` (app instalado no emulador):
+
+```bash
+adb shell am start -a android.intent.action.VIEW \
+  -d "obsidianpay://transfer?toUserId=2001&amount=10&memo=test" \
+  com.obsidianpay.mobile.debug
+```
+
+> O `applicationId` debug é `com.obsidianpay.mobile.debug` (sufixo `.debug`).
+> Para o build release, use `com.obsidianpay.mobile`.
+
+- **QR Payment** (tela): cole/digite um dos payloads acima; o app os interpreta
+  como uma leitura de QR faria.
+- **Web Support** (WebView): carrega
+  `http://10.0.2.2:8102/api/mobile/webview/support?topic=mobile`. JavaScript e
+  DOM storage ficam habilitados; **não** há JavaScript interface nesta fase.
 
 ## Notas técnicas (Fase 3)
 

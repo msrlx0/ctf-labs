@@ -1,19 +1,20 @@
 # Fases — Lab 08: ObsidianPay Mobile
 
-Plano de fases do laboratório. Fases 1–4 implementadas.
+Plano de fases do laboratório. Fases 1–5 implementadas.
 
 | Fase | Foco | Status |
 |---|---|---|
 | **Fase 1** | Fundação: arquitetura, documentação base, backend mínimo e contratos de API. | ✅ Concluída |
 | **Fase 2** | API mobile rica + primeiras vulnerabilidades de backend (IDOR, mass assignment, gates fracos, scaffolds de QR/WebView/vault). | ✅ Concluída |
 | **Fase 3** | App Android base (Kotlin + Compose): telas, cliente HTTP, SharedPreferences inseguro, enumeração manual por ID, suporte/diagnostics, transfer preview. | ✅ Concluída |
-| **Fase 4** | Armazenamento local inseguro: SharedPreferences rico, SQLite (`obsidianpay_local.db`), arquivos em filesDir/cacheDir, export app-specific externo, eventos de debug, cache offline. | ✅ Atual |
-| Fase 5 | Recon estático do app + trilha network/API (interceptação, legado/HTTP, pinning). | 🔜 Planejada |
-| Fase 6 | Trilha storage/RE avançada: segredos hardcoded, cripto fraca, RE do binário. | 🔜 Planejada |
-| Fase 7 | Trilha platform: componentes exportados, deep links, QR. | 🔜 Planejada |
-| Fase 8 | Trilha WebView: settings inseguras, bridge JS, cadeia deep link → WebView. | 🔜 Planejada |
-| Fase 9 | Trilha anti-analysis/auth: root/emulador/biometria, binary patching, BAC/mass assignment. | 🔜 Planejada |
-| Fase 10 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
+| **Fase 4** | Armazenamento local inseguro: SharedPreferences rico, SQLite (`obsidianpay_local.db`), arquivos em filesDir/cacheDir, export app-specific externo, eventos de debug, cache offline. | ✅ Concluída |
+| **Fase 5** | Deep links (`obsidianpay://transfer/support/receipt`), QR Payment (input textual), Web Support (WebView com JS), reflexão controlada no portal, cache de eventos deep link/QR/WebView. | ✅ Atual |
+| Fase 6 | Recon estático do app + trilha network/API (interceptação, legado/HTTP, pinning). | 🔜 Planejada |
+| Fase 7 | Trilha storage/RE avançada: segredos hardcoded, cripto fraca, RE do binário. | 🔜 Planejada |
+| Fase 8 | Trilha platform: componentes exportados (Service/Receiver/Provider). | 🔜 Planejada |
+| Fase 9 | Trilha WebView avançada: bridge JS, cadeia deep link → WebView → file/token disclosure. | 🔜 Planejada |
+| Fase 10 | Trilha anti-analysis/auth: root/emulador/biometria, binary patching, BAC/mass assignment. | 🔜 Planejada |
+| Fase 11 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
 
 ## Escopo da Fase 1 (entregue)
 
@@ -46,6 +47,18 @@ Plano de fases do laboratório. Fases 1–4 implementadas.
   (`filesDir`/`cacheDir`) + export app-specific externo.
 - Telas atualizadas para cachear respostas + tela interna `LocalStateScreen`.
 - Script `scripts/validate-phase4.sh`.
+
+## Escopo da Fase 5 (entregue)
+
+- Deep links no `AndroidManifest` (`obsidianpay://transfer/support/receipt`).
+- `deeplink/DeepLinkRouter.kt` + `DeepLinkModels.kt` (parse permissivo).
+- Roteamento em `MainActivity` (intent inicial + `onNewIntent` + deep link pendente pós-login).
+- `ui/QrInputScreen.kt` (QR Payment por input textual) e
+  `ui/WebViewSupportScreen.kt` (WebView com JS/DOM storage, sem bridge).
+- Backend `GET /api/mobile/webview/support` reflete `topic`/`message`.
+- Cache local de eventos: `deep_link_opened`, `qr_payload_processed`,
+  `webview_support_opened` + chaves `last_deep_link/last_qr_payload/last_webview_url`.
+- Script `scripts/validate-phase5.sh`.
 
 ## Princípios entre fases
 

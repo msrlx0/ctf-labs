@@ -10,9 +10,10 @@
       Android Emulator setup (http://10.0.2.2:8102) and must never be used in
       production.
 
-      NOTE (instructor): exported components (Activities/Services/Receivers/
-      Providers) used as controlled vulnerabilities are a FUTURE phase. In this
-      phase only MainActivity is exported, because the launcher requires it.
+      NOTE (instructor): exported Service/Receiver/Provider components used as
+      controlled vulnerabilities are a FUTURE phase. In this phase only
+      MainActivity is exported — required by the launcher and to receive the
+      obsidianpay:// deep links below.
     -->
     <application
         android:allowBackup="true"
@@ -30,6 +31,21 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!--
+              ObsidianPay deep links. Examples:
+                obsidianpay://transfer?toUserId=2001&amount=10&memo=test
+                obsidianpay://support?topic=mobile&message=hello
+                obsidianpay://receipt?id=1002
+            -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="obsidianpay" android:host="transfer" />
+                <data android:scheme="obsidianpay" android:host="support" />
+                <data android:scheme="obsidianpay" android:host="receipt" />
             </intent-filter>
         </activity>
 

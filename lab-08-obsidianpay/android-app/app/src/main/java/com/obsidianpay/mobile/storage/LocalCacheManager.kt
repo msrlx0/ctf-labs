@@ -115,6 +115,22 @@ class LocalCacheManager(
 
     fun addEvent(eventType: String, details: String?) = db.addDebugEvent(eventType, details)
 
+    // --- Deep link / QR / WebView (Phase 5) -------------------------------------
+    fun saveLastDeepLink(rawUri: String, type: String) {
+        store.saveLastDeepLink(rawUri, type)
+        db.addDebugEvent("deep_link_opened", "$type | $rawUri")
+    }
+
+    fun saveLastQrPayload(payload: String, type: String) {
+        store.saveLastQrPayload(payload, type)
+        db.addDebugEvent("qr_payload_processed", "$type | $payload")
+    }
+
+    fun saveLastWebViewUrl(url: String) {
+        store.saveLastWebViewUrl(url)
+        db.addDebugEvent("webview_support_opened", url)
+    }
+
     // --- File artifacts ---------------------------------------------------------
     fun writeTempSupportSnapshot(rawJson: String): String? =
         writeFile(File(context.cacheDir, "obsidian-support-last-sync.json"), rawJson)

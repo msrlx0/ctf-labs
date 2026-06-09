@@ -37,6 +37,14 @@ object Constants {
     const val KEY_LAST_OPENED_CARD: String = "obsidian.debug.last_opened_card"
     const val KEY_BASE_URL_HINT: String = "obsidian.debug.base_url_hint"
 
+    // Deep link / QR / WebView surfaces (Phase 5).
+    const val KEY_LAST_DEEP_LINK: String = "obsidian.debug.last_deep_link"
+    const val KEY_LAST_QR_PAYLOAD: String = "obsidian.debug.last_qr_payload"
+    const val KEY_LAST_WEBVIEW_URL: String = "obsidian.debug.last_webview_url"
+
+    // Default WebView support path on the backend.
+    const val WEBVIEW_SUPPORT_PATH: String = "/api/mobile/webview/support"
+
     // Debug header expected by the backend's diagnostics endpoint.
     const val DEBUG_HEADER_NAME: String = "X-Obsidian-Debug"
     const val DEBUG_HEADER_VALUE: String = "mobile-diagnostics"

@@ -95,6 +95,7 @@ fun HomeScreen(
             OutlinedButton(onClick = { onNavigate(Screen.Cards) }, modifier = Modifier.fillMaxWidth()) { Text("Cartões") }
             OutlinedButton(onClick = { onNavigate(Screen.Support) }, modifier = Modifier.fillMaxWidth()) { Text("Suporte") }
             OutlinedButton(onClick = { onNavigate(Screen.Transfer) }, modifier = Modifier.fillMaxWidth()) { Text("Prévia de transferência") }
+            OutlinedButton(onClick = { onNavigate(Screen.Qr) }, modifier = Modifier.fillMaxWidth()) { Text("QR Payment") }
 
             OutlinedButton(
                 onClick = {

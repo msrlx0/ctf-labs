@@ -31,6 +31,7 @@ fun SupportScreen(
     apiClient: ApiClient,
     store: InsecureSessionStore,
     cache: LocalCacheManager,
+    onOpenWebSupport: (topic: String?, message: String?) -> Unit,
     onBack: () -> Unit,
 ) {
     var response by remember { mutableStateOf("") }
@@ -100,6 +101,16 @@ fun SupportScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Rotas legadas") }
+
+            OutlinedButton(
+                onClick = { onOpenWebSupport("mobile", null) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Open Web Support") }
+
+            OutlinedButton(
+                onClick = { onOpenWebSupport("mobile", "hello from support") },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Open Web Support with Message") }
 
             OutlinedButton(
                 onClick = {

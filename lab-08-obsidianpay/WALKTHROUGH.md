@@ -2,10 +2,11 @@
 
 > **Documento interno do instrutor.** Não é material do aluno.
 >
-> **Estado: Fase 4.** Este walkthrough descreve a arquitetura, as cadeias
+> **Estado: Fase 5.** Este walkthrough descreve a arquitetura, as cadeias
 > futuras em alto nível, as **vulnerabilidades de backend da Fase 2**, o **app
-> Android base da Fase 3** e, agora, o **armazenamento local inseguro da Fase 4**
-> (visão de instrutor, sem cadeia final longa).
+> Android base da Fase 3**, o **armazenamento local inseguro da Fase 4** e,
+> agora, os **deep links / QR / WebView da Fase 5** (visão de instrutor, sem
+> cadeia final longa).
 > Ele **não** contém:
 > - a cadeia/solução final do Lab 8,
 > - payloads avançados ou exploits prontos extensos.
@@ -177,6 +178,41 @@ serão exploradas futuramente. Pontos de instrutor:
 > Estas são as superfícies de armazenamento local. A extração/encadeamento final
 > (e flags) não entram aqui nesta fase.
 
+## 3.4 Fase 5 — deep links, QR e WebView (app)
+
+A Fase 5 cria as superfícies de deep link, QR e WebView. Pontos de instrutor:
+
+- **Deep links** (`AndroidManifest`): `MainActivity` aceita
+  `obsidianpay://transfer`, `obsidianpay://support`, `obsidianpay://receipt`
+  (VIEW + DEFAULT + BROWSABLE). Apenas `MainActivity` é exportada; nenhum
+  Service/Receiver/Provider exportado nesta fase (fica para depois).
+- **DeepLinkRouter** (`deeplink/`): parse permissivo (pouca sanitização, por
+  design) → `DeepLinkData(type, toUserId, amount, memo, topic, message, receiptId)`.
+- **Roteamento**: `MainActivity` processa o intent inicial e `onNewIntent`,
+  parqueia deep link pendente se não houver login e aplica após o login.
+  TRANSFER→TransferPreview, SUPPORT→WebView, RECEIPT→Receipts (auto-open).
+- **QR Payment** (`QrInputScreen`): simula leitura colando/digitando o payload;
+  usa o mesmo `DeepLinkRouter`.
+- **WebView** (`WebViewSupportScreen`): carrega
+  `http://10.0.2.2:8102/api/mobile/webview/support?topic=...&message=...`,
+  com `javaScriptEnabled = true` e `domStorageEnabled = true`, **sem**
+  `addJavascriptInterface` (sem bridge perigosa ainda). O backend reflete
+  `topic`/`message` de forma controlada (semente de XSS/bridge para depois).
+- **Cache local**: eventos `deep_link_opened`, `qr_payload_processed`,
+  `webview_support_opened`, além de `transfer_preview_from_*` e `receipt_from_*`,
+  e chaves `last_deep_link` / `last_qr_payload` / `last_webview_url`.
+
+### URIs legítimas de exemplo
+
+```
+obsidianpay://transfer?toUserId=2001&amount=10&memo=test
+obsidianpay://support?topic=mobile&message=hello
+obsidianpay://receipt?id=1002
+```
+
+> A cadeia final (deep link → WebView → bridge / file/token disclosure) **não**
+> é entregue aqui; a bridge perigosa fica para uma fase futura.
+
 ## 4. Matriz de vulnerabilidades planejadas
 
 Detalhe completo por trilha em [docs/VULNERABILITY-ROADMAP.md](./docs/VULNERABILITY-ROADMAP.md).
@@ -197,11 +233,11 @@ Resumo de status (atualizado na Fase 2):
 | 11 | Platform | Exported Service | planned |
 | 12 | Platform | BroadcastReceiver debug trigger | planned |
 | 13 | Platform | ContentProvider exposure | planned |
-| 14 | Platform | Deep link abuse | planned |
-| 15 | Platform | QR Code untrusted input | scaffolded |
-| 16 | WebView | Unsafe WebView settings | scaffolded |
+| 14 | Platform | Deep link abuse | implemented-app |
+| 15 | Platform | QR Code untrusted input | implemented-app |
+| 16 | WebView | Unsafe WebView settings | scaffolded-app |
 | 17 | WebView | JavaScript bridge exposure | planned |
-| 18 | WebView | Deep link → WebView chain | planned |
+| 18 | WebView | Deep link → WebView chain | scaffolded-app |
 | 19 | WebView | Local file / token disclosure | planned |
 | 20 | Anti-analysis/Auth | Root detection bypass | planned |
 | 21 | Anti-analysis/Auth | Emulator detection bypass | planned |

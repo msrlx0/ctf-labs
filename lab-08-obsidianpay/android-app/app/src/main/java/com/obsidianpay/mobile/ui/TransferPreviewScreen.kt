@@ -10,6 +10,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,15 +33,27 @@ fun TransferPreviewScreen(
     apiClient: ApiClient,
     store: InsecureSessionStore,
     cache: LocalCacheManager,
+    initialToUserId: String? = null,
+    initialAmount: String? = null,
+    initialMemo: String? = null,
+    prefillSource: String? = null,
     onBack: () -> Unit,
 ) {
-    var toUserId by remember { mutableStateOf("2001") }
-    var amount by remember { mutableStateOf("10") }
-    var memo by remember { mutableStateOf("teste") }
+    var toUserId by remember { mutableStateOf(initialToUserId ?: "2001") }
+    var amount by remember { mutableStateOf(initialAmount ?: "10") }
+    var memo by remember { mutableStateOf(initialMemo ?: "teste") }
     var status by remember { mutableStateOf("") }
     var response by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val token = store.token
+
+    // When opened from a deep link / QR, record where the prefill came from.
+    LaunchedEffect(prefillSource) {
+        if (prefillSource != null) {
+            cache.addEvent("transfer_preview_from_$prefillSource", "toUserId=$toUserId amount=$amount")
+            status = "Prefilled via $prefillSource."
+        }
+    }
 
     ObsidianScaffold(title = "Prévia de transferência", onBack = onBack) { modifier ->
         Column(

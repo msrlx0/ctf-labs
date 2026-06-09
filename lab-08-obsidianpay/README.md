@@ -2,7 +2,7 @@
 
 **Tema:** Segurança de aplicações mobile (Android) — backend + app
 **Porta oficial:** http://127.0.0.1:8102
-**Status:** Fase 4 (app Android com **cache local/offline**). O APK final ainda não foi publicado.
+**Status:** Fase 5 (app com **deep links, QR Payment e Web Support**). O APK final ainda não foi publicado.
 **Dificuldade alvo:** Hard / realista (acima de labs introdutórios como AndroGoat).
 
 ---
@@ -160,14 +160,15 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 
 - ✅ Backend mobile (API rica) na porta 8102 — Fase 2
 - ✅ App Android base (telas + cliente HTTP) — Fase 3
-- ✅ Cache local/offline do app (perfil, config, recibos, cartões) — **Fase 4**
+- ✅ Cache local/offline do app (perfil, config, recibos, cartões) — Fase 4
+- ✅ Deep links, QR Payment e Web Support no app — **Fase 5**
 - ✅ Documentação base e arquitetura
 - 🔜 APK final publicado
 - 🔜 Cadeias completas app ↔ API
 
-> Na Fase 4 o app passou a manter **estado local/offline** (SharedPreferences,
-> SQLite e arquivos em storage interno), como um app mobile real faz para cache
-> e funcionamento sem rede.
+> A Fase 5 adiciona **deep links** (`obsidianpay://transfer|support|receipt`),
+> uma tela **QR Payment** que interpreta payloads colados/digitados, e um
+> **Web Support** em WebView que carrega o portal de suporte do backend local.
 
 > **O APK final ainda não foi publicado.** A Fase 3 entrega o código-fonte do
 > app base. Trate o app e a API como alvos reais: explore, observe e questione.

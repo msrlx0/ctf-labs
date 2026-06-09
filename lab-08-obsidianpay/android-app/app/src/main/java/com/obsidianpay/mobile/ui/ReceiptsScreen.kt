@@ -37,11 +37,13 @@ fun ReceiptsScreen(
     apiClient: ApiClient,
     store: InsecureSessionStore,
     cache: LocalCacheManager,
+    initialReceiptId: String? = null,
+    prefillSource: String? = null,
     onBack: () -> Unit,
 ) {
     var receipts by remember { mutableStateOf<List<Receipt>>(emptyList()) }
     var status by remember { mutableStateOf("Carregando recibos...") }
-    var lookupId by remember { mutableStateOf("") }
+    var lookupId by remember { mutableStateOf(initialReceiptId ?: "") }
     var detail by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val token = store.token
@@ -59,6 +61,26 @@ fun ReceiptsScreen(
                 status = "${res.data.size} recibo(s)."
             }
             is ApiResult.Error -> status = "Erro: ${res.message}"
+        }
+    }
+
+    // Opened via deep link / QR with a specific id: auto-open it.
+    LaunchedEffect(initialReceiptId) {
+        val id = initialReceiptId?.trim().orEmpty()
+        if (id.isEmpty()) return@LaunchedEffect
+        if (prefillSource != null) cache.addEvent("receipt_from_$prefillSource", "id=$id")
+        if (token == null) {
+            detail = "Sessão ausente."
+            return@LaunchedEffect
+        }
+        detail = "Abrindo recibo $id..."
+        val res = withContext(Dispatchers.IO) { apiClient.getReceipt(token, id) }
+        detail = when (res) {
+            is ApiResult.Success -> {
+                cache.cacheReceipt(id, res.rawBody)
+                res.rawBody
+            }
+            is ApiResult.Error -> "Erro (${res.httpCode ?: "?"}): ${res.message}"
         }
     }
 

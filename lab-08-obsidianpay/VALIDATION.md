@@ -356,3 +356,61 @@ adb shell run-as com.obsidianpay.mobile.debug ls -R /data/data/com.obsidianpay.m
 - [ ] UI expõe Local State / Cached Receipts / Cached Cards / Local Artifacts.
 - [ ] Docs públicos sem flags; README/STUDENT-GUIDE/app README sem credenciais internas.
 - [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+---
+
+## Fase 5 — deep links, QR e WebView
+
+> Atalho: `bash scripts/validate-phase5.sh` (estrutura). Backend opcional com
+> `RUN_BACKEND_TESTS=1`.
+
+### F5.1 — Arquivos
+
+```bash
+SRC=android-app/app/src/main/java/com/obsidianpay/mobile
+ls $SRC/deeplink/DeepLinkRouter.kt $SRC/ui/QrInputScreen.kt $SRC/ui/WebViewSupportScreen.kt
+```
+
+### F5.2 — Manifest e conteúdo-chave
+
+```bash
+grep -E 'obsidianpay|transfer|support|receipt|VIEW|BROWSABLE' android-app/app/src/main/AndroidManifest.xml
+grep -rqE 'deep_link_opened|qr_payload_processed|webview_support_opened' $SRC && echo OK
+grep -rq 'javaScriptEnabled' $SRC && echo OK
+grep -rq '10.0.2.2:8102' $SRC || grep -rq 'DEFAULT_BASE_URL' $SRC && echo OK
+grep -rq '/api/mobile/webview/support' $SRC && echo OK
+```
+
+### F5.3 — UI
+
+```bash
+grep -rq 'QR Payment'      $SRC && echo OK
+grep -rq 'Process Payload' $SRC && echo OK
+grep -rq 'Open Web Support' $SRC && echo OK
+```
+
+### F5.4 — Backend WebView support (com backend no ar)
+
+```bash
+curl -s "http://127.0.0.1:8102/api/mobile/webview/support?topic=mobile&message=hello"
+```
+
+Esperado: HTML com "ObsidianPay mobile support portal", `topic` e `message` refletidos.
+
+### F5.5 — Deep link via adb (app instalado no emulador)
+
+```bash
+adb shell am start -a android.intent.action.VIEW \
+  -d "obsidianpay://transfer?toUserId=2001&amount=10&memo=test" \
+  com.obsidianpay.mobile.debug
+```
+
+### Critérios de aceite (Fase 5)
+
+- [ ] `validate-phase1/2/3/4.sh` continuam passando.
+- [ ] `validate-phase5.sh` passa.
+- [ ] `DeepLinkRouter`, `QrInputScreen`, `WebViewSupportScreen` criados.
+- [ ] Manifest aceita `obsidianpay://transfer/support/receipt`.
+- [ ] Eventos locais `deep_link_opened/qr_payload_processed/webview_support_opened`.
+- [ ] Docs públicos sem flags; sem credenciais internas em README/STUDENT/app README.
+- [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.

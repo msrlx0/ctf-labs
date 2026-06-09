@@ -366,7 +366,8 @@ app.get('/api/mobile/webview/support', (req, res) => {
 <html lang="pt-br">
   <head><meta charset="utf-8"><title>ObsidianPay Support</title></head>
   <body>
-    <h1>Central de Suporte ObsidianPay</h1>
+    <h1>ObsidianPay mobile support portal</h1>
+    <p>Central de Suporte ObsidianPay</p>
     <p>Tópico atual: ${topic}</p>
     <div id="message">${message}</div>
     <p>Ambiente local apenas.</p>

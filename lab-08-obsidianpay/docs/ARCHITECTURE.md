@@ -81,6 +81,17 @@ A Fase 3 entrega o **app base** em `android-app/` (Kotlin + Jetpack Compose):
 - **Build:** AGP 8.5.2, Kotlin 1.9.24, Gradle 8.7 (wrapper incluído), minSdk 24,
   target/compile SDK 34.
 
+### Fluxo de deep link / QR / WebView (Fase 5)
+
+```
+Deep link (obsidianpay://…) ─┐
+QR payload (colado/digitado) ─┴─▶ DeepLinkRouter ─▶ tela interna:
+                                                   ├─ TRANSFER → TransferPreview (+ API)
+                                                   ├─ RECEIPT  → Receipts (+ API)
+                                                   └─ SUPPORT  → WebView ─▶ 10.0.2.2:8102/api/mobile/webview/support
+        (todos os eventos: deep_link_opened / qr_payload_processed / webview_support_opened → cache local)
+```
+
 ### Fluxo de storage local
 
 ```
