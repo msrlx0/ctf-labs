@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ObsidianPay</string>
+    <string name="tagline">Sua carteira digital, no seu bolso.</string>
+
+    <string name="login_title">Entrar</string>
+    <string name="login_username">Usuário</string>
+    <string name="login_password">Senha</string>
+    <string name="login_button">Entrar</string>
+
+    <string name="home_title">Início</string>
+    <string name="action_profile_refresh">Atualizar perfil</string>
+    <string name="action_receipts">Recibos</string>
+    <string name="action_cards">Cartões</string>
+    <string name="action_support">Suporte</string>
+    <string name="action_transfer">Prévia de transferência</string>
+    <string name="action_config">Configuração</string>
+    <string name="action_logout">Sair</string>
+
+    <string name="receipts_title">Recibos</string>
+    <string name="cards_title">Cartões</string>
+    <string name="support_title">Suporte</string>
+    <string name="transfer_title">Prévia de transferência</string>
+
+    <string name="open_by_id">Abrir por ID</string>
+</resources>

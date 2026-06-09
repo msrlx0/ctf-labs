@@ -2,14 +2,15 @@
 
 > **Documento interno do instrutor.** Não é material do aluno.
 >
-> **Estado: Fase 2.** Este walkthrough descreve a arquitetura, as cadeias
-> futuras em alto nível e, agora, as **vulnerabilidades de backend introduzidas
-> na Fase 2** (visão de instrutor, sem cadeia final longa). Ele **não** contém:
+> **Estado: Fase 3.** Este walkthrough descreve a arquitetura, as cadeias
+> futuras em alto nível, as **vulnerabilidades de backend da Fase 2** e, agora, o
+> **app Android base da Fase 3** (visão de instrutor, sem cadeia final longa).
+> Ele **não** contém:
 > - a cadeia/solução final do Lab 8,
 > - payloads avançados ou exploits prontos extensos.
 >
 > Marcadores de progresso (`FLAG{...}`) existem apenas nos dados do backend
-> (`api/src/data.js`), nunca em documentos públicos.
+> (`api/src/data.js`), nunca em documentos públicos nem no app.
 
 ---
 
@@ -110,6 +111,36 @@ documentadas para o aluno; servem para descoberta futura via mobile/RE/storage.
 
 - `bash scripts/validate-phase2.sh` cobre todos os itens acima de ponta a ponta.
 - `bash scripts/validate-phase1.sh` continua passando (compatibilidade).
+
+## 3.2 Fase 3 — app Android base
+
+A Fase 3 entrega o cliente Android (Kotlin + Compose) em `android-app/`,
+consumindo a API local via `http://10.0.2.2:8102`. Pontos de instrutor:
+
+- **App realista:** carteira ObsidianPay com telas de Login, Início, Recibos,
+  Cartões, Suporte, Prévia de transferência e Configuração — **não** é um menu
+  de vulnerabilidades.
+- **Comunicação HTTP local:** `usesCleartextTraffic` + `network_security_config`
+  liberam cleartext só para `10.0.2.2/127.0.0.1/localhost`. Semente para o
+  estudo de interceptação/tráfego legado.
+- **SharedPreferences inseguro:** `InsecureSessionStore` grava token, perfil
+  (cache) e identificadores em texto puro. Semente para "insecure data storage".
+- **Enumeração manual por ID:** as telas de Recibos e Cartões têm um campo
+  "abrir por ID" que chama `/receipts/:id` e `/cards/:id`. Na UI isso é só uma
+  busca; é a superfície que conecta o aluno ao IDOR já ativo no backend (Fase 2).
+  A tela **não** chama isso de IDOR.
+- **Support diagnostics:** a tela de Suporte tem botões para diagnostics com e
+  sem o header de debug, expondo o gate fraco da Fase 2 pela UI.
+- **Transfer preview:** tela liga ao endpoint de prévia (futuro QR/deep link).
+- **Componentes exportados:** apenas `MainActivity` (launcher). Exported
+  components vulneráveis ficam para fase futura (comentado no Manifest).
+
+### Validação rápida (instrutor)
+
+- `bash scripts/validate-phase3.sh` checa estrutura Android + (opcional) backend
+  com `RUN_BACKEND_TESTS=1`, e tenta build se houver Gradle/SDK.
+- Sem Android SDK, o build do APK não roda; o projeto compila a configuração
+  Gradle e falha apenas na detecção do SDK (esperado).
 
 ## 4. Matriz de vulnerabilidades planejadas
 

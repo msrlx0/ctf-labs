@@ -2,7 +2,7 @@
 
 **Tema:** Segurança de aplicações mobile (Android) — backend + app
 **Porta oficial:** http://127.0.0.1:8102
-**Status:** Fase 2 (API mobile mais rica disponível). O APK Android será entregue em fases futuras.
+**Status:** Fase 3 (API mobile + **app Android base**). O APK final ainda não foi publicado.
 **Dificuldade alvo:** Hard / realista (acima de labs introdutórios como AndroGoat).
 
 ---
@@ -144,13 +144,25 @@ Para o detalhamento por trilhas (com status), veja
 
 ---
 
+## App Android
+
+A partir da Fase 3 existe um **app Android base** (Kotlin + Jetpack Compose) em
+[android-app/](./android-app/), que consome a API local.
+
+- No **Android Emulator**, o app usa `http://10.0.2.2:8102` (alias do emulador
+  para o `127.0.0.1` do host).
+- Abra a pasta `android-app/` no Android Studio e rode em um emulador (API 24+).
+- Login de teste: `guest` / `guest123`.
+
+Detalhes de build e execução em [android-app/README.md](./android-app/README.md).
+
 ## Estado atual
 
-- ✅ Backend mobile (API rica) na porta 8102 — **Fase 2**
-- ✅ Contratos mobile: perfil, recibos, cartões, config, suporte, transfer preview, WebView
+- ✅ Backend mobile (API rica) na porta 8102 — Fase 2
+- ✅ App Android base (telas + cliente HTTP) — **Fase 3**
 - ✅ Documentação base e arquitetura
-- 🔜 APK Android (fases futuras)
-- 🔜 Integração app ↔ API e cadeias completas
+- 🔜 APK final publicado
+- 🔜 Cadeias completas app ↔ API
 
-> **O APK Android ainda não foi entregue.** A API já representa os contratos que
-> o app vai consumir. Trate-a como um alvo real: explore, observe e questione.
+> **O APK final ainda não foi publicado.** A Fase 3 entrega o código-fonte do
+> app base. Trate o app e a API como alvos reais: explore, observe e questione.

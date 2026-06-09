@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Platform Material theme with no action bar (Compose draws its own UI).
+      Using a platform theme keeps the app free of an AppCompat dependency.
+    -->
+    <style name="Theme.ObsidianPay" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/obsidian_primary</item>
+        <item name="android:windowBackground">@color/obsidian_background</item>
+    </style>
+</resources>

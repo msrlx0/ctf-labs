@@ -1,9 +1,9 @@
 # Guia do Aluno — Lab 08: ObsidianPay Mobile
 
 Bem-vindo(a) ao ObsidianPay, uma carteira digital fictícia usada para treino de
-segurança mobile. Este guia te orienta na **Fase 2**: o backend já expõe uma API
-mobile rica, representando os contratos que o aplicativo Android vai consumir.
-**O APK ainda está em construção** e chega em fases futuras.
+segurança mobile. Na **Fase 3** já existe um **app Android base** (Kotlin +
+Compose) que consome a API mobile do lab. **O APK final ainda não foi publicado**
+— você roda o app a partir do código-fonte no Android Studio.
 
 > Este documento é público e **não** contém solução nem flags.
 
@@ -46,6 +46,22 @@ Para autenticar, use a conta de teste `guest` / `guest123` em
 Os comandos completos estão em [VALIDATION.md](./VALIDATION.md).
 
 ---
+
+## 2.1 Rodar o app Android (Fase 3)
+
+Com o backend no ar (`127.0.0.1:8102`):
+
+1. Abra `lab-08-obsidianpay/android-app` no **Android Studio**.
+2. Espere o **Gradle sync** terminar (baixa as dependências).
+3. Crie/escolha um **emulador** (Pixel, API 24+) e rode o app.
+4. No emulador, o app fala com `http://10.0.2.2:8102` (alias para o
+   `127.0.0.1` da sua máquina) — não é preciso configurar nada.
+5. Faça login com `guest` / `guest123` (já vem preenchido).
+6. Navegue pelas telas: Início, Recibos, Cartões, Suporte, Prévia de
+   transferência e Configuração.
+
+Detalhes e build via linha de comando em
+[android-app/README.md](./android-app/README.md).
 
 ## 3. Como pensar no Lab 8 (visão futura)
 

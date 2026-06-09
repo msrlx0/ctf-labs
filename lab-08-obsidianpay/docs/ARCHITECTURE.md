@@ -9,8 +9,8 @@ quanto como contrato para as fases futuras.
 
 | Componente | Estado | Descrição |
 |---|---|---|
-| ObsidianPay Mobile API | ✅ Fase 1 | Backend Node.js + Express em `127.0.0.1:8102`. |
-| App Android (APK) | 🔜 futuro | Cliente de carteira/pagamentos que consome a API. |
+| ObsidianPay Mobile API | ✅ Fase 2 | Backend Node.js + Express em `127.0.0.1:8102`. |
+| App Android (base) | ✅ Fase 3 | Cliente Kotlin + Compose em `android-app/`; consome a API via `10.0.2.2:8102`. |
 | Documentação | ✅ Fase 1 | README, guia do aluno, walkthrough interno, roadmap. |
 | Scripts de validação | ✅ Fase 1 | `scripts/validate-phase1.sh`. |
 
@@ -67,17 +67,33 @@ lab-08-obsidianpay/
 
 ---
 
-## 3. App Android (futuro)
+## 3. App Android (base — Fase 3)
 
-Planejado para fases seguintes. Espera-se que o app:
+A Fase 3 entrega o **app base** em `android-app/` (Kotlin + Jetpack Compose):
 
-- Implemente fluxos reais de carteira (login, saldo, recibos, suporte, QR, pagamentos).
-- Consuma a API mobile já definida na Fase 1.
-- Exponha superfícies clássicas de Android: componentes exportados, deep links,
-  WebView, storage local, criptografia, controles anti-tampering.
+- **Telas:** Login, Início, Recibos, Cartões, Suporte, Prévia de transferência,
+  Configuração.
+- **Cliente HTTP:** `ApiClient` (OkHttp) consumindo a API mobile.
+- **Storage local:** `InsecureSessionStore` (SharedPreferences em texto puro,
+  intencional).
+- **Build:** AGP 8.5.2, Kotlin 1.9.24, Gradle 8.7 (wrapper incluído), minSdk 24,
+  target/compile SDK 34.
 
-O APK **não** é um "menu de vulnerabilidades": as fraquezas ficam embutidas em
-um produto que parece legítimo.
+### Fluxo de comunicação
+
+```
+┌────────────────────────┐    http://10.0.2.2:8102     ┌──────────────────────────┐    publish 127.0.0.1:8102   ┌──────────────────────┐
+│  App Android (emulador)│ ─────────────────────────▶  │  Docker: obsidianpay-api  │ ◀────────────────────────── │  Host 127.0.0.1:8102 │
+│  Compose + OkHttp      │                             │  Node.js + Express :8102  │                             │  (docker compose)    │
+└────────────────────────┘                             └──────────────────────────┘                             └──────────────────────┘
+```
+
+No Android Emulator, `10.0.2.2` é o alias para o `127.0.0.1` do host, onde o
+Docker publica a API na porta 8102.
+
+O app **não** é um "menu de vulnerabilidades": as fraquezas ficam embutidas em um
+produto que parece legítimo. Superfícies avançadas (exported components, deep
+links, WebView bridge, criptografia, anti-tampering) chegam em fases futuras.
 
 ---
 

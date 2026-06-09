@@ -242,4 +242,55 @@ Derrube ao final: `docker compose down`.
 - [ ] `PATCH /profile` aplica campos enviados (incl. privilegiados).
 - [ ] `/support/diagnostics` é `403` sem header e `200` com header correto.
 - [ ] `/internal/vault-status` é `403` para customer e `200` para analyst.
-- [ ] `README.md` e `STUDENT-GUIDE.md` **não** contêm `FLAG{`.
+- [ ] `README.md` e `STUDENT-GUIDE.md` sem flags (sem o marcador de progresso).
+
+---
+
+## Fase 3 — app Android base
+
+> Atalho: `bash scripts/validate-phase3.sh` valida a estrutura do app. Para
+> também rodar os testes de backend, use `RUN_BACKEND_TESTS=1 bash
+> scripts/validate-phase3.sh`.
+
+### F3.1 — Estrutura do projeto Android
+
+```bash
+ls android-app/settings.gradle android-app/build.gradle android-app/app/build.gradle
+ls android-app/app/src/main/AndroidManifest.xml
+ls android-app/app/src/main/res/xml/network_security_config.xml
+ls android-app/app/src/main/java/com/obsidianpay/mobile/util/Constants.kt
+ls android-app/app/src/main/java/com/obsidianpay/mobile/api/ApiClient.kt
+ls android-app/app/src/main/java/com/obsidianpay/mobile/storage/InsecureSessionStore.kt
+ls android-app/app/src/main/java/com/obsidianpay/mobile/ui/
+```
+
+### F3.2 — Conteúdo-chave
+
+```bash
+grep -q 'android.permission.INTERNET' android-app/app/src/main/AndroidManifest.xml && echo OK
+grep -q '10.0.2.2' android-app/app/src/main/res/xml/network_security_config.xml && echo OK
+grep -q 'http://10.0.2.2:8102' android-app/app/src/main/java/com/obsidianpay/mobile/util/Constants.kt && echo OK
+grep -q 'SharedPreferences' android-app/app/src/main/java/com/obsidianpay/mobile/storage/InsecureSessionStore.kt && echo OK
+grep -qi 'okhttp' android-app/app/src/main/java/com/obsidianpay/mobile/api/ApiClient.kt && echo OK
+```
+
+### F3.3 — Build (se houver Gradle + Android SDK)
+
+```bash
+cd android-app
+./gradlew tasks            # baixa o Gradle na 1ª vez; requer JDK 17+
+./gradlew assembleDebug    # requer Android SDK (sdk.dir / ANDROID_HOME)
+```
+
+Sem Android SDK, o `assembleDebug` falha apenas em "SDK location not found" — isso
+é esperado neste ambiente. Use o Android Studio para o build completo.
+
+### Critérios de aceite (Fase 3)
+
+- [ ] `scripts/validate-phase1.sh` e `scripts/validate-phase2.sh` continuam passando.
+- [ ] `scripts/validate-phase3.sh` passa (estrutura Android presente).
+- [ ] Manifest declara `INTERNET`; `network_security_config` cobre `10.0.2.2`.
+- [ ] `Constants.kt` define `http://10.0.2.2:8102`.
+- [ ] App tem as 6 telas e cliente HTTP (OkHttp).
+- [ ] `README.md` e `STUDENT-GUIDE.md` sem flags e sem credenciais internas.
+- [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.

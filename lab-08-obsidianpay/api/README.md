@@ -73,6 +73,6 @@ curl -s http://127.0.0.1:8102/api/mobile/cards    -H "Authorization: Bearer $TOK
 - A Fase 2 introduz, no backend, **vulnerabilidades controladas** (autorização a
   nível de objeto, mass assignment, gate de debug fraco, etc.). Os detalhes de
   exploração não ficam aqui — fazem parte do exercício.
-- Marcadores de progresso (`FLAG{...}`) existem apenas nos dados internos do lab
+- Marcadores de progresso existem apenas nos dados internos do lab
   (`src/data.js`), nunca em documentos públicos.
 - Nenhum segredo de produção está presente neste backend.

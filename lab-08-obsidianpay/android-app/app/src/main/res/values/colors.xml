@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="obsidian_primary">#1A1B2E</color>
+    <color name="obsidian_primary_variant">#2E2F50</color>
+    <color name="obsidian_accent">#7C5CFF</color>
+    <color name="obsidian_background">#0F1020</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>
