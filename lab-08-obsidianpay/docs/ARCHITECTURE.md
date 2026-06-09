@@ -74,10 +74,23 @@ A Fase 3 entrega o **app base** em `android-app/` (Kotlin + Jetpack Compose):
 - **Telas:** Login, Início, Recibos, Cartões, Suporte, Prévia de transferência,
   Configuração.
 - **Cliente HTTP:** `ApiClient` (OkHttp) consumindo a API mobile.
-- **Storage local:** `InsecureSessionStore` (SharedPreferences em texto puro,
-  intencional).
+- **Storage local (Fase 4):** `InsecureSessionStore` (SharedPreferences em texto
+  puro), `ObsidianLocalDb` (SQLite `obsidianpay_local.db`) e arquivos em
+  `filesDir`/`cacheDir` + export em external app-specific. Orquestrado por
+  `LocalCacheManager`. Tudo intencionalmente inseguro.
 - **Build:** AGP 8.5.2, Kotlin 1.9.24, Gradle 8.7 (wrapper incluído), minSdk 24,
   target/compile SDK 34.
+
+### Fluxo de storage local
+
+```
+App Android ─┬─▶ SharedPreferences (sessão, token, cache de perfil/config)
+             ├─▶ SQLite obsidianpay_local.db (cached_receipts/cards, debug_events)
+             ├─▶ filesDir/ (receipts/*.json, debug/export.json) e cacheDir/ (snapshot)
+             └─▶ external app-specific (obsidian-export.txt)
+                     ▲
+                     └── alimentado pelas respostas da API em 10.0.2.2:8102
+```
 
 ### Fluxo de comunicação
 

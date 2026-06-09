@@ -2,9 +2,10 @@
 
 > **Documento interno do instrutor.** Não é material do aluno.
 >
-> **Estado: Fase 3.** Este walkthrough descreve a arquitetura, as cadeias
-> futuras em alto nível, as **vulnerabilidades de backend da Fase 2** e, agora, o
-> **app Android base da Fase 3** (visão de instrutor, sem cadeia final longa).
+> **Estado: Fase 4.** Este walkthrough descreve a arquitetura, as cadeias
+> futuras em alto nível, as **vulnerabilidades de backend da Fase 2**, o **app
+> Android base da Fase 3** e, agora, o **armazenamento local inseguro da Fase 4**
+> (visão de instrutor, sem cadeia final longa).
 > Ele **não** contém:
 > - a cadeia/solução final do Lab 8,
 > - payloads avançados ou exploits prontos extensos.
@@ -142,6 +143,40 @@ consumindo a API local via `http://10.0.2.2:8102`. Pontos de instrutor:
 - Sem Android SDK, o build do APK não roda; o projeto compila a configuração
   Gradle e falha apenas na detecção do SDK (esperado).
 
+## 3.3 Fase 4 — armazenamento local inseguro (app)
+
+A Fase 4 enriquece o storage local do app, criando as superfícies de cache que
+serão exploradas futuramente. Pontos de instrutor:
+
+- **SharedPreferences em texto puro** (`InsecureSessionStore`): token, username,
+  userId, role, plan, dailyLimit, kycApproved, `rawProfileJson`, `rawConfigJson`,
+  últimos support sync/diagnostics/transfer preview, últimos IDs abertos,
+  timestamp e baseUrlHint.
+- **SQLite local** (`ObsidianLocalDb`, `obsidianpay_local.db`): tabelas
+  `cached_receipts`, `cached_cards` (com `rawJson` em claro) e `debug_events`.
+- **Arquivos internos**: `cacheDir/obsidian-support-last-sync.json`,
+  `filesDir/receipts/receipt-<id>.json`, `filesDir/debug/obsidian-debug-export.json`.
+- **External app-specific export** (scaffold): `getExternalFilesDir(null)/obsidian-export.txt`.
+  É storage específico do app, **não** storage público global (isso fica para depois).
+- **Log de eventos locais** (`debug_events`): login, abertura de recibo/cartão,
+  support sync, diagnostics, transfer preview, clear.
+- **`LocalCacheManager`** orquestra prefs + SQLite + arquivos. A tela interna
+  **Local State** mostra o estado local (apresentada como ferramenta de
+  suporte/dev, não como tela de "exploração").
+
+### Caminhos Android prováveis (alto nível)
+
+```
+/data/data/com.obsidianpay.mobile/shared_prefs/    # SharedPreferences (token, cache)
+/data/data/com.obsidianpay.mobile/databases/       # obsidianpay_local.db
+/data/data/com.obsidianpay.mobile/files/           # receipts/, debug/
+/data/data/com.obsidianpay.mobile/cache/           # snapshot de suporte
+# Android/data/com.obsidianpay.mobile/files/        # export app-specific externo
+```
+
+> Estas são as superfícies de armazenamento local. A extração/encadeamento final
+> (e flags) não entram aqui nesta fase.
+
 ## 4. Matriz de vulnerabilidades planejadas
 
 Detalhe completo por trilha em [docs/VULNERABILITY-ROADMAP.md](./docs/VULNERABILITY-ROADMAP.md).
@@ -153,9 +188,9 @@ Resumo de status (atualizado na Fase 2):
 | 2 | Network/API | HTTPS interception | planned |
 | 3 | Network/API | Certificate pinning bypass | planned |
 | 4 | Network/API | Native pinning | planned |
-| 5 | Storage/RE | SharedPreferences token leak | planned |
-| 6 | Storage/RE | SQLite sensitive data | planned |
-| 7 | Storage/RE | Temp/cache file leak | planned |
+| 5 | Storage/RE | SharedPreferences token leak | implemented-app |
+| 6 | Storage/RE | SQLite sensitive data | implemented-app |
+| 7 | Storage/RE | Temp/cache file leak | implemented-app |
 | 8 | Storage/RE | Hardcoded/config secrets | planned |
 | 9 | Storage/RE | Weak crypto | planned |
 | 10 | Platform | Exported Activity | planned |

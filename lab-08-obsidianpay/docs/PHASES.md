@@ -1,18 +1,19 @@
 # Fases — Lab 08: ObsidianPay Mobile
 
-Plano de fases do laboratório. Fases 1–3 implementadas.
+Plano de fases do laboratório. Fases 1–4 implementadas.
 
 | Fase | Foco | Status |
 |---|---|---|
 | **Fase 1** | Fundação: arquitetura, documentação base, backend mínimo e contratos de API. | ✅ Concluída |
 | **Fase 2** | API mobile rica + primeiras vulnerabilidades de backend (IDOR, mass assignment, gates fracos, scaffolds de QR/WebView/vault). | ✅ Concluída |
-| **Fase 3** | App Android base (Kotlin + Compose): telas, cliente HTTP, SharedPreferences inseguro, enumeração manual por ID, suporte/diagnostics, transfer preview. | ✅ Atual |
-| Fase 4 | Recon estático do app + trilha network/API (interceptação, legado/HTTP, pinning). | 🔜 Planejada |
-| Fase 5 | Trilha storage/RE: SharedPreferences, SQLite, cache, segredos, cripto fraca. | 🔜 Planejada |
-| Fase 6 | Trilha platform: componentes exportados, deep links, QR. | 🔜 Planejada |
-| Fase 7 | Trilha WebView: settings inseguras, bridge JS, cadeia deep link → WebView. | 🔜 Planejada |
-| Fase 8 | Trilha anti-analysis/auth: root/emulador/biometria, binary patching, BAC/mass assignment. | 🔜 Planejada |
-| Fase 9 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
+| **Fase 3** | App Android base (Kotlin + Compose): telas, cliente HTTP, SharedPreferences inseguro, enumeração manual por ID, suporte/diagnostics, transfer preview. | ✅ Concluída |
+| **Fase 4** | Armazenamento local inseguro: SharedPreferences rico, SQLite (`obsidianpay_local.db`), arquivos em filesDir/cacheDir, export app-specific externo, eventos de debug, cache offline. | ✅ Atual |
+| Fase 5 | Recon estático do app + trilha network/API (interceptação, legado/HTTP, pinning). | 🔜 Planejada |
+| Fase 6 | Trilha storage/RE avançada: segredos hardcoded, cripto fraca, RE do binário. | 🔜 Planejada |
+| Fase 7 | Trilha platform: componentes exportados, deep links, QR. | 🔜 Planejada |
+| Fase 8 | Trilha WebView: settings inseguras, bridge JS, cadeia deep link → WebView. | 🔜 Planejada |
+| Fase 9 | Trilha anti-analysis/auth: root/emulador/biometria, binary patching, BAC/mass assignment. | 🔜 Planejada |
+| Fase 10 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
 
 ## Escopo da Fase 1 (entregue)
 
@@ -33,6 +34,18 @@ Plano de fases do laboratório. Fases 1–3 implementadas.
 - Gradle wrapper (8.7), AGP 8.5.2, Kotlin 1.9.24, minSdk 24 / SDK 34.
 - `network_security_config` liberando cleartext só para hosts locais.
 - Script `scripts/validate-phase3.sh`.
+
+## Escopo da Fase 4 (entregue)
+
+- `InsecureSessionStore` ampliado (SharedPreferences em texto puro): sessão,
+  cache de perfil/config, últimos support sync/diagnostics/transfer preview,
+  últimos IDs abertos, timestamp, baseUrlHint.
+- `ObsidianLocalDb` (SQLite `obsidianpay_local.db`): `cached_receipts`,
+  `cached_cards` (com `rawJson`) e `debug_events`.
+- `LocalCacheManager`: orquestra prefs + SQLite + arquivos
+  (`filesDir`/`cacheDir`) + export app-specific externo.
+- Telas atualizadas para cachear respostas + tela interna `LocalStateScreen`.
+- Script `scripts/validate-phase4.sh`.
 
 ## Princípios entre fases
 

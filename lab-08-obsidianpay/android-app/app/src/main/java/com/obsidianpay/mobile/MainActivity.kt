@@ -28,15 +28,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.obsidianpay.mobile.api.ApiClient
 import com.obsidianpay.mobile.storage.InsecureSessionStore
+import com.obsidianpay.mobile.storage.LocalCacheManager
+import com.obsidianpay.mobile.storage.ObsidianLocalDb
 import com.obsidianpay.mobile.ui.CardsScreen
 import com.obsidianpay.mobile.ui.HomeScreen
+import com.obsidianpay.mobile.ui.LocalStateScreen
 import com.obsidianpay.mobile.ui.LoginScreen
 import com.obsidianpay.mobile.ui.ReceiptsScreen
 import com.obsidianpay.mobile.ui.SupportScreen
 import com.obsidianpay.mobile.ui.TransferPreviewScreen
 
 /** Top-level destinations. A tiny enum-based nav keeps the app dependency-free. */
-enum class Screen { Login, Home, Receipts, Cards, Support, Transfer }
+enum class Screen { Login, Home, Receipts, Cards, Support, Transfer, LocalState }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,6 +59,8 @@ fun ObsidianPayApp() {
     val context = LocalContext.current
     val apiClient = remember { ApiClient() }
     val store = remember { InsecureSessionStore(context) }
+    val db = remember { ObsidianLocalDb(context) }
+    val cache = remember { LocalCacheManager(context.applicationContext, store, db) }
 
     var screen by remember {
         mutableStateOf(if (store.isLoggedIn()) Screen.Home else Screen.Login)
@@ -65,23 +70,26 @@ fun ObsidianPayApp() {
         Screen.Login -> LoginScreen(
             apiClient = apiClient,
             store = store,
+            cache = cache,
             onLoggedIn = { screen = Screen.Home },
         )
 
         Screen.Home -> HomeScreen(
             apiClient = apiClient,
             store = store,
+            cache = cache,
             onNavigate = { screen = it },
             onLogout = {
-                store.clear()
+                cache.clearAll()
                 screen = Screen.Login
             },
         )
 
-        Screen.Receipts -> ReceiptsScreen(apiClient, store) { screen = Screen.Home }
-        Screen.Cards -> CardsScreen(apiClient, store) { screen = Screen.Home }
-        Screen.Support -> SupportScreen(apiClient, store) { screen = Screen.Home }
-        Screen.Transfer -> TransferPreviewScreen(apiClient, store) { screen = Screen.Home }
+        Screen.Receipts -> ReceiptsScreen(apiClient, store, cache) { screen = Screen.Home }
+        Screen.Cards -> CardsScreen(apiClient, store, cache) { screen = Screen.Home }
+        Screen.Support -> SupportScreen(apiClient, store, cache) { screen = Screen.Home }
+        Screen.Transfer -> TransferPreviewScreen(apiClient, store, cache) { screen = Screen.Home }
+        Screen.LocalState -> LocalStateScreen(cache) { screen = Screen.Home }
     }
 }
 

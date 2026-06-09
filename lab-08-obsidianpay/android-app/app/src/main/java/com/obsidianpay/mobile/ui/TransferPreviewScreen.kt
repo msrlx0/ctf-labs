@@ -22,6 +22,7 @@ import com.obsidianpay.mobile.ResponseBox
 import com.obsidianpay.mobile.api.ApiClient
 import com.obsidianpay.mobile.api.ApiResult
 import com.obsidianpay.mobile.storage.InsecureSessionStore
+import com.obsidianpay.mobile.storage.LocalCacheManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,6 +31,7 @@ import kotlinx.coroutines.withContext
 fun TransferPreviewScreen(
     apiClient: ApiClient,
     store: InsecureSessionStore,
+    cache: LocalCacheManager,
     onBack: () -> Unit,
 ) {
     var toUserId by remember { mutableStateOf("2001") }
@@ -76,6 +78,7 @@ fun TransferPreviewScreen(
                             is ApiResult.Success -> {
                                 status = "Prévia gerada (executará: ${res.data.willExecute})."
                                 response = res.data.raw
+                                cache.cacheTransferPreview(res.rawBody)
                             }
                             is ApiResult.Error -> {
                                 status = "Erro ${res.httpCode ?: "?"}"

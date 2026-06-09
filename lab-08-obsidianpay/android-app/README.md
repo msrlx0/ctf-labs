@@ -1,8 +1,9 @@
-# ObsidianPay — App Android (Fase 3)
+# ObsidianPay — App Android (Fase 4)
 
 App Android nativo (Kotlin + Jetpack Compose) que consome a API mobile do
-**Lab 08 — ObsidianPay Mobile**. Esta é a **fundação mobile** (Fase 3): projeto
-base buildável, telas principais e cliente HTTP simples.
+**Lab 08 — ObsidianPay Mobile**. A partir da Fase 4, o app mantém **cache
+local/offline** (SharedPreferences, SQLite e arquivos internos), como um app de
+carteira real faria.
 
 > **Ambiente somente local.** O app só fala com o backend do lab em
 > `http://10.0.2.2:8102` (alias do emulador para o `127.0.0.1` do host).
@@ -80,11 +81,30 @@ android-app/
         ├── java/com/obsidianpay/mobile/
         │   ├── MainActivity.kt          # shell Compose + navegação simples
         │   ├── api/                      # ApiClient (OkHttp), modelos, ApiResult
-        │   ├── storage/                  # InsecureSessionStore (SharedPreferences)
+        │   ├── storage/                  # InsecureSessionStore, ObsidianLocalDb (SQLite), LocalCacheManager
         │   ├── ui/                       # telas Login/Home/Receipts/Cards/Support/Transfer
         │   └── util/Constants.kt         # base URL, chaves de storage, header de debug
         └── res/ (values/, xml/network_security_config.xml)
 ```
+
+## Armazenamento local (Fase 4)
+
+O app mantém estado local/offline, em texto puro **de propósito** (semente para
+estudo de armazenamento inseguro):
+
+- **SharedPreferences** (`InsecureSessionStore`): sessão e cache de perfil/config,
+  além de últimos resultados de suporte/diagnostics/preview e IDs abertos.
+- **SQLite** (`ObsidianLocalDb` → `obsidianpay_local.db`): tabelas
+  `cached_receipts`, `cached_cards` (com `rawJson`) e `debug_events`.
+- **Arquivos internos**: `cacheDir/obsidian-support-last-sync.json`,
+  `filesDir/receipts/receipt-<id>.json`, `filesDir/debug/obsidian-debug-export.json`.
+- **External app-specific**: `getExternalFilesDir(null)/obsidian-export.txt`
+  (storage específico do app, não público global).
+- **`LocalCacheManager`** orquestra tudo; a tela **Local State** (na Início)
+  mostra o estado local como ferramenta de suporte/dev.
+
+Educacionalmente: vale observar **o que** o app persiste e **onde**. Este README
+não descreve extração nem exploração — isso faz parte do exercício.
 
 ## Notas técnicas (Fase 3)
 
@@ -92,8 +112,7 @@ android-app/
   permitem cleartext **apenas** para `10.0.2.2`/`127.0.0.1`/`localhost`. Não use
   em produção.
 - **Armazenamento local:** `InsecureSessionStore` grava token/perfil em
-  `SharedPreferences` em texto puro, **de propósito** (semente para estudo de
-  armazenamento inseguro em fase futura).
+  `SharedPreferences` em texto puro, **de propósito** (ver seção acima).
 - **Componentes exportados:** apenas `MainActivity` é exportada (exigência do
   launcher). Componentes exportados vulneráveis ficam para uma fase futura.
 - **Fora de escopo nesta fase:** Frida, pinning real, lib nativa, root/biometria

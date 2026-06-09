@@ -38,7 +38,7 @@ class ApiClient(private val baseUrl: String = Constants.DEFAULT_BASE_URL) {
                 val body = resp.body?.string().orEmpty()
                 Log.d(TAG, "${request.method} ${request.url.encodedPath} -> ${resp.code}")
                 if (resp.isSuccessful) {
-                    ApiResult.Success(body, resp.code)
+                    ApiResult.Success(body, resp.code, body)
                 } else {
                     ApiResult.Error(extractMessage(body, "HTTP ${resp.code}"), resp.code)
                 }
@@ -58,7 +58,7 @@ class ApiClient(private val baseUrl: String = Constants.DEFAULT_BASE_URL) {
     private inline fun <T> ApiResult<String>.mapBody(parse: (String) -> T): ApiResult<T> =
         when (this) {
             is ApiResult.Success -> try {
-                ApiResult.Success(parse(data), httpCode)
+                ApiResult.Success(parse(data), httpCode, rawBody)
             } catch (e: Exception) {
                 ApiResult.Error("parse error: ${e.message}", httpCode)
             }

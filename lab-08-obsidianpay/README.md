@@ -2,7 +2,7 @@
 
 **Tema:** Segurança de aplicações mobile (Android) — backend + app
 **Porta oficial:** http://127.0.0.1:8102
-**Status:** Fase 3 (API mobile + **app Android base**). O APK final ainda não foi publicado.
+**Status:** Fase 4 (app Android com **cache local/offline**). O APK final ainda não foi publicado.
 **Dificuldade alvo:** Hard / realista (acima de labs introdutórios como AndroGoat).
 
 ---
@@ -159,10 +159,15 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 ## Estado atual
 
 - ✅ Backend mobile (API rica) na porta 8102 — Fase 2
-- ✅ App Android base (telas + cliente HTTP) — **Fase 3**
+- ✅ App Android base (telas + cliente HTTP) — Fase 3
+- ✅ Cache local/offline do app (perfil, config, recibos, cartões) — **Fase 4**
 - ✅ Documentação base e arquitetura
 - 🔜 APK final publicado
 - 🔜 Cadeias completas app ↔ API
+
+> Na Fase 4 o app passou a manter **estado local/offline** (SharedPreferences,
+> SQLite e arquivos em storage interno), como um app mobile real faz para cache
+> e funcionamento sem rede.
 
 > **O APK final ainda não foi publicado.** A Fase 3 entrega o código-fonte do
 > app base. Trate o app e a API como alvos reais: explore, observe e questione.

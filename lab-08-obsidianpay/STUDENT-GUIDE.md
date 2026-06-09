@@ -59,6 +59,14 @@ Com o backend no ar (`127.0.0.1:8102`):
 5. Faça login com `guest` / `guest123` (já vem preenchido).
 6. Navegue pelas telas: Início, Recibos, Cartões, Suporte, Prévia de
    transferência e Configuração.
+7. Abra recibos e cartões (inclusive pelo campo "abrir por ID"), envie um sync
+   de suporte, gere uma prévia de transferência.
+
+> **Estado local/offline:** como um app real, o ObsidianPay guarda cache local
+> (sessão, perfil, config, recibos, cartões) para funcionar melhor. A Início tem
+> uma área interna "Local State" que mostra o que o app mantém no dispositivo.
+> Vale observar **o que** fica guardado e **onde** — isso faz parte do raciocínio
+> de segurança mobile. (Este guia não diz como extrair nada; a investigação é sua.)
 
 Detalhes e build via linha de comando em
 [android-app/README.md](./android-app/README.md).

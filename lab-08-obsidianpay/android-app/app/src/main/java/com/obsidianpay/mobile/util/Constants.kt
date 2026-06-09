@@ -24,6 +24,18 @@ object Constants {
     const val KEY_USERNAME: String = "obsidian.session.username"
     const val KEY_USER_ID: String = "obsidian.session.user_id"
     const val KEY_ROLE: String = "obsidian.session.role"
+    const val KEY_PLAN: String = "obsidian.session.plan"
+    const val KEY_DAILY_LIMIT: String = "obsidian.session.daily_limit"
+    const val KEY_KYC_APPROVED: String = "obsidian.session.kyc_approved"
+
+    // Cached raw API payloads (plaintext, intentional for the lab).
+    const val KEY_RAW_CONFIG: String = "obsidian.config.cache"
+    const val KEY_LAST_SUPPORT_SYNC: String = "obsidian.debug.last_support_sync"
+    const val KEY_LAST_DIAGNOSTICS: String = "obsidian.debug.last_diagnostics"
+    const val KEY_LAST_TRANSFER_PREVIEW: String = "obsidian.debug.last_transfer_preview"
+    const val KEY_LAST_OPENED_RECEIPT: String = "obsidian.debug.last_opened_receipt"
+    const val KEY_LAST_OPENED_CARD: String = "obsidian.debug.last_opened_card"
+    const val KEY_BASE_URL_HINT: String = "obsidian.debug.base_url_hint"
 
     // Debug header expected by the backend's diagnostics endpoint.
     const val DEBUG_HEADER_NAME: String = "X-Obsidian-Debug"

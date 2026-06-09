@@ -294,3 +294,65 @@ Sem Android SDK, o `assembleDebug` falha apenas em "SDK location not found" — 
 - [ ] App tem as 6 telas e cliente HTTP (OkHttp).
 - [ ] `README.md` e `STUDENT-GUIDE.md` sem flags e sem credenciais internas.
 - [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+---
+
+## Fase 4 — armazenamento local inseguro (app)
+
+> Atalho: `bash scripts/validate-phase4.sh` valida a estrutura de storage local.
+> Para também rodar os testes de backend: `RUN_BACKEND_TESTS=1 bash
+> scripts/validate-phase4.sh`.
+
+### F4.1 — Arquivos de storage
+
+```bash
+SRC=android-app/app/src/main/java/com/obsidianpay/mobile/storage
+ls $SRC/InsecureSessionStore.kt $SRC/ObsidianLocalDb.kt $SRC/LocalCacheManager.kt
+ls android-app/app/src/main/java/com/obsidianpay/mobile/ui/LocalStateScreen.kt
+```
+
+### F4.2 — Conteúdo-chave
+
+```bash
+grep -q 'SharedPreferences' $SRC/InsecureSessionStore.kt && echo OK
+grep -q 'SQLiteOpenHelper'  $SRC/ObsidianLocalDb.kt && echo OK
+grep -q 'obsidianpay_local.db' $SRC/ObsidianLocalDb.kt && echo OK
+grep -Eq 'cached_receipts|cached_cards|debug_events' $SRC/ObsidianLocalDb.kt && echo OK
+grep -Eq 'filesDir|cacheDir|getExternalFilesDir' $SRC/LocalCacheManager.kt && echo OK
+```
+
+### F4.3 — UI referencia o estado local
+
+```bash
+grep -rqE 'Local State|LocalStateScreen' android-app/app/src/main && echo OK
+grep -rq 'Cached Receipts' android-app/app/src/main && echo OK
+grep -rq 'Cached Cards'    android-app/app/src/main && echo OK
+grep -rq 'Local Artifacts' android-app/app/src/main && echo OK
+```
+
+### F4.4 — Build (se houver Gradle + Android SDK)
+
+```bash
+cd android-app && ./gradlew assembleDebug   # requer Android SDK
+```
+
+Sem SDK, o build falha apenas em "SDK location not found" (esperado).
+
+### Inspeção em runtime (apenas com app instalado no emulador)
+
+Depois de usar o app, os artefatos locais ficam sob o sandbox do app, ex.:
+
+```bash
+adb shell run-as com.obsidianpay.mobile.debug ls -R /data/data/com.obsidianpay.mobile.debug/
+```
+
+> O que observar lá faz parte do exercício; este documento não entrega extração.
+
+### Critérios de aceite (Fase 4)
+
+- [ ] `validate-phase1/2/3.sh` continuam passando.
+- [ ] `validate-phase4.sh` passa.
+- [ ] App tem SharedPreferences + SQLiteOpenHelper + arquivos locais/cache.
+- [ ] UI expõe Local State / Cached Receipts / Cached Cards / Local Artifacts.
+- [ ] Docs públicos sem flags; README/STUDENT-GUIDE/app README sem credenciais internas.
+- [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.

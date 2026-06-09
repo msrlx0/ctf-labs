@@ -20,6 +20,7 @@ import com.obsidianpay.mobile.ObsidianScaffold
 import com.obsidianpay.mobile.api.ApiClient
 import com.obsidianpay.mobile.api.ApiResult
 import com.obsidianpay.mobile.storage.InsecureSessionStore
+import com.obsidianpay.mobile.storage.LocalCacheManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,6 +29,7 @@ import kotlinx.coroutines.withContext
 fun LoginScreen(
     apiClient: ApiClient,
     store: InsecureSessionStore,
+    cache: LocalCacheManager,
     onLoggedIn: () -> Unit,
 ) {
     // Defaults are pre-filled to make local testing quick.
@@ -73,15 +75,19 @@ fun LoginScreen(
                                 val profile = withContext(Dispatchers.IO) {
                                     apiClient.getProfile(login.token)
                                 }
-                                val profileCache =
-                                    (profile as? ApiResult.Success)?.data?.toString()
-                                store.saveSession(
+                                val profileRaw = (profile as? ApiResult.Success)?.rawBody
+                                val profileData = (profile as? ApiResult.Success)?.data
+                                store.saveLoginSession(
                                     token = login.token,
                                     username = login.username,
                                     userId = login.userId,
                                     role = login.role,
-                                    profileJson = profileCache,
+                                    plan = login.plan ?: profileData?.plan,
+                                    dailyLimit = profileData?.dailyLimit,
+                                    kycApproved = profileData?.kycApproved,
+                                    rawProfileJson = profileRaw,
                                 )
+                                cache.addEvent("login_success", "user=${login.username}")
                                 loading = false
                                 onLoggedIn()
                             }
