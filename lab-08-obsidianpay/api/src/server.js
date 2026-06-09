@@ -1,19 +1,38 @@
 'use strict';
 
 /**
- * ObsidianPay Mobile API - Lab 08, Phase 1
+ * ObsidianPay Mobile API - Lab 08, Phase 2
  *
- * Minimal Express backend that establishes the technical contract for the
- * mobile lab. It is intentionally simple and intentionally NOT yet vulnerable
- * in the ways future phases will explore. Local use only.
+ * Express backend that defines the mobile contract AND introduces the first
+ * controlled, backend-side vulnerabilities a mobile pentest would explore:
+ *   - IDOR / broken object-level authorization (receipts, cards)
+ *   - Mass assignment (PATCH profile)
+ *   - Weak debug gate (support/diagnostics)
+ *   - Legacy route disclosure (legacy/routes)
+ *   - Role gate for an internal vault status endpoint
+ *   - QR/deep-link transfer preview scaffold + WebView support scaffold
+ *
+ * Local use only. Progress markers (FLAG{...}) live in data.js and are only
+ * reachable through these flaws — never in public docs.
  */
 
 const express = require('express');
-const { LAB, users, receipts, mobileConfig } = require('./data');
+const {
+  LAB,
+  users,
+  receipts,
+  cards,
+  featureFlags,
+  vaultStatusByRole,
+  buildMobileConfig,
+} = require('./data');
 
 const app = express();
 const HOST = '0.0.0.0';
 const PORT = Number(process.env.PORT) || LAB.port;
+
+const DEBUG_HEADER = 'x-obsidian-debug';
+const DEBUG_TOKEN = 'mobile-diagnostics';
 
 app.disable('x-powered-by');
 app.use(express.json({ limit: '64kb' }));
@@ -25,25 +44,23 @@ app.use((req, _res, next) => {
   next();
 });
 
-// --- Didactic token helpers --------------------------------------------------
-// Phase 1 token is intentionally predictable/decodable. This is a deliberate
-// teaching seam: a future phase will turn this into a controlled vulnerability
-// (token forging / weak session material). Do NOT treat this as security.
-function issueToken(user) {
-  const payload = `${user.username}:${user.role}:${user.id}`;
-  return 'op_' + Buffer.from(payload, 'utf8').toString('base64');
+// --- Standard responses ------------------------------------------------------
+function sendError(res, status, error, message) {
+  return res.status(status).json({ error, message });
 }
 
-function decodeToken(token) {
-  if (typeof token !== 'string' || !token.startsWith('op_')) return null;
-  try {
-    const raw = Buffer.from(token.slice(3), 'base64').toString('utf8');
-    const [username, role, id] = raw.split(':');
-    if (!username || !role || !id) return null;
-    return { username, role, userId: Number(id) };
-  } catch (_err) {
-    return null;
-  }
+// --- Didactic token helpers --------------------------------------------------
+// Predictable-but-consistent token: obsidian-mobile-token-<username>-<userId>.
+// Intentionally forgeable: this is a teaching seam, not real security.
+function issueToken(user) {
+  return `obsidian-mobile-token-${user.username}-${user.id}`;
+}
+
+function parseToken(token) {
+  if (typeof token !== 'string') return null;
+  const m = /^obsidian-mobile-token-([a-z0-9_]+)-(\d+)$/i.exec(token);
+  if (!m) return null;
+  return { username: m[1], userId: Number(m[2]) };
 }
 
 function getBearer(req) {
@@ -53,21 +70,53 @@ function getBearer(req) {
 }
 
 function requireAuth(req, res, next) {
-  const token = getBearer(req);
-  const claims = decodeToken(token);
+  const claims = parseToken(getBearer(req));
   if (!claims) {
-    return res
-      .status(401)
-      .json({ error: 'unauthorized', message: 'Missing or invalid Bearer token.' });
+    return sendError(res, 401, 'unauthorized', 'Missing or invalid Bearer token.');
   }
   const user = users.find((u) => u.id === claims.userId && u.username === claims.username);
   if (!user) {
-    return res
-      .status(401)
-      .json({ error: 'unauthorized', message: 'Token does not map to a known user.' });
+    return sendError(res, 401, 'unauthorized', 'Token does not map to a known user.');
   }
   req.authUser = user;
   next();
+}
+
+// --- Serializers -------------------------------------------------------------
+function publicProfile(u) {
+  return {
+    id: u.id,
+    username: u.username,
+    displayName: u.displayName,
+    phone: u.phone,
+    role: u.role,
+    plan: u.plan,
+    walletId: u.walletId,
+    dailyLimit: u.dailyLimit,
+    kycApproved: u.kycApproved,
+    supportTier: u.supportTier,
+    balanceBRL: u.balanceBRL,
+  };
+}
+
+function maskCardNumber(number) {
+  const last4 = String(number).slice(-4);
+  return `**** **** **** ${last4}`;
+}
+
+// Card view returned to clients. Number is masked, but ownerRole and the
+// internalReference are intentionally exposed (controlled leak via IDOR).
+function cardView(card) {
+  return {
+    cardId: card.cardId,
+    ownerUserId: card.ownerUserId,
+    ownerRole: card.ownerRole,
+    brand: card.brand,
+    maskedNumber: maskCardNumber(card.number),
+    expiry: card.expiry,
+    holder: card.holder,
+    internalReference: card.internalReference,
+  };
 }
 
 // --- Public / meta endpoints -------------------------------------------------
@@ -94,109 +143,279 @@ app.get('/health', (_req, res) => {
   });
 });
 
-// --- Mobile API --------------------------------------------------------------
+// --- Auth --------------------------------------------------------------------
 app.post('/api/mobile/login', (req, res) => {
   const { username, password } = req.body || {};
   if (typeof username !== 'string' || typeof password !== 'string') {
-    return res
-      .status(400)
-      .json({ error: 'bad_request', message: 'username and password are required.' });
+    return sendError(res, 400, 'bad_request', 'username and password are required.');
   }
 
   const user = users.find((u) => u.username === username && u.password === password);
   if (!user) {
-    return res
-      .status(401)
-      .json({ error: 'invalid_credentials', message: 'Invalid username or password.' });
+    return sendError(res, 401, 'invalid_credentials', 'Invalid username or password.');
   }
 
-  const token = issueToken(user);
   res.json({
-    token,
+    token: issueToken(user),
     tokenType: 'Bearer',
     profile: {
       id: user.id,
       username: user.username,
       displayName: user.displayName,
       role: user.role,
-      tier: user.tier,
+      plan: user.plan,
     },
-    featureFlags: mobileConfig.mobileFeatureFlags,
+    featureFlags: { ...featureFlags },
   });
 });
 
+// --- Profile -----------------------------------------------------------------
 app.get('/api/mobile/profile', requireAuth, (req, res) => {
-  const u = req.authUser;
-  res.json({
-    id: u.id,
-    username: u.username,
-    displayName: u.displayName,
-    role: u.role,
-    tier: u.tier,
-    walletId: u.walletId,
-    balanceBRL: u.balanceBRL,
-    kycLevel: u.kycLevel,
-  });
+  res.json(publicProfile(req.authUser));
 });
 
-app.get('/api/mobile/config', (_req, res) => {
-  res.json(mobileConfig);
-});
+// PATCH profile — controlled MASS ASSIGNMENT.
+// The app would only send displayName/phone, but the backend also accepts
+// privileged fields (role, plan, dailyLimit, kycApproved, supportTier) and
+// mutates the in-memory user. Only a known set of keys is applied so the app
+// cannot be broken by arbitrary input.
+const PATCHABLE_FIELDS = [
+  'displayName',
+  'phone',
+  'role',
+  'plan',
+  'dailyLimit',
+  'kycApproved',
+  'supportTier',
+];
 
-app.get('/api/mobile/receipt/:id', requireAuth, (req, res) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: 'bad_request', message: 'Invalid receipt id.' });
+app.patch('/api/mobile/profile', requireAuth, (req, res) => {
+  const body = req.body || {};
+  if (typeof body !== 'object' || Array.isArray(body)) {
+    return sendError(res, 400, 'bad_request', 'JSON object body required.');
   }
 
+  const applied = [];
+  for (const key of PATCHABLE_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(body, key)) {
+      let value = body[key];
+      if (key === 'dailyLimit') value = Number(value);
+      if (key === 'kycApproved') value = Boolean(value);
+      if (key === 'dailyLimit' && Number.isNaN(value)) continue; // keep app stable
+      req.authUser[key] = value;
+      applied.push(key);
+    }
+  }
+
+  res.json({ updated: true, appliedFields: applied, profile: publicProfile(req.authUser) });
+});
+
+// --- Config ------------------------------------------------------------------
+app.get('/api/mobile/config', (_req, res) => {
+  res.json(buildMobileConfig());
+});
+
+// --- Receipts ----------------------------------------------------------------
+// List: correctly scoped to the authenticated user.
+app.get('/api/mobile/receipts', requireAuth, (req, res) => {
+  const own = receipts
+    .filter((r) => r.ownerUserId === req.authUser.id)
+    .map((r) => ({
+      receiptId: r.receiptId,
+      type: r.type,
+      status: r.status,
+      amountBRL: r.amountBRL,
+      currency: r.currency,
+      counterparty: r.counterparty,
+      createdAt: r.createdAt,
+      reference: r.reference,
+    }));
+  res.json({ count: own.length, receipts: own });
+});
+
+// IDOR (broken object-level authorization): any valid token can fetch ANY
+// existing receipt by id, regardless of ownership. The full object (including
+// metadata.internalNote) is returned.
+app.get('/api/mobile/receipts/:receiptId', requireAuth, (req, res) => {
+  const id = Number(req.params.receiptId);
+  if (!Number.isInteger(id)) {
+    return sendError(res, 400, 'bad_request', 'Invalid receipt id.');
+  }
   const receipt = receipts.find((r) => r.receiptId === id);
   if (!receipt) {
-    return res.status(404).json({ error: 'not_found', message: 'Receipt not found.' });
+    return sendError(res, 404, 'not_found', 'Receipt not found.');
   }
-
-  // Phase 1: enforce ownership so the endpoint is well-behaved for now.
-  // (Object-level authorization is a planned topic for a later phase.)
-  if (receipt.ownerUserId !== req.authUser.id) {
-    return res
-      .status(403)
-      .json({ error: 'forbidden', message: 'This receipt does not belong to you.' });
-  }
-
   res.json(receipt);
 });
 
+// Phase 1 compatibility endpoint (singular). Ownership IS enforced here so the
+// Phase 1 validation continues to pass unchanged.
+app.get('/api/mobile/receipt/:id', requireAuth, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    return sendError(res, 400, 'bad_request', 'Invalid receipt id.');
+  }
+  const receipt = receipts.find((r) => r.receiptId === id);
+  if (!receipt) {
+    return sendError(res, 404, 'not_found', 'Receipt not found.');
+  }
+  if (receipt.ownerUserId !== req.authUser.id) {
+    return sendError(res, 403, 'forbidden', 'This receipt does not belong to you.');
+  }
+  res.json(receipt);
+});
+
+// --- Cards -------------------------------------------------------------------
+// List: correctly scoped to the authenticated user.
+app.get('/api/mobile/cards', requireAuth, (req, res) => {
+  const own = cards.filter((c) => c.ownerUserId === req.authUser.id).map(cardView);
+  res.json({ count: own.length, cards: own });
+});
+
+// IDOR: any valid token can fetch ANY card by id. Number is masked, but
+// ownerRole and internalReference leak.
+app.get('/api/mobile/cards/:cardId', requireAuth, (req, res) => {
+  const card = cards.find((c) => c.cardId === req.params.cardId);
+  if (!card) {
+    return sendError(res, 404, 'not_found', 'Card not found.');
+  }
+  res.json(cardView(card));
+});
+
+// --- Support: legacy sync (Phase 1 stub, kept) ------------------------------
 app.post('/api/mobile/support/sync', (req, res) => {
   const { message, ticketRef } = req.body || {};
   if (typeof message !== 'string' || message.length === 0) {
-    return res
-      .status(400)
-      .json({ error: 'bad_request', message: 'A non-empty message is required.' });
+    return sendError(res, 400, 'bad_request', 'A non-empty message is required.');
   }
-
-  // Legacy support sync stub. Controlled echo for now; future phases use this
-  // path to study legacy/HTTP/mobile sync behavior. No external calls.
   res.json({
     accepted: true,
-    mode: mobileConfig.supportSyncMode,
+    mode: 'legacy-http',
     ticketRef: typeof ticketRef === 'string' ? ticketRef : 'OP-SUP-AUTO',
     echo: message,
     syncedAt: new Date().toISOString(),
-    note: 'Legacy support sync stub (Phase 1).',
+    note: 'Legacy support sync stub.',
   });
+});
+
+// --- Support: diagnostics (weak debug gate) ----------------------------------
+// Requires a valid token AND a static debug header. The header is the only
+// gate — a weak control on purpose.
+app.get('/api/mobile/support/diagnostics', requireAuth, (req, res) => {
+  if (req.headers[DEBUG_HEADER] !== DEBUG_TOKEN) {
+    return sendError(res, 403, 'forbidden', 'Diagnostics require the mobile debug header.');
+  }
+  const enabledModules = Object.keys(featureFlags).filter((k) => featureFlags[k]);
+  res.json({
+    apiVersion: 'v1',
+    buildChannel: 'internal-dev',
+    enabledModules,
+    legacyRoutes: [
+      '/api/mobile/support/sync',
+      '/api/mobile/legacy/routes',
+      '/api/mobile/internal/vault-status',
+    ],
+    mobileDeepLinks: ['obsidianpay://transfer', 'obsidianpay://support'],
+    storageHints: [
+      'obsidian.session.token',
+      'obsidian.profile.cache',
+      'obsidian.receipts.offline',
+      'obsidian.debug.last_sync',
+    ],
+  });
+});
+
+// --- Transfer preview (QR / deep link scaffold) ------------------------------
+// Weak validation on purpose: accepts amount as string or number, memo is not
+// strongly sanitized, and no transfer is executed.
+app.post('/api/mobile/transfer/preview', requireAuth, (req, res) => {
+  const { toUserId, amount, memo } = req.body || {};
+  const normalizedAmount = Number(amount);
+  if (Number.isNaN(normalizedAmount)) {
+    return sendError(res, 400, 'bad_request', 'amount must be a number or numeric string.');
+  }
+
+  const recipient = users.find((u) => u.id === Number(toUserId));
+  res.json({
+    willExecute: false,
+    normalizedPreview: {
+      fromUserId: req.authUser.id,
+      toUserId: Number(toUserId),
+      recipientKnown: Boolean(recipient),
+      recipientDisplayName: recipient ? recipient.displayName : null,
+      amount: normalizedAmount,
+      currency: 'BRL',
+      feeBRL: 0,
+      memo: typeof memo === 'string' ? memo : '',
+      deepLinkScheme: 'obsidianpay://transfer',
+    },
+    note: 'Preview only. No funds moved (Phase 2 scaffold).',
+  });
+});
+
+// --- WebView support portal (scaffold) ---------------------------------------
+// Returns simple HTML that reflects a `topic`/`message` query parameter. This
+// is a controlled scaffold for a future WebView/bridge study. Local only.
+app.get('/api/mobile/webview/support', (req, res) => {
+  const topic = typeof req.query.topic === 'string' ? req.query.topic : 'home';
+  const message = typeof req.query.message === 'string' ? req.query.message : '';
+  res
+    .type('html')
+    .send(
+      `<!doctype html>
+<html lang="pt-br">
+  <head><meta charset="utf-8"><title>ObsidianPay Support</title></head>
+  <body>
+    <h1>Central de Suporte ObsidianPay</h1>
+    <p>Tópico atual: ${topic}</p>
+    <div id="message">${message}</div>
+    <p>Ambiente local apenas.</p>
+  </body>
+</html>`
+    );
+});
+
+// --- Legacy route disclosure -------------------------------------------------
+app.get('/api/mobile/legacy/routes', requireAuth, (_req, res) => {
+  res.json({
+    note: 'Internal/legacy and planned mobile routes.',
+    routes: [
+      '/api/mobile/support/sync',
+      '/api/mobile/support/diagnostics',
+      '/api/mobile/webview/support',
+      '/api/mobile/transfer/preview',
+      '/api/mobile/internal/vault-status',
+    ],
+  });
+});
+
+// --- Internal vault status (role gate) ---------------------------------------
+// customer -> 403. analyst/operator -> different statuses. Future use:
+// biometric / root / binary-patching chains.
+app.get('/api/mobile/internal/vault-status', requireAuth, (req, res) => {
+  const role = req.authUser.role;
+  if (role === 'customer') {
+    return sendError(res, 403, 'forbidden', 'Vault status is restricted to internal roles.');
+  }
+  const status = vaultStatusByRole[role];
+  if (!status) {
+    return sendError(res, 403, 'forbidden', 'Role not permitted for vault status.');
+  }
+  res.json(status);
 });
 
 // --- Error handling ----------------------------------------------------------
 app.use((_req, res) => {
-  res.status(404).json({ error: 'not_found', message: 'Unknown endpoint.' });
+  sendError(res, 404, 'not_found', 'Unknown endpoint.');
 });
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
   if (err && err.type === 'entity.parse.failed') {
-    return res.status(400).json({ error: 'bad_request', message: 'Malformed JSON body.' });
+    return sendError(res, 400, 'bad_request', 'Malformed JSON body.');
   }
   console.error('[error]', err && err.message ? err.message : err);
-  res.status(500).json({ error: 'internal_error', message: 'Something went wrong.' });
+  sendError(res, 500, 'internal_error', 'Something went wrong.');
 });
 
 const server = app.listen(PORT, HOST, () => {
@@ -204,7 +423,6 @@ const server = app.listen(PORT, HOST, () => {
   console.log('Local lab environment only. Do not expose outside 127.0.0.1.');
 });
 
-// Graceful shutdown for container stop signals.
 for (const sig of ['SIGINT', 'SIGTERM']) {
   process.on(sig, () => {
     console.log(`Received ${sig}, shutting down.`);

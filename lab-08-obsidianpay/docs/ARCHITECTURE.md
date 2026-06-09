@@ -35,21 +35,35 @@ lab-08-obsidianpay/
 
 ---
 
-## 2. Backend local (Fase 1)
+## 2. Backend local (Fase 2)
 
 - **Stack:** Node.js 20 + Express.
-- **Persistência:** estado em memória (`api/src/data.js`). SQLite/persistência
+- **Persistência:** estado em memória (`api/src/data.js`), organizado por
+  domínio (usuários, recibos, cartões, feature flags, config). SQLite/persistência
   podem ser introduzidos quando uma vulnerabilidade de storage exigir.
 - **Bind:** `0.0.0.0:8102` dentro do container; publicado em `127.0.0.1:8102`.
-- **Contrato de API (Fase 1):**
-  - `GET /` — identificação do serviço.
-  - `GET /health` — status/versão/porta.
-  - `POST /api/mobile/login` — `guest`/`guest123` → token didático.
-  - `GET /api/mobile/profile` — requer `Authorization: Bearer`.
-  - `GET /api/mobile/config` — configuração mobile simulada.
-  - `GET /api/mobile/receipt/:id` — recibo (ownership validado na Fase 1).
+- **Token:** didático e previsível (`obsidian-mobile-token-<username>-<userId>`),
+  validado por helper; endpoints protegidos retornam `401` sem token válido.
+- **Contrato de API (Fase 2):**
+  - `GET /` · `GET /health` — identificação e status.
+  - `POST /api/mobile/login` — autenticação mobile (token Bearer didático).
+  - `GET` / `PATCH /api/mobile/profile` — leitura e atualização de perfil.
+  - `GET /api/mobile/config` — config mobile (versões, schemes de deep link,
+    chaves de storage do cliente, feature flags).
+  - `GET /api/mobile/receipts` · `GET /api/mobile/receipts/:receiptId` — recibos.
+  - `GET /api/mobile/receipt/:id` — endpoint singular de compatibilidade (Fase 1).
+  - `GET /api/mobile/cards` · `GET /api/mobile/cards/:cardId` — cartões (número
+    mascarado na saída).
   - `POST /api/mobile/support/sync` — stub legado de sincronização.
+  - `GET /api/mobile/support/diagnostics` — diagnósticos atrás de header de debug.
+  - `POST /api/mobile/transfer/preview` — prévia de transferência (QR/deep link).
+  - `GET /api/mobile/webview/support` — portal HTML para WebView futura.
+  - `GET /api/mobile/legacy/routes` — enumeração de rotas internas/futuras.
+  - `GET /api/mobile/internal/vault-status` — status interno com gate por papel.
 - **Respostas de erro:** sempre JSON (`{ error, message }`).
+- **Controles intencionalmente fracos:** alguns endpoints da Fase 2 implementam
+  fronteiras de segurança propositalmente frágeis (ver §5 e o roadmap). São
+  alvos de estudo, não garantias de segurança.
 
 ---
 

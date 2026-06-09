@@ -1,9 +1,9 @@
 # Guia do Aluno — Lab 08: ObsidianPay Mobile
 
 Bem-vindo(a) ao ObsidianPay, uma carteira digital fictícia usada para treino de
-segurança mobile. Este guia te orienta na **Fase 1**, que estabelece o backend e
-a fundação do laboratório. **O aplicativo Android ainda não foi entregue** — ele
-chega em fases futuras.
+segurança mobile. Este guia te orienta na **Fase 2**: o backend já expõe uma API
+mobile rica, representando os contratos que o aplicativo Android vai consumir.
+**O APK ainda está em construção** e chega em fases futuras.
 
 > Este documento é público e **não** contém solução nem flags.
 
@@ -61,6 +61,23 @@ Quando o app Android chegar, a ideia é trabalhar como em um pentest mobile real
 Use OWASP **MASVS/MASTG** como bússola conceitual. O foco é raciocínio manual,
 não rodar ferramenta e copiar saída.
 
+### Investigação manual da API (Fase 2)
+
+A API já está rica o suficiente para começar a investigar **agora**, mesmo sem o
+app. Pratique o método, não a resposta:
+
+- **Mapeie a superfície.** Que endpoints existem? O que cada um aceita e devolve?
+  Comece pelo que a config e os fluxos de suporte revelam.
+- **Pense como o app pensaria.** Que requisições um cliente mobile faria? O que o
+  servidor confia que veio do app?
+- **Questione cada resposta.** Os dados retornados são só os seus? Os campos que
+  você consegue enviar são só os esperados? O que acontece nas bordas (IDs de
+  outros objetos, campos extras, headers especiais, valores estranhos)?
+- **Ligue os pontos.** Um detalhe vazado aqui pode habilitar algo ali. Anote.
+
+O objetivo é descobrir sozinho(a). Este guia **não** entrega payloads nem o
+caminho — isso faz parte do desafio.
+
 ## 4. Ferramentas recomendadas
 
 Para as fases com o app Android:
@@ -91,10 +108,12 @@ Mantenha tudo **local** e **autorizado**.
 
 ## 6. Status desta fase
 
-- ✅ Backend mobile disponível (porta 8102)
+- ✅ API mobile rica disponível (porta 8102) — **Fase 2**
 - ✅ Conta de teste `guest` / `guest123`
+- ✅ Contratos mobile: perfil, recibos, cartões, suporte, transfer preview, WebView
 - 🔜 APK Android (próximas fases)
-- 🔜 Desafios e cadeias do app
+- 🔜 Integração app ↔ API e cadeias completas
 
-> Por enquanto, familiarize-se com a API, valide o ambiente e entenda o produto.
-> O componente Android — onde mora a maior parte do desafio — vem a seguir.
+> A API já é um alvo de verdade para análise manual. Explore os contratos,
+> valide o ambiente e entenda o produto. O componente Android — onde mora boa
+> parte do desafio — vem a seguir.

@@ -2,14 +2,14 @@
 
 > **Documento interno do instrutor.** Não é material do aluno.
 >
-> **Estado: Fase 1.** Este walkthrough descreve a **arquitetura planejada** e as
-> **cadeias futuras em alto nível**. Ele **não** contém, nesta fase:
-> - flags finais,
-> - payloads avançados,
-> - passo a passo de exploração.
+> **Estado: Fase 2.** Este walkthrough descreve a arquitetura, as cadeias
+> futuras em alto nível e, agora, as **vulnerabilidades de backend introduzidas
+> na Fase 2** (visão de instrutor, sem cadeia final longa). Ele **não** contém:
+> - a cadeia/solução final do Lab 8,
+> - payloads avançados ou exploits prontos extensos.
 >
-> Esses detalhes serão adicionados nas fases em que cada vulnerabilidade for de
-> fato implementada.
+> Marcadores de progresso (`FLAG{...}`) existem apenas nos dados do backend
+> (`api/src/data.js`), nunca em documentos públicos.
 
 ---
 
@@ -73,14 +73,52 @@ Itens já presentes no backend que sustentam vulnerabilidades futuras
 
 ---
 
+## 3.1 Fase 2 — vulnerabilidades de backend introduzidas
+
+A Fase 2 ativa, **no backend**, a primeira leva de falhas. Resumo de instrutor
+(sem cadeia final longa):
+
+- **IDOR / broken object-level authorization (receipts):**
+  `GET /api/mobile/receipts/:receiptId` retorna qualquer recibo existente para
+  qualquer token válido. `GET /api/mobile/receipts` (lista) e
+  `GET /api/mobile/receipt/:id` (singular, compat. Fase 1) **mantêm** o escopo
+  correto. Recibos `1002/1003/9001` pertencem a outros papéis; `9001` é o export
+  legado com `metadata.internalNote` sensível.
+- **IDOR (cards):** `GET /api/mobile/cards/:cardId` devolve qualquer cartão; o
+  número é mascarado, mas `ownerRole` e `internalReference` vazam. A lista
+  `GET /api/mobile/cards` continua escopada.
+- **Mass assignment:** `PATCH /api/mobile/profile` aceita, além de
+  `displayName/phone`, os campos privilegiados `role/plan/dailyLimit/
+  kycApproved/supportTier`, mutando o usuário em memória.
+- **Debug gate fraco:** `GET /api/mobile/support/diagnostics` exige apenas o
+  header estático `X-Obsidian-Debug: mobile-diagnostics` (além de token).
+- **Legacy route disclosure:** `GET /api/mobile/legacy/routes` enumera rotas
+  internas/futuras.
+- **Vault role gate:** `GET /api/mobile/internal/vault-status` nega `customer`
+  (403) e responde diferente para `analyst`/`operator` (base para
+  biometria/root/binary patching).
+- **QR/deep link (scaffold):** `POST /api/mobile/transfer/preview` com validação
+  fraca (amount string/numérico, memo sem sanitização forte), sem executar
+  transferência.
+- **WebView (scaffold):** `GET /api/mobile/webview/support` reflete `topic`/
+  `message` em HTML (semente para WebView/bridge/XSS futuro).
+
+Credenciais `analyst`/`operator` existem em `data.js` mas **não** são
+documentadas para o aluno; servem para descoberta futura via mobile/RE/storage.
+
+### Validação rápida (instrutor)
+
+- `bash scripts/validate-phase2.sh` cobre todos os itens acima de ponta a ponta.
+- `bash scripts/validate-phase1.sh` continua passando (compatibilidade).
+
 ## 4. Matriz de vulnerabilidades planejadas
 
 Detalhe completo por trilha em [docs/VULNERABILITY-ROADMAP.md](./docs/VULNERABILITY-ROADMAP.md).
-Resumo de status (Fase 1 = tudo `planned`):
+Resumo de status (atualizado na Fase 2):
 
 | # | Trilha | Vulnerabilidade planejada | Status |
 |---|---|---|---|
-| 1 | Network/API | HTTP legacy sync | planned |
+| 1 | Network/API | HTTP legacy sync | implemented-backend |
 | 2 | Network/API | HTTPS interception | planned |
 | 3 | Network/API | Certificate pinning bypass | planned |
 | 4 | Network/API | Native pinning | planned |
@@ -94,17 +132,17 @@ Resumo de status (Fase 1 = tudo `planned`):
 | 12 | Platform | BroadcastReceiver debug trigger | planned |
 | 13 | Platform | ContentProvider exposure | planned |
 | 14 | Platform | Deep link abuse | planned |
-| 15 | Platform | QR Code untrusted input | planned |
-| 16 | WebView | Unsafe WebView settings | planned |
+| 15 | Platform | QR Code untrusted input | scaffolded |
+| 16 | WebView | Unsafe WebView settings | scaffolded |
 | 17 | WebView | JavaScript bridge exposure | planned |
 | 18 | WebView | Deep link → WebView chain | planned |
 | 19 | WebView | Local file / token disclosure | planned |
 | 20 | Anti-analysis/Auth | Root detection bypass | planned |
 | 21 | Anti-analysis/Auth | Emulator detection bypass | planned |
-| 22 | Anti-analysis/Auth | Biometric callback bypass | planned |
+| 22 | Anti-analysis/Auth | Biometric vault backend gate | scaffolded |
 | 23 | Anti-analysis/Auth | Binary patching | planned |
-| 24 | Anti-analysis/Auth | API broken access control | planned |
-| 25 | Anti-analysis/Auth | Mass assignment | planned |
+| 24 | Anti-analysis/Auth | API broken access control | implemented-backend |
+| 25 | Anti-analysis/Auth | Mass assignment | implemented-backend |
 
 ---
 

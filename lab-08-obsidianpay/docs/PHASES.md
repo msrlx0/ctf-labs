@@ -4,9 +4,9 @@ Plano de fases do laboratório. Apenas a Fase 1 está implementada.
 
 | Fase | Foco | Status |
 |---|---|---|
-| **Fase 1** | Fundação: arquitetura, documentação base, backend mínimo e contratos de API. | ✅ Atual |
-| Fase 2 | APK Android inicial: app de carteira realista consumindo a API; recon estático. | 🔜 Planejada |
-| Fase 3 | Trilha 1 (network/API): interceptação, tráfego legado/HTTP, pinning. | 🔜 Planejada |
+| **Fase 1** | Fundação: arquitetura, documentação base, backend mínimo e contratos de API. | ✅ Concluída |
+| **Fase 2** | API mobile rica + primeiras vulnerabilidades de backend (IDOR, mass assignment, gates fracos, scaffolds de QR/WebView/vault). | ✅ Atual |
+| Fase 3 | APK Android inicial consumindo a API; recon estático; trilha network/API (interceptação, legado/HTTP, pinning). | 🔜 Planejada |
 | Fase 4 | Trilha 2 (storage/RE): SharedPreferences, SQLite, cache, segredos, cripto fraca. | 🔜 Planejada |
 | Fase 5 | Trilha 3 (platform): componentes exportados, deep links, QR. | 🔜 Planejada |
 | Fase 6 | Trilha 4 (WebView): settings inseguras, bridge JS, cadeia deep link → WebView. | 🔜 Planejada |

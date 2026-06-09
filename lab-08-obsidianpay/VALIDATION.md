@@ -1,14 +1,23 @@
-# VALIDATION — Lab 08: ObsidianPay Mobile (Fase 1)
+# VALIDATION — Lab 08: ObsidianPay Mobile
 
-Checklist técnico para validar a fundação e o backend da Fase 1.
-Todos os comandos assumem que você está na pasta do lab:
+Checklist técnico de validação. Todos os comandos assumem que você está na pasta
+do lab:
 
 ```bash
 cd lab-08-obsidianpay
 ```
 
-> Atalho: `bash scripts/validate-phase1.sh` executa o fluxo abaixo de ponta a
-> ponta e falha com `exit 1` se algum endpoint não responder como esperado.
+> Atalhos:
+> - `bash scripts/validate-phase1.sh` — valida a fundação/contrato da Fase 1.
+> - `bash scripts/validate-phase2.sh` — valida os contratos e as vulnerabilidades
+>   controladas da Fase 2.
+>
+> Ambos sobem o ambiente, testam de ponta a ponta, derrubam ao final e falham
+> com `exit 1` se algo não responder como esperado.
+
+A seção abaixo (1–12) cobre a **Fase 1**. A seção **Fase 2** vem em seguida.
+
+## Fase 1
 
 ---
 
@@ -147,3 +156,90 @@ adicionados e que **nenhum** lab anterior (01–07) foi alterado.
 - [ ] `scripts/validate-phase1.sh` passa.
 - [ ] `README.md` e `STUDENT-GUIDE.md` sem flags/solução.
 - [ ] Nenhum lab anterior alterado.
+
+---
+
+## Fase 2
+
+Suba o ambiente (se ainda não estiver no ar) e faça login como guest:
+
+```bash
+docker compose up --build -d
+TOKEN=$(curl -s -X POST http://127.0.0.1:8102/api/mobile/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"guest","password":"guest123"}' \
+  | python3 -c 'import sys,json; print(json.load(sys.stdin)["token"])')
+```
+
+### F2.1 — Recibos do usuário
+
+```bash
+curl -s http://127.0.0.1:8102/api/mobile/receipts -H "Authorization: Bearer $TOKEN"
+curl -s http://127.0.0.1:8102/api/mobile/receipts/1001 -H "Authorization: Bearer $TOKEN"
+```
+
+### F2.2 — Recibo por id (autorização a nível de objeto)
+
+```bash
+# observe o que volta para um id que não é o seu
+curl -s http://127.0.0.1:8102/api/mobile/receipts/1002 -H "Authorization: Bearer $TOKEN"
+```
+
+### F2.3 — Cartões
+
+```bash
+curl -s http://127.0.0.1:8102/api/mobile/cards -H "Authorization: Bearer $TOKEN"
+curl -s http://127.0.0.1:8102/api/mobile/cards/card-analyst-01 -H "Authorization: Bearer $TOKEN"
+```
+
+### F2.4 — Atualização de perfil
+
+```bash
+curl -s -X PATCH http://127.0.0.1:8102/api/mobile/profile \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"displayName":"Guest X","plan":"privileged","dailyLimit":99999}'
+```
+
+### F2.5 — Diagnostics (header de debug)
+
+```bash
+# sem header -> 403
+curl -s -o /dev/null -w '%{http_code}\n' \
+  http://127.0.0.1:8102/api/mobile/support/diagnostics -H "Authorization: Bearer $TOKEN"
+# com header -> 200
+curl -s http://127.0.0.1:8102/api/mobile/support/diagnostics \
+  -H "Authorization: Bearer $TOKEN" -H 'X-Obsidian-Debug: mobile-diagnostics'
+```
+
+### F2.6 — Transfer preview / WebView / Legacy routes
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/transfer/preview \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"toUserId":2001,"amount":"10","memo":"teste"}'
+
+curl -s "http://127.0.0.1:8102/api/mobile/webview/support?topic=mobile"
+
+curl -s http://127.0.0.1:8102/api/mobile/legacy/routes -H "Authorization: Bearer $TOKEN"
+```
+
+### F2.7 — Vault status (gate por papel)
+
+```bash
+# guest (customer) -> 403
+curl -s -o /dev/null -w '%{http_code}\n' \
+  http://127.0.0.1:8102/api/mobile/internal/vault-status -H "Authorization: Bearer $TOKEN"
+```
+
+Derrube ao final: `docker compose down`.
+
+### Critérios de aceite (Fase 2)
+
+- [ ] `scripts/validate-phase1.sh` continua passando.
+- [ ] `scripts/validate-phase2.sh` passa.
+- [ ] `/receipts` e `/cards` escopam pelo usuário; `/receipts/:id` e `/cards/:id`
+      retornam objetos por id.
+- [ ] `PATCH /profile` aplica campos enviados (incl. privilegiados).
+- [ ] `/support/diagnostics` é `403` sem header e `200` com header correto.
+- [ ] `/internal/vault-status` é `403` para customer e `200` para analyst.
+- [ ] `README.md` e `STUDENT-GUIDE.md` **não** contêm `FLAG{`.

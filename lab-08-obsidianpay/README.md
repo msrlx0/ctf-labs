@@ -2,7 +2,7 @@
 
 **Tema:** Segurança de aplicações mobile (Android) — backend + app
 **Porta oficial:** http://127.0.0.1:8102
-**Status:** Fase 1 (fundação + backend mínimo). O APK Android será entregue em fases futuras.
+**Status:** Fase 2 (API mobile mais rica disponível). O APK Android será entregue em fases futuras.
 **Dificuldade alvo:** Hard / realista (acima de labs introdutórios como AndroGoat).
 
 ---
@@ -80,8 +80,32 @@ Para derrubar:
 docker compose down
 ```
 
-Para um teste completo da Fase 1, veja [VALIDATION.md](./VALIDATION.md) ou rode
-[scripts/validate-phase1.sh](./scripts/validate-phase1.sh).
+Para um teste completo, veja [VALIDATION.md](./VALIDATION.md) ou rode os scripts
+[scripts/validate-phase1.sh](./scripts/validate-phase1.sh) e
+[scripts/validate-phase2.sh](./scripts/validate-phase2.sh).
+
+---
+
+## Endpoints principais (visão geral)
+
+A API mobile expõe, entre outros:
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/health` | Status do lab |
+| GET | `/` | Identificação da API |
+| POST | `/api/mobile/login` | Autenticação mobile |
+| GET / PATCH | `/api/mobile/profile` | Perfil do usuário |
+| GET | `/api/mobile/config` | Configuração mobile |
+| GET | `/api/mobile/receipts` | Recibos |
+| GET | `/api/mobile/cards` | Cartões |
+| POST | `/api/mobile/support/sync` | Sincronização de suporte (legado) |
+| GET | `/api/mobile/webview/support` | Portal de suporte (WebView) |
+| POST | `/api/mobile/transfer/preview` | Prévia de transferência (QR/deep link) |
+
+> Os contratos acima são os que o aplicativo Android consumirá nas próximas
+> fases. A documentação **não** descreve como explorar a API: a investigação é
+> parte do exercício.
 
 ---
 
@@ -122,10 +146,11 @@ Para o detalhamento por trilhas (com status), veja
 
 ## Estado atual
 
-- ✅ Backend mínimo funcional (API mobile) na porta 8102
+- ✅ Backend mobile (API rica) na porta 8102 — **Fase 2**
+- ✅ Contratos mobile: perfil, recibos, cartões, config, suporte, transfer preview, WebView
 - ✅ Documentação base e arquitetura
 - 🔜 APK Android (fases futuras)
-- 🔜 Cadeias de vulnerabilidade do app
+- 🔜 Integração app ↔ API e cadeias completas
 
-> **O APK Android ainda não foi entregue.** Esta fase estabelece a fundação,
-> os contratos técnicos e o backend mínimo.
+> **O APK Android ainda não foi entregue.** A API já representa os contratos que
+> o app vai consumir. Trate-a como um alvo real: explore, observe e questione.
