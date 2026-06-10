@@ -52,6 +52,22 @@ need_grep_tree() {
   if grep -rqF "$1" "$2" 2>/dev/null; then pass "$desc"; else fail "$desc (esperado '$1' em $2)"; fi
 }
 
+need_grep_re_tree() {
+  # $1 = pattern (ERE), $2 = dir, $3 = descrição (obrigatória)
+  if grep -rEq "$1" "$2" 2>/dev/null; then pass "$3"; else fail "$3 (esperado /$1/ em $2)"; fi
+}
+
+reject_grep_re_tree() {
+  # $1 = pattern (ERE) que NÃO deve existir, $2 = dir, $3 = descrição
+  # Usa regex com limites para não casar com o nome correto (ex.: o typo
+  # 'getSessionSummar' é substring do correto 'getSessionSummary').
+  if grep -rEq "$1" "$2" 2>/dev/null; then
+    fail "$3 (typo /$1/ encontrado em $2)"
+  else
+    pass "$3"
+  fi
+}
+
 info "Diretório do lab: $LAB_DIR"
 
 # --- Scripts anteriores ------------------------------------------------------
@@ -79,6 +95,22 @@ done
 need_grep_tree "webview_bridge_called" "$SRC"
 need_grep_tree "webview_bridge_attached" "$SRC"
 need_grep_file "@JavascriptInterface" "$BRIDGE" "bridge usa @JavascriptInterface"
+need_grep_file "fun getSessionSummary" "$BRIDGE" "bridge declara 'fun getSessionSummary'"
+
+# --- Typos críticos que quebram o build Android ------------------------------
+# Estes typos NÃO podem ser detectados com grep de string fixa, porque o nome
+# correto contém o typo como substring. Usamos regex com limites:
+#   getSessionSummar(  -> typo (falta 'y'); o correto é getSessionSummary(
+#   @JavascriptInterfac -> typo (falta 'e'); o correto é @JavascriptInterface
+#   webVieClient       -> typo de webViewClient (não é substring do correto)
+info "Conferindo typos críticos de bridge/WebView..."
+reject_grep_re_tree 'getSessionSummar([^y]|$)' "$SRC" "sem typo 'getSessionSummar' (esperado getSessionSummary)"
+reject_grep_re_tree '@JavascriptInterfac([^e]|$)' "$SRC" "sem typo '@JavascriptInterfac' (esperado @JavascriptInterface)"
+reject_grep_re_tree 'webVieClient' "$SRC" "sem typo 'webVieClient' (esperado webViewClient)"
+# E confirma positivamente que os nomes corretos existem.
+need_grep_re_tree 'fun[[:space:]]+getSessionSummary' "$SRC" "código declara 'fun getSessionSummary'"
+need_grep_tree "logBridgeEvent" "$SRC" "código expõe logBridgeEvent"
+need_grep_tree "addJavascriptInterface" "$SRC" "código anexa via addJavascriptInterface"
 
 # --- WebView screen ----------------------------------------------------------
 info "Conferindo WebViewSupportScreen..."

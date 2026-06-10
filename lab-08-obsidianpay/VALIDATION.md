@@ -421,6 +421,14 @@ adb shell am start -a android.intent.action.VIEW \
 
 > Atalho: `bash scripts/validate-phase6.sh` (estrutura). Backend anterior
 > opcional com `RUN_BACKEND_TESTS=1`.
+>
+> O script também valida **typos comuns de bridge/WebView** que quebrariam o
+> build Android sem aparecer numa checagem de string simples: `getSessionSummar`
+> (falta o `y`), `@JavascriptInterfac` (falta o `e`) e `webVieClient` (em vez de
+> `webViewClient`). As checagens usam regex com limites para não casar com os
+> nomes corretos, e confirmam positivamente `fun getSessionSummary`,
+> `@JavascriptInterface`, `logBridgeEvent`, `ObsidianBridge` e
+> `addJavascriptInterface`. Qualquer typo crítico faz o script sair com exit 1.
 
 ### F6.1 — Arquivos
 
