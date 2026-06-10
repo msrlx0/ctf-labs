@@ -95,6 +95,24 @@ need_grep_tree "X-Obsidian-Device" "$SRC" "header X-Obsidian-Device"
 need_grep_tree "X-Obsidian-Timestamp" "$SRC" "header X-Obsidian-Timestamp"
 need_grep_tree "X-Obsidian-Signature" "$SRC" "header X-Obsidian-Signature"
 
+# --- Typos de LegacyRequestSigner / WeakCrypto (quebrariam o build) -----------
+info "Conferindo typos de LegacyRequestSigner / WeakCrypto..."
+# Negativas: estes typos compilariam errado (símbolo inexistente) e devem falhar.
+reject_grep_re_tree 'LegacyRequestSigne([^r]|$)' "$SRC" "sem typo 'LegacyRequestSigne' (esperado LegacyRequestSigner)"
+reject_grep_re_tree 'WeakCryptosha1Hex' "$SRC" "sem typo 'WeakCryptosha1Hex' (esperado WeakCrypto.sha1Hex)"
+reject_grep_re_tree 'WeakCryptomd5Hex' "$SRC" "sem typo 'WeakCryptomd5Hex' (esperado WeakCrypto.md5Hex)"
+reject_grep_re_tree 'WeakCrypto[[:space:]]+sha1Hex' "$SRC" "sem 'WeakCrypto sha1Hex' sem ponto (esperado WeakCrypto.sha1Hex)"
+reject_grep_re_tree 'WeakCrypto[[:space:]]+md5Hex' "$SRC" "sem 'WeakCrypto md5Hex' sem ponto (esperado WeakCrypto.md5Hex)"
+# Positivas: o símbolo e a chamada qualificada corretos devem existir.
+need_grep_tree "object LegacyRequestSigner" "$SRC" "declaração 'object LegacyRequestSigner'"
+if grep -rqE "WeakCrypto\.(sha1Hex|md5Hex)" "$SRC" 2>/dev/null; then
+  pass "chamada qualificada WeakCrypto.sha1Hex/md5Hex"
+else
+  fail "chamada qualificada ausente (esperado WeakCrypto.sha1Hex ou WeakCrypto.md5Hex em $SRC)"
+fi
+need_grep_file "import com.obsidianpay.mobile.security.LegacyRequestSigner" "$DEVICE_TRUST_SCREEN" \
+  "DeviceTrustScreen importa LegacyRequestSigner"
+
 # --- DeviceTrustScreen + eventos ---------------------------------------------
 info "Conferindo DeviceTrustScreen e eventos..."
 need_grep_tree "Device Trust" "$APP/app/src/main" "UI: Device Trust"

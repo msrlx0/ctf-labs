@@ -540,6 +540,12 @@ nunca o token completo.
 
 > Atalho: `bash scripts/validate-phase8.sh` (estrutura). Reforça também os typos
 > de bridge da Fase 6.
+>
+> O script valida ainda typos comuns de `LegacyRequestSigner`/`WeakCrypto` que
+> quebrariam o build Android: falha em `LegacyRequestSigne`, `WeakCryptosha1Hex`
+> e `WeakCryptomd5Hex`; exige `object LegacyRequestSigner`, a chamada qualificada
+> `WeakCrypto.sha1Hex`/`WeakCrypto.md5Hex` e o `import` de `LegacyRequestSigner`
+> em `DeviceTrustScreen.kt`.
 
 ### F8.1 — Arquivos do pacote `security/` + tela
 
