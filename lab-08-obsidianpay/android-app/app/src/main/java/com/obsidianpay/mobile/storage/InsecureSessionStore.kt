@@ -105,6 +105,13 @@ class InsecureSessionStore(context: Context) {
     fun getDailyLimit(): String? = prefs.getString(Constants.KEY_DAILY_LIMIT, null)
     fun getRawProfileJson(): String? = prefs.getString(Constants.KEY_PROFILE_CACHE, null)
     fun getRawConfigJson(): String? = prefs.getString(Constants.KEY_RAW_CONFIG, null)
+    fun getLastSupportSync(): String? = prefs.getString(Constants.KEY_LAST_SUPPORT_SYNC, null)
+    fun getLastTransferPreview(): String? = prefs.getString(Constants.KEY_LAST_TRANSFER_PREVIEW, null)
+    fun getLastOpenedReceipt(): String? = prefs.getString(Constants.KEY_LAST_OPENED_RECEIPT, null)
+    fun getLastOpenedCard(): String? = prefs.getString(Constants.KEY_LAST_OPENED_CARD, null)
+    fun getLastDeepLink(): String? = prefs.getString(Constants.KEY_LAST_DEEP_LINK, null)
+    fun getLastQrPayload(): String? = prefs.getString(Constants.KEY_LAST_QR_PAYLOAD, null)
+    fun getLastWebViewUrl(): String? = prefs.getString(Constants.KEY_LAST_WEBVIEW_URL, null)
     fun getLastSyncTimestamp(): Long = prefs.getLong(Constants.KEY_DEBUG_LAST_SYNC, 0L)
 
     // Backwards-compatible accessors used by earlier-phase screens.

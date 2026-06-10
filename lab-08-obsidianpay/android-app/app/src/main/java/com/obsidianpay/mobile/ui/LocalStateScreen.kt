@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.obsidianpay.mobile.ObsidianScaffold
 import com.obsidianpay.mobile.storage.LocalCacheManager
+import com.obsidianpay.mobile.util.Constants
 
 /**
  * Internal support / developer tooling screen: shows the device-local app state
@@ -58,9 +59,21 @@ fun LocalStateScreen(
             if (cards.isEmpty()) Mono("(vazio)")
             cards.forEach { Mono("${it.id} · ${it.ownerRole ?: "-"} · ${it.maskedNumber ?: "-"}") }
 
+            Section("Navegação recente (deep link / QR / Web Support)")
+            Mono("lastWebViewUrl = ${preview(debugValues[Constants.KEY_LAST_WEBVIEW_URL])}")
+            Mono("lastDeepLink = ${preview(debugValues[Constants.KEY_LAST_DEEP_LINK])}")
+            Mono("lastQrPayload = ${preview(debugValues[Constants.KEY_LAST_QR_PAYLOAD])}")
+
             Section("Eventos de debug")
             if (events.isEmpty()) Mono("(vazio)")
             events.forEach { Mono("#${it.id} ${it.eventType}") }
+
+            val bridgeEvents = events.filter {
+                it.eventType.startsWith("webview_bridge") || it.eventType.startsWith("bridge_")
+            }
+            Section("Eventos do Web Support")
+            if (bridgeEvents.isEmpty()) Mono("(nenhum)")
+            bridgeEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
 
             Section("Artefatos locais (arquivos)")
             if (artifacts.isEmpty()) Mono("(nenhum)")

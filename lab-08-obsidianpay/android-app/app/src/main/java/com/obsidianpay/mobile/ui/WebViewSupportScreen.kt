@@ -21,20 +21,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.obsidianpay.mobile.ObsidianScaffold
+import com.obsidianpay.mobile.storage.InsecureSessionStore
 import com.obsidianpay.mobile.storage.LocalCacheManager
 import com.obsidianpay.mobile.util.Constants
+import com.obsidianpay.mobile.webview.ObsidianSupportBridge
 
 /**
  * WebView-based support portal. Loads the backend's support page and reflects
  * the topic/message that may arrive from a deep link or QR payload.
  *
- * NOTE (instructor): JavaScript and DOM storage are enabled to prepare a future
- * WebView/bridge study. No JavaScript interface is added in this phase — there
- * is intentionally no dangerous bridge yet.
+ * NOTE (instructor): JavaScript and DOM storage are enabled and an
+ * `@JavascriptInterface` bridge (`ObsidianBridge`) is attached so the support
+ * page can surface internal context (session summary, cached payloads, local
+ * artifacts) without a backend round-trip. This is the intentional,
+ * lab-controlled WebView bridge surface — see [ObsidianSupportBridge].
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WebViewSupportScreen(
+    store: InsecureSessionStore,
     cache: LocalCacheManager,
     topic: String?,
     message: String?,
@@ -76,7 +81,11 @@ fun WebViewSupportScreen(
                         webViewClient = WebViewClient()
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
-                        // No addJavascriptInterface() in this phase (no bridge yet).
+                        // Attach the lab support bridge so the page can read local
+                        // context. Exposed to JS as window.ObsidianBridge.
+                        val bridge = ObsidianSupportBridge(store, cache)
+                        addJavascriptInterface(bridge, "ObsidianBridge")
+                        cache.addEvent("webview_bridge_attached", "ObsidianBridge")
                     }
                 },
                 update = { web ->

@@ -65,13 +65,17 @@ Com o backend no ar (`127.0.0.1:8102`):
    - `obsidianpay://transfer?toUserId=2001&amount=10&memo=lunch`
    - `obsidianpay://support?topic=mobile&message=hello`
    - `obsidianpay://receipt?id=1002`
-9. Em **Suporte**, abra o **Web Support** (portal de suporte em WebView).
+9. Em **Suporte**, abra o **Web Support** (portal de suporte em WebView). O
+   portal mostra o tópico/mensagem e, quando aberto dentro do app, traz uma área
+   de **diagnóstico assistido** ("Show bridge info", "Show session summary").
+   Observe o portal e use o fluxo de suporte normalmente.
 10. (Opcional) Dispare um deep link pelo terminal com `adb` — veja
     [android-app/README.md](./android-app/README.md).
 
-> Os deep links e o QR Payment são recursos legítimos do app. Observe como a
-> entrada digitada/colada é interpretada e para onde leva. (Este guia não explica
-> como abusar disso; a investigação é sua.)
+> Os deep links, o QR Payment e o Web Support são recursos legítimos do app.
+> Observe como a entrada digitada/colada é interpretada e para onde leva, e o que
+> o portal de suporte consegue mostrar dentro do app. (Este guia não explica como
+> abusar disso; a investigação é sua.)
 
 > **Estado local/offline:** como um app real, o ObsidianPay guarda cache local
 > (sessão, perfil, config, recibos, cartões) para funcionar melhor. A Início tem

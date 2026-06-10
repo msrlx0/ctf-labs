@@ -2,7 +2,7 @@
 
 **Tema:** Segurança de aplicações mobile (Android) — backend + app
 **Porta oficial:** http://127.0.0.1:8102
-**Status:** Fase 5 (app com **deep links, QR Payment e Web Support**). O APK final ainda não foi publicado.
+**Status:** Fase 6 (app com **deep links, QR Payment, Web Support e WebView bridge**). O APK final ainda não foi publicado.
 **Dificuldade alvo:** Hard / realista (acima de labs introdutórios como AndroGoat).
 
 ---
@@ -161,7 +161,8 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 - ✅ Backend mobile (API rica) na porta 8102 — Fase 2
 - ✅ App Android base (telas + cliente HTTP) — Fase 3
 - ✅ Cache local/offline do app (perfil, config, recibos, cartões) — Fase 4
-- ✅ Deep links, QR Payment e Web Support no app — **Fase 5**
+- ✅ Deep links, QR Payment e Web Support no app — Fase 5
+- ✅ WebView **support bridge** para suporte mobile assistido — **Fase 6**
 - ✅ Documentação base e arquitetura
 - 🔜 APK final publicado
 - 🔜 Cadeias completas app ↔ API
@@ -169,6 +170,12 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 > A Fase 5 adiciona **deep links** (`obsidianpay://transfer|support|receipt`),
 > uma tela **QR Payment** que interpreta payloads colados/digitados, e um
 > **Web Support** em WebView que carrega o portal de suporte do backend local.
+
+> A Fase 6 adiciona uma **support bridge** ao Web Support: a WebView passa a
+> expor uma interface JavaScript (`ObsidianBridge`) usada pelo portal de suporte
+> para mostrar contexto local do app (resumo de sessão, status, diagnóstico).
+> Como em apps reais, observe **o que** essa ponte de suporte disponibiliza para
+> a página — a investigação faz parte do exercício.
 
 > **O APK final ainda não foi publicado.** A Fase 3 entrega o código-fonte do
 > app base. Trate o app e a API como alvos reais: explore, observe e questione.

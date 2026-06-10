@@ -353,9 +353,12 @@ app.post('/api/mobile/transfer/preview', requireAuth, (req, res) => {
   });
 });
 
-// --- WebView support portal (scaffold) ---------------------------------------
-// Returns simple HTML that reflects a `topic`/`message` query parameter. This
-// is a controlled scaffold for a future WebView/bridge study. Local only.
+// --- WebView support portal --------------------------------------------------
+// Returns an HTML "Mobile Support Portal" that reflects the `topic`/`message`
+// query parameters and exposes small support/diagnostics actions. When loaded
+// inside the app's WebView it can talk to the in-app `ObsidianBridge`
+// (@JavascriptInterface). The page never exfiltrates anything on its own — it
+// only renders output into a div when the user taps a button. Local only.
 app.get('/api/mobile/webview/support', (req, res) => {
   const topic = typeof req.query.topic === 'string' ? req.query.topic : 'home';
   const message = typeof req.query.message === 'string' ? req.query.message : '';
@@ -364,13 +367,90 @@ app.get('/api/mobile/webview/support', (req, res) => {
     .send(
       `<!doctype html>
 <html lang="pt-br">
-  <head><meta charset="utf-8"><title>ObsidianPay Support</title></head>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ObsidianPay — Mobile Support Portal</title>
+    <style>
+      body { font-family: -apple-system, Roboto, Arial, sans-serif; margin: 0; background: #0f1115; color: #e9edf2; }
+      header { background: #14181f; padding: 16px; border-bottom: 1px solid #232a35; }
+      header h1 { font-size: 18px; margin: 0; }
+      header small { color: #8aa0b6; }
+      main { padding: 16px; }
+      .card { background: #161b22; border: 1px solid #232a35; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+      .muted { color: #8aa0b6; font-size: 13px; }
+      .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #1f2733; color: #9fb4c9; }
+      .ok { background: #143226; color: #6fe2a8; }
+      .off { background: #321a1a; color: #e29a9a; }
+      button { background: #2563eb; color: #fff; border: 0; border-radius: 8px; padding: 10px 12px; margin: 4px 6px 4px 0; font-size: 14px; }
+      button.secondary { background: #2b3340; }
+      a.support-link { color: #6aa9ff; display: block; margin: 6px 0; text-decoration: none; }
+      pre { background: #0b0e12; border: 1px solid #232a35; border-radius: 8px; padding: 12px; overflow: auto; white-space: pre-wrap; word-break: break-word; font-size: 12px; }
+    </style>
+  </head>
   <body>
-    <h1>ObsidianPay mobile support portal</h1>
-    <p>Central de Suporte ObsidianPay</p>
-    <p>Tópico atual: ${topic}</p>
-    <div id="message">${message}</div>
-    <p>Ambiente local apenas.</p>
+    <header>
+      <h1>ObsidianPay · Mobile Support Portal</h1>
+      <small>Central de Suporte — atendimento e diagnóstico do app</small>
+    </header>
+    <main>
+      <div class="card">
+        <div class="muted">Tópico atual</div>
+        <div id="topic">${topic}</div>
+        <div class="muted" style="margin-top:8px">Mensagem</div>
+        <div id="message">${message}</div>
+      </div>
+
+      <div class="card">
+        <div>Status do app: <span id="bridgeStatus" class="pill off">verificando…</span></div>
+        <div class="muted" id="bridgeHint">Abra esta página dentro do app ObsidianPay para recursos de suporte assistido.</div>
+      </div>
+
+      <div class="card">
+        <div class="muted" style="margin-bottom:6px">Diagnóstico assistido</div>
+        <button onclick="showBridgeInfo()">Show bridge info</button>
+        <button class="secondary" onclick="showSessionSummary()">Show session summary</button>
+        <button class="secondary" onclick="showCachedConfig()">Show cached config</button>
+        <pre id="out">—</pre>
+      </div>
+
+      <div class="card">
+        <div class="muted" style="margin-bottom:6px">Links de suporte</div>
+        <a class="support-link" href="?topic=billing">Cobrança e faturas</a>
+        <a class="support-link" href="?topic=transfers">Transferências e Pix</a>
+        <a class="support-link" href="?topic=security">Segurança da conta</a>
+      </div>
+
+      <p class="muted">Ambiente local apenas (lab). Nenhum dado é enviado automaticamente.</p>
+    </main>
+
+    <script>
+      function hasBridge() { return typeof window.ObsidianBridge !== 'undefined'; }
+      function render(label, value) {
+        var out = document.getElementById('out');
+        out.textContent = label + '\\n' + value;
+      }
+      function safeCall(label, fn) {
+        if (!hasBridge()) { render(label, 'Mobile bridge unavailable (abra no app).'); return; }
+        try { render(label, fn()); } catch (e) { render(label, 'erro: ' + e); }
+      }
+      function showBridgeInfo() { safeCall('bridgeInfo', function () { return window.ObsidianBridge.getBridgeInfo(); }); }
+      function showSessionSummary() { safeCall('sessionSummary', function () { return window.ObsidianBridge.getSessionSummary(); }); }
+      function showCachedConfig() { safeCall('cachedConfig', function () { return window.ObsidianBridge.getCachedConfig(); }); }
+
+      (function initBridgeStatus() {
+        var el = document.getElementById('bridgeStatus');
+        var hint = document.getElementById('bridgeHint');
+        if (hasBridge()) {
+          el.textContent = 'Mobile bridge available';
+          el.className = 'pill ok';
+          hint.textContent = 'Recursos de suporte assistido estão disponíveis neste dispositivo.';
+        } else {
+          el.textContent = 'Standalone (sem app)';
+          el.className = 'pill off';
+        }
+      })();
+    </script>
   </body>
 </html>`
     );

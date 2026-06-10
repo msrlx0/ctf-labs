@@ -178,6 +178,7 @@ fun ObsidianPayApp(
         Screen.WebSupport -> {
             val s = prefill?.takeIf { it.type == DeepLinkType.SUPPORT }
             WebViewSupportScreen(
+                store = store,
                 cache = cache,
                 topic = s?.topic,
                 message = s?.message,

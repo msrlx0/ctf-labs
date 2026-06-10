@@ -1,9 +1,9 @@
-# ObsidianPay — App Android (Fase 5)
+# ObsidianPay — App Android (Fase 6)
 
 App Android nativo (Kotlin + Jetpack Compose) que consome a API mobile do
-**Lab 08 — ObsidianPay Mobile**. Mantém cache local/offline (Fase 4) e, a partir
-da Fase 5, suporta **deep links**, uma tela **QR Payment** e um **Web Support**
-em WebView.
+**Lab 08 — ObsidianPay Mobile**. Mantém cache local/offline (Fase 4), suporta
+**deep links**, uma tela **QR Payment** e um **Web Support** em WebView (Fase 5)
+e, a partir da Fase 6, uma **support bridge** JavaScript na WebView de suporte.
 
 > **Ambiente somente local.** O app só fala com o backend do lab em
 > `http://10.0.2.2:8102` (alias do emulador para o `127.0.0.1` do host).
@@ -131,7 +131,20 @@ adb shell am start -a android.intent.action.VIEW \
   como uma leitura de QR faria.
 - **Web Support** (WebView): carrega
   `http://10.0.2.2:8102/api/mobile/webview/support?topic=mobile`. JavaScript e
-  DOM storage ficam habilitados; **não** há JavaScript interface nesta fase.
+  DOM storage ficam habilitados.
+
+## Support bridge (Fase 6)
+
+A WebView de **Web Support** expõe uma **support bridge** JavaScript
+(`webview/ObsidianSupportBridge.kt`, anexada como `ObsidianBridge` via
+`addJavascriptInterface`). Ela existe para que o portal de suporte mostre, dentro
+do app, contexto local (resumo de sessão, status, diagnóstico) sem uma chamada
+extra ao backend. O portal detecta `window.ObsidianBridge` e habilita botões de
+diagnóstico assistido ("Show bridge info", "Show session summary").
+
+Educacionalmente: vale observar **o que** uma ponte de suporte como essa
+disponibiliza para a página da WebView e **quem** pode acioná-la. Este README não
+descreve abuso nem entrega solução — isso faz parte do exercício. (Sem flags.)
 
 ## Notas técnicas (Fase 3)
 

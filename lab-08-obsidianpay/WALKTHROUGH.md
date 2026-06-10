@@ -2,11 +2,11 @@
 
 > **Documento interno do instrutor.** Não é material do aluno.
 >
-> **Estado: Fase 5.** Este walkthrough descreve a arquitetura, as cadeias
+> **Estado: Fase 6.** Este walkthrough descreve a arquitetura, as cadeias
 > futuras em alto nível, as **vulnerabilidades de backend da Fase 2**, o **app
-> Android base da Fase 3**, o **armazenamento local inseguro da Fase 4** e,
-> agora, os **deep links / QR / WebView da Fase 5** (visão de instrutor, sem
-> cadeia final longa).
+> Android base da Fase 3**, o **armazenamento local inseguro da Fase 4**, os
+> **deep links / QR / WebView da Fase 5** e, agora, a **WebView JavaScript bridge
+> da Fase 6** (visão de instrutor, sem cadeia final longa).
 > Ele **não** contém:
 > - a cadeia/solução final do Lab 8,
 > - payloads avançados ou exploits prontos extensos.
@@ -211,7 +211,56 @@ obsidianpay://receipt?id=1002
 ```
 
 > A cadeia final (deep link → WebView → bridge / file/token disclosure) **não**
-> é entregue aqui; a bridge perigosa fica para uma fase futura.
+> é entregue aqui; a bridge controlada chega na Fase 6.
+
+## 3.5 Fase 6 — WebView JavaScript bridge (app)
+
+A Fase 6 ativa a **bridge JS controlada** na WebView de suporte, fechando a
+cadeia `deep link/QR → WebView support portal → ObsidianBridge → cache local`.
+Pontos de instrutor:
+
+- **WebView inseguro** (`ui/WebViewSupportScreen.kt`): `javaScriptEnabled = true`,
+  `domStorageEnabled = true` e, agora,
+  `addJavascriptInterface(ObsidianSupportBridge(store, cache), "ObsidianBridge")`.
+  O nome exposto ao JS é `window.ObsidianBridge`. Evento `webview_bridge_attached`.
+- **Bridge** (`webview/ObsidianSupportBridge.kt`): cada método é anotado com
+  `@JavascriptInterface` (executado na thread JavaBridge do WebView). Métodos:
+  - `getSessionSummary()` — username, userId, role, plan, dailyLimit, últimos IDs
+    abertos, `lastWebViewUrl` e **apenas um preview do token** (nunca o token
+    inteiro).
+  - `getCachedProfile()` / `getCachedConfig()` — `rawProfileJson` / `rawConfigJson`
+    do `InsecureSessionStore`, se existirem.
+  - `getLastSupportSync()` / `getLastTransferPreview()` — últimos payloads cacheados.
+  - `getLocalArtifacts()` — lista de artefatos locais via `LocalCacheManager`
+    (paths app-specific + tamanho).
+  - `getBridgeInfo()` — `bridgeName=ObsidianBridge`, `bridgeVersion=phase6-lab`,
+    `enabledMethods=[...]`.
+  - `logBridgeEvent(eventType, details)` — grava em `debug_events` e retorna `ok`.
+  - Eventos: `webview_bridge_called`, `bridge_get_cached_profile`,
+    `bridge_get_cached_config`, `bridge_get_artifacts`, `bridge_log_event`.
+- **Portal de suporte** (backend `GET /api/mobile/webview/support`): "Mobile
+  Support Portal" que reflete `topic`/`message`, detecta `window.ObsidianBridge`
+  ("Mobile bridge available") e oferece botões de diagnóstico assistido
+  (`getBridgeInfo`, `getSessionSummary`, `getCachedConfig`). Não exfiltra nada
+  automaticamente.
+- **Cadeia planejada (alto nível):** um `topic`/`message` controlado (via deep
+  link `obsidianpay://support?...` ou QR) chega refletido na página → JavaScript
+  na WebView alcança `window.ObsidianBridge` → leitura de sessão/caches/artefatos
+  locais → saída visível na página/`debug_events`. A extração final encadeada (e
+  flags) fica para a fase de consolidação.
+
+### Limites/guardas da bridge (por design)
+
+- Não retorna `FLAG{` nem credenciais internas (`analyst123`/`operator123`).
+- `getSessionSummary` traz token apenas mascarado/preview, nunca inteiro.
+- Só expõe caches/artefatos que **já existem** localmente no dispositivo.
+- Fora de escopo desta fase: pinning real, lib nativa, Frida/root, biometria,
+  binary patching, componentes exportados vulneráveis, scanner de QR por câmera.
+
+### Validação rápida (instrutor)
+
+- `bash scripts/validate-phase6.sh` (estrutura). Backend anterior opcional com
+  `RUN_BACKEND_TESTS=1`. Sem Android SDK, o build do APK não roda (esperado).
 
 ## 4. Matriz de vulnerabilidades planejadas
 
@@ -235,10 +284,10 @@ Resumo de status (atualizado na Fase 2):
 | 13 | Platform | ContentProvider exposure | planned |
 | 14 | Platform | Deep link abuse | implemented-app |
 | 15 | Platform | QR Code untrusted input | implemented-app |
-| 16 | WebView | Unsafe WebView settings | scaffolded-app |
-| 17 | WebView | JavaScript bridge exposure | planned |
-| 18 | WebView | Deep link → WebView chain | scaffolded-app |
-| 19 | WebView | Local file / token disclosure | planned |
+| 16 | WebView | Unsafe WebView settings | implemented-app |
+| 17 | WebView | JavaScript bridge exposure | implemented-app |
+| 18 | WebView | Deep link → WebView chain | implemented-app |
+| 19 | WebView | Local file / token disclosure | scaffolded-app |
 | 20 | Anti-analysis/Auth | Root detection bypass | planned |
 | 21 | Anti-analysis/Auth | Emulator detection bypass | planned |
 | 22 | Anti-analysis/Auth | Biometric vault backend gate | scaffolded |

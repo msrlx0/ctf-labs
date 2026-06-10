@@ -414,3 +414,57 @@ adb shell am start -a android.intent.action.VIEW \
 - [ ] Eventos locais `deep_link_opened/qr_payload_processed/webview_support_opened`.
 - [ ] Docs públicos sem flags; sem credenciais internas em README/STUDENT/app README.
 - [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+---
+
+## Fase 6 — WebView JavaScript bridge
+
+> Atalho: `bash scripts/validate-phase6.sh` (estrutura). Backend anterior
+> opcional com `RUN_BACKEND_TESTS=1`.
+
+### F6.1 — Arquivos
+
+```bash
+SRC=android-app/app/src/main/java/com/obsidianpay/mobile
+ls $SRC/webview/ObsidianSupportBridge.kt $SRC/ui/WebViewSupportScreen.kt
+```
+
+### F6.2 — Bridge e WebView (conteúdo-chave)
+
+```bash
+grep -q '@JavascriptInterface' $SRC/webview/ObsidianSupportBridge.kt && echo OK
+grep -Eq 'getSessionSummary|getCachedProfile|getCachedConfig|getBridgeInfo|logBridgeEvent' \
+  $SRC/webview/ObsidianSupportBridge.kt && echo OK
+grep -q 'addJavascriptInterface' $SRC/ui/WebViewSupportScreen.kt && echo OK
+grep -q 'ObsidianBridge' $SRC/ui/WebViewSupportScreen.kt && echo OK
+grep -q 'webViewClient' $SRC/ui/WebViewSupportScreen.kt && echo OK
+# o typo NÃO deve existir:
+grep -q 'webVieClient' $SRC/ui/WebViewSupportScreen.kt && echo 'TYPO!' || echo 'sem typo'
+```
+
+### F6.3 — Backend support portal (com backend no ar)
+
+```bash
+curl -s "http://127.0.0.1:8102/api/mobile/webview/support?topic=mobile&message=hello"
+```
+
+Esperado: HTML "ObsidianPay · Mobile Support Portal" que reflete `topic`/`message`
+e contém o JavaScript que detecta `window.ObsidianBridge` (botões
+`getBridgeInfo`/`getSessionSummary`/`getCachedConfig`).
+
+### F6.4 — Eventos da bridge (app instalado no emulador)
+
+Depois de abrir o **Web Support** e tocar nos botões de diagnóstico, a tela
+interna **Local State** lista eventos como `webview_bridge_attached`,
+`webview_bridge_called`, `bridge_get_cached_config`, etc.
+
+### Critérios de aceite (Fase 6)
+
+- [ ] `validate-phase1/2/3/4/5.sh` continuam passando.
+- [ ] `validate-phase6.sh` passa.
+- [ ] `webview/ObsidianSupportBridge.kt` criada com `@JavascriptInterface`.
+- [ ] WebView usa `addJavascriptInterface(bridge, "ObsidianBridge")` (JS/DOM on).
+- [ ] Sem o typo `webVieClient` na WebView.
+- [ ] Backend reconhece `ObsidianBridge`/`getBridgeInfo`/`Mobile Support Portal`.
+- [ ] Bridge e docs públicos sem `FLAG{` e sem credenciais internas.
+- [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
