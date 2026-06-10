@@ -96,22 +96,89 @@ need_grep_tree "X-Obsidian-Timestamp" "$SRC" "header X-Obsidian-Timestamp"
 need_grep_tree "X-Obsidian-Signature" "$SRC" "header X-Obsidian-Signature"
 
 # --- Typos de LegacyRequestSigner / WeakCrypto (quebrariam o build) -----------
-info "Conferindo typos de LegacyRequestSigner / WeakCrypto..."
-# Negativas: estes typos compilariam errado (símbolo inexistente) e devem falhar.
-reject_grep_re_tree 'LegacyRequestSigne([^r]|$)' "$SRC" "sem typo 'LegacyRequestSigne' (esperado LegacyRequestSigner)"
-reject_grep_re_tree 'WeakCryptosha1Hex' "$SRC" "sem typo 'WeakCryptosha1Hex' (esperado WeakCrypto.sha1Hex)"
-reject_grep_re_tree 'WeakCryptomd5Hex' "$SRC" "sem typo 'WeakCryptomd5Hex' (esperado WeakCrypto.md5Hex)"
-reject_grep_re_tree 'WeakCrypto[[:space:]]+sha1Hex' "$SRC" "sem 'WeakCrypto sha1Hex' sem ponto (esperado WeakCrypto.sha1Hex)"
-reject_grep_re_tree 'WeakCrypto[[:space:]]+md5Hex' "$SRC" "sem 'WeakCrypto md5Hex' sem ponto (esperado WeakCrypto.md5Hex)"
-# Positivas: o símbolo e a chamada qualificada corretos devem existir.
-need_grep_tree "object LegacyRequestSigner" "$SRC" "declaração 'object LegacyRequestSigner'"
-if grep -rqE "WeakCrypto\.(sha1Hex|md5Hex)" "$SRC" 2>/dev/null; then
-  pass "chamada qualificada WeakCrypto.sha1Hex/md5Hex"
+# Estas checagens usam palavra inteira (não substring): 'LegacyRequestSigne'
+# nunca pode casar com o correto 'LegacyRequestSigner'. Usamos python3 (com
+# fallback para awk) para inspecionar linha a linha de forma exata.
+info "Conferindo typos de LegacyRequestSigner / WeakCrypto (palavra inteira)..."
+LRS_FILE="$SECURITY/LegacyRequestSigner.kt"
+SIGNER_CHECK=""
+if command -v python3 >/dev/null 2>&1; then SIGNER_CHECK=python3; elif command -v awk >/dev/null 2>&1; then SIGNER_CHECK=awk; fi
+
+if [ -z "$SIGNER_CHECK" ]; then
+  fail "nem python3 nem awk disponíveis para validar typos por palavra inteira"
+elif [ "$SIGNER_CHECK" = "python3" ]; then
+  python3 - "$SRC" "$LRS_FILE" "$DEVICE_TRUST_SCREEN" <<'PY'
+import os, re, sys
+src, lrs, screen = sys.argv[1], sys.argv[2], sys.argv[3]
+G='\033[32m'; R='\033[31m'; Z='\033[0m'
+ok=True
+def pas(m): print(f"  {G}[PASS]{Z} {m}")
+def bad(m):
+    global ok; ok=False; print(f"  {R}[FAIL]{Z} {m}", file=sys.stderr)
+
+def walk(root):
+    if os.path.isfile(root):
+        yield root; return
+    for d,_,fs in os.walk(root):
+        for f in fs: yield os.path.join(d,f)
+
+def read(p):
+    try:
+        with open(p, encoding='utf-8', errors='replace') as fh: return fh.read()
+    except Exception: return ""
+
+# Typos negativos: (rótulo, regex). \b garante palavra inteira.
+NEG = [
+    ("object LegacyRequestSigne {",  r"object\s+LegacyRequestSigne\s*\{"),
+    ("LegacyRequestSigne (sem r)",   r"\bLegacyRequestSigne\b(?!r)"),
+    ("WeakCryptosha1Hex",            r"\bWeakCryptosha1Hex\b"),
+    ("WeakCryptomd5Hex",             r"\bWeakCryptomd5Hex\b"),
+    ("WeakCrypto sha1Hex (sem ponto)", r"\bWeakCrypto[ \t]+sha1Hex\b"),
+    ("WeakCrypto md5Hex (sem ponto)",  r"\bWeakCrypto[ \t]+md5Hex\b"),
+    ("securityLegacyRequestSigner",  r"\bsecurityLegacyRequestSigner\b"),
+]
+hits = {label: [] for label,_ in NEG}
+for path in walk(src):
+    if not path.endswith('.kt'): continue
+    for i,line in enumerate(read(path).splitlines(),1):
+        for label,pat in NEG:
+            if re.search(pat,line): hits[label].append(f"{path}:{i}")
+for label,_ in NEG:
+    if hits[label]: bad(f"typo '{label}' encontrado: {', '.join(hits[label])}")
+    else: pas(f"sem typo '{label}'")
+
+# Positivos exatos.
+lrs = read(lrs)
+if re.search(r"^\s*object\s+LegacyRequestSigner\s*\{", lrs, re.M):
+    pas("declaração exata 'object LegacyRequestSigner {'")
+else: bad("ausente 'object LegacyRequestSigner {' em LegacyRequestSigner.kt")
+if "WeakCrypto.sha1Hex(base)" in lrs:
+    pas("chamada exata 'WeakCrypto.sha1Hex(base)'")
+else: bad("ausente 'WeakCrypto.sha1Hex(base)' em LegacyRequestSigner.kt")
+if "import com.obsidianpay.mobile.security.LegacyRequestSigner" in read(screen):
+    pas("DeviceTrustScreen importa LegacyRequestSigner")
+else: bad("DeviceTrustScreen não importa com.obsidianpay.mobile.security.LegacyRequestSigner")
+sys.exit(0 if ok else 1)
+PY
+  [ $? -ne 0 ] && FAILED=1
 else
-  fail "chamada qualificada ausente (esperado WeakCrypto.sha1Hex ou WeakCrypto.md5Hex em $SRC)"
+  # Fallback awk (palavra inteira via [^A-Za-z0-9_] nas bordas).
+  awk -v RS='\n' '
+    /object[ \t]+LegacyRequestSigne[ \t]*\{/ { n1=1 }
+    /(^|[^A-Za-z0-9_])WeakCryptosha1Hex([^A-Za-z0-9_]|$)/ { n2=1 }
+    /(^|[^A-Za-z0-9_])WeakCryptomd5Hex([^A-Za-z0-9_]|$)/ { n3=1 }
+    /(^|[^A-Za-z0-9_])WeakCrypto[ \t]+sha1Hex([^A-Za-z0-9_]|$)/ { n4=1 }
+    /(^|[^A-Za-z0-9_])WeakCrypto[ \t]+md5Hex([^A-Za-z0-9_]|$)/ { n5=1 }
+    /(^|[^A-Za-z0-9_])securityLegacyRequestSigner([^A-Za-z0-9_]|$)/ { n6=1 }
+    END { if (n1||n2||n3||n4||n5||n6) exit 1 }
+  ' $(find "$SRC" -name '*.kt') \
+    && pass "sem typos de LegacyRequestSigner/WeakCrypto (awk)" \
+    || fail "typo de LegacyRequestSigner/WeakCrypto encontrado (awk)"
+  need_grep_file "object LegacyRequestSigner {" "$LRS_FILE" "declaração 'object LegacyRequestSigner {'"
+  need_grep_file "WeakCrypto.sha1Hex(base)" "$LRS_FILE" "chamada 'WeakCrypto.sha1Hex(base)'"
+  need_grep_file "import com.obsidianpay.mobile.security.LegacyRequestSigner" "$DEVICE_TRUST_SCREEN" \
+    "DeviceTrustScreen importa LegacyRequestSigner"
 fi
-need_grep_file "import com.obsidianpay.mobile.security.LegacyRequestSigner" "$DEVICE_TRUST_SCREEN" \
-  "DeviceTrustScreen importa LegacyRequestSigner"
 
 # --- DeviceTrustScreen + eventos ---------------------------------------------
 info "Conferindo DeviceTrustScreen e eventos..."
