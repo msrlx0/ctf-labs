@@ -131,6 +131,29 @@ class LocalCacheManager(
         db.addDebugEvent("webview_support_opened", url)
     }
 
+    // --- Exported components (Phase 7) ------------------------------------------
+    /** Record an event coming from an exported Activity/Receiver/Provider. */
+    fun recordExportedEvent(eventType: String, details: String?) {
+        store.saveLastExportedEvent("$eventType | ${details ?: ""}")
+        db.addDebugEvent(eventType, details)
+    }
+
+    /** Persist a didactic operator hint toggled by the exported debug receiver. */
+    fun saveOperatorHint(value: String) {
+        store.saveOperatorHint(value)
+        db.addDebugEvent("operator_hint_set", value)
+    }
+
+    /** Persist the last debug command received from the exported receiver. */
+    fun saveExternalDebugCommand(command: String, details: String?) {
+        store.saveExternalDebugCommand(command, details)
+        db.addDebugEvent("external_debug_command", "$command | ${details ?: ""}")
+    }
+
+    /** Provider-safe local debug values (full token removed, only `token_preview`). */
+    fun getSafeDebugValuesForProvider(): Map<String, String?> =
+        store.getSafeDebugValuesForProvider()
+
     // --- File artifacts ---------------------------------------------------------
     fun writeTempSupportSnapshot(rawJson: String): String? =
         writeFile(File(context.cacheDir, "obsidian-support-last-sync.json"), rawJson)

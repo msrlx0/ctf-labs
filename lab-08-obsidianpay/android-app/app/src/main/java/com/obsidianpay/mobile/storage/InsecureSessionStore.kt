@@ -84,6 +84,18 @@ class InsecureSessionStore(context: Context) {
 
     fun saveLastWebViewUrl(url: String) = putAndTouch(Constants.KEY_LAST_WEBVIEW_URL, url)
 
+    // --- Exported components (Phase 7) ------------------------------------------
+
+    /** Didactic "operator hint" toggled by the exported debug receiver. */
+    fun saveOperatorHint(value: String) = putAndTouch(Constants.KEY_OPERATOR_HINT, value)
+
+    /** Last debug command received from the exported BroadcastReceiver. */
+    fun saveExternalDebugCommand(command: String, details: String?) =
+        putAndTouch(Constants.KEY_LAST_EXTERNAL_DEBUG_COMMAND, "$command | ${details ?: ""}")
+
+    /** Last event triggered by any exported component (Activity/Receiver/Provider). */
+    fun saveLastExportedEvent(value: String) = putAndTouch(Constants.KEY_LAST_EXPORTED_EVENT, value)
+
     private fun putAndTouch(key: String, value: String) {
         prefs.edit()
             .putString(key, value)
@@ -112,7 +124,22 @@ class InsecureSessionStore(context: Context) {
     fun getLastDeepLink(): String? = prefs.getString(Constants.KEY_LAST_DEEP_LINK, null)
     fun getLastQrPayload(): String? = prefs.getString(Constants.KEY_LAST_QR_PAYLOAD, null)
     fun getLastWebViewUrl(): String? = prefs.getString(Constants.KEY_LAST_WEBVIEW_URL, null)
+    fun getOperatorHint(): String? = prefs.getString(Constants.KEY_OPERATOR_HINT, null)
+    fun getLastExternalDebugCommand(): String? =
+        prefs.getString(Constants.KEY_LAST_EXTERNAL_DEBUG_COMMAND, null)
+    fun getLastExportedEvent(): String? = prefs.getString(Constants.KEY_LAST_EXPORTED_EVENT, null)
     fun getLastSyncTimestamp(): Long = prefs.getLong(Constants.KEY_DEBUG_LAST_SYNC, 0L)
+
+    /**
+     * Masked preview of the session token. Never returns the full token — only a
+     * short head plus the length, so callers (e.g. the exported provider) can hint
+     * "a token exists" without disclosing it.
+     */
+    fun getTokenPreview(): String? {
+        val t = getToken()
+        if (t.isNullOrEmpty()) return null
+        return "${t.take(8)}…(${t.length} chars)"
+    }
 
     // Backwards-compatible accessors used by earlier-phase screens.
     val token: String? get() = getToken()
@@ -142,8 +169,27 @@ class InsecureSessionStore(context: Context) {
         Constants.KEY_LAST_DEEP_LINK to prefs.getString(Constants.KEY_LAST_DEEP_LINK, null),
         Constants.KEY_LAST_QR_PAYLOAD to prefs.getString(Constants.KEY_LAST_QR_PAYLOAD, null),
         Constants.KEY_LAST_WEBVIEW_URL to prefs.getString(Constants.KEY_LAST_WEBVIEW_URL, null),
+        Constants.KEY_OPERATOR_HINT to getOperatorHint(),
+        Constants.KEY_LAST_EXTERNAL_DEBUG_COMMAND to getLastExternalDebugCommand(),
+        Constants.KEY_LAST_EXPORTED_EVENT to getLastExportedEvent(),
         Constants.KEY_DEBUG_LAST_SYNC to getLastSyncTimestamp().takeIf { it > 0 }?.toString(),
     )
+
+    /**
+     * Provider-safe view of the local debug values: identical to
+     * [getAllDebugValues] but the full session token is **removed** and replaced
+     * by a masked `token_preview`. Used by the exported [ObsidianNotesProvider] so
+     * an external query never reads the full token.
+     */
+    fun getSafeDebugValuesForProvider(): Map<String, String?> {
+        val out = linkedMapOf<String, String?>()
+        getAllDebugValues().forEach { (k, v) ->
+            if (k == Constants.KEY_SESSION_TOKEN) return@forEach // never expose full token
+            out[k] = v
+        }
+        getTokenPreview()?.let { out["token_preview"] = it }
+        return out
+    }
 
     fun clear() {
         prefs.edit().clear().apply()

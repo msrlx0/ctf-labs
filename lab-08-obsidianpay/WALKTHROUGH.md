@@ -262,6 +262,73 @@ Pontos de instrutor:
 - `bash scripts/validate-phase6.sh` (estrutura). Backend anterior opcional com
   `RUN_BACKEND_TESTS=1`. Sem Android SDK, o build do APK não roda (esperado).
 
+## 3.6 Fase 7 — Componentes Android exportados (app)
+
+A Fase 7 adiciona o pacote `platform/` com três componentes **exportados de
+propósito** e mal protegidos, integrados ao `LocalCacheManager`/SQLite/debug
+events. Pontos de instrutor:
+
+- **Activity exportada** (`platform/InternalOpsActivity.kt`): `exported=true`,
+  action `com.obsidianpay.mobile.INTERNAL_OPS`, category `DEFAULT`. Lê extras
+  previsíveis (`obsidian.intent.extra.INTERNAL_ROUTE/SESSION_HINT/OPERATOR_MODE/
+  RECEIPT_ID`), mostra "Internal Operations", registra `exported_activity_opened`
+  e, se houver `RECEIPT_ID`, grava `lastOpenedReceiptId`. Não exige login.
+- **BroadcastReceiver exportado** (`platform/DebugCommandReceiver.kt`):
+  `exported=true`, action `com.obsidianpay.mobile.DEBUG_COMMAND`. Extras
+  `command`/`route`/`note`. Comandos controlados: `sync_marker` (evento
+  `external_debug_sync_marker`), `set_last_receipt` (extra `receiptId` →
+  `lastOpenedReceiptId`), `write_debug_export` (gera o export via
+  `LocalCacheManager`), `enable_operator_hint` (`support/operator_hint=true`).
+  Sempre registra `exported_receiver_called`. Sem comandos de sistema, sem rede.
+- **ContentProvider exportado** (`platform/ObsidianNotesProvider.kt`):
+  `exported=true`, authority `com.obsidianpay.mobile.provider.notes`,
+  `grantUriPermissions=true`. `query()` via `MatrixCursor`:
+  - `/notes` → `id,title,body` (notas de suporte genéricas, com hints didáticos);
+  - `/debug` → `key,value` de `getSafeDebugValuesForProvider()` — o token aparece
+    **apenas** como `token_preview` mascarado (nunca inteiro);
+  - `/cache` → `item,value` com `listLocalArtifacts()`.
+  - URIs desconhecidas → cursor nulo/vazio controlado.
+
+### Exemplos de comandos (adb) — instrutor
+
+```bash
+# Activity exportada interna
+adb shell am start -n com.obsidianpay.mobile/.platform.InternalOpsActivity \
+  -a com.obsidianpay.mobile.INTERNAL_OPS \
+  --es obsidian.intent.extra.INTERNAL_ROUTE support/ops \
+  --es obsidian.intent.extra.RECEIPT_ID 1002
+
+# BroadcastReceiver de debug
+adb shell am broadcast -a com.obsidianpay.mobile.DEBUG_COMMAND \
+  --es command set_last_receipt --es receiptId 1002
+adb shell am broadcast -a com.obsidianpay.mobile.DEBUG_COMMAND \
+  --es command write_debug_export --es route support/ops
+adb shell am broadcast -a com.obsidianpay.mobile.DEBUG_COMMAND \
+  --es command enable_operator_hint
+
+# ContentProvider exportado
+adb shell content query --uri content://com.obsidianpay.mobile.provider.notes/notes
+adb shell content query --uri content://com.obsidianpay.mobile.provider.notes/debug
+adb shell content query --uri content://com.obsidianpay.mobile.provider.notes/cache
+```
+
+> No build debug o `applicationId` é `com.obsidianpay.mobile.debug`; ajuste o
+> alvo `-n`/pacote conforme o build instalado. Os efeitos aparecem na tela
+> interna **Local State** (eventos `exported_*`/`external_debug_*`, `operatorHint`).
+
+### Limites/guardas da Fase 7 (por design)
+
+- Nenhum componente executa comandos de sistema ou faz rede.
+- O provider só devolve `token_preview` mascarado — nunca o token inteiro.
+- Sem `FLAG{` e sem credenciais internas (`analyst123`/`operator123`).
+- Fora de escopo desta fase: pinning real, lib nativa, Frida/root, biometria,
+  binary patching, scanner de QR por câmera.
+
+### Validação rápida (instrutor)
+
+- `bash scripts/validate-phase7.sh` (estrutura; reforça também os typos de bridge
+  da Fase 6). Sem Android SDK, o build do APK não roda (esperado).
+
 ## 4. Matriz de vulnerabilidades planejadas
 
 Detalhe completo por trilha em [docs/VULNERABILITY-ROADMAP.md](./docs/VULNERABILITY-ROADMAP.md).
@@ -278,10 +345,10 @@ Resumo de status (atualizado na Fase 2):
 | 7 | Storage/RE | Temp/cache file leak | implemented-app |
 | 8 | Storage/RE | Hardcoded/config secrets | planned |
 | 9 | Storage/RE | Weak crypto | planned |
-| 10 | Platform | Exported Activity | planned |
+| 10 | Platform | Exported Activity | implemented-app |
 | 11 | Platform | Exported Service | planned |
-| 12 | Platform | BroadcastReceiver debug trigger | planned |
-| 13 | Platform | ContentProvider exposure | planned |
+| 12 | Platform | BroadcastReceiver debug trigger | implemented-app |
+| 13 | Platform | ContentProvider exposure | implemented-app |
 | 14 | Platform | Deep link abuse | implemented-app |
 | 15 | Platform | QR Code untrusted input | implemented-app |
 | 16 | WebView | Unsafe WebView settings | implemented-app |

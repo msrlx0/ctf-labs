@@ -476,3 +476,62 @@ interna **Local State** lista eventos como `webview_bridge_attached`,
 - [ ] Backend reconhece `ObsidianBridge`/`getBridgeInfo`/`Mobile Support Portal`.
 - [ ] Bridge e docs públicos sem `FLAG{` e sem credenciais internas.
 - [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+## Fase 7 — Componentes Android exportados
+
+> Atalho: `bash scripts/validate-phase7.sh` (estrutura). Esse script também
+> reforça os typos de bridge da Fase 6 (`getSessionSummar`, `@JavascriptInterfac`,
+> `webVieClient`) com regex que **não** casa com os nomes corretos.
+
+### F7.1 — Arquivos do pacote `platform/`
+
+```bash
+SRC=android-app/app/src/main/java/com/obsidianpay/mobile
+ls $SRC/platform/InternalOpsActivity.kt \
+   $SRC/platform/DebugCommandReceiver.kt \
+   $SRC/platform/ObsidianNotesProvider.kt
+```
+
+### F7.2 — Manifest (componentes exportados)
+
+```bash
+M=android-app/app/src/main/AndroidManifest.xml
+grep -q '.platform.InternalOpsActivity' $M && echo OK
+grep -q '.platform.DebugCommandReceiver' $M && echo OK
+grep -q '.platform.ObsidianNotesProvider' $M && echo OK
+grep -q 'com.obsidianpay.mobile.INTERNAL_OPS' $M && echo OK
+grep -q 'com.obsidianpay.mobile.DEBUG_COMMAND' $M && echo OK
+grep -q 'com.obsidianpay.mobile.provider.notes' $M && echo OK
+```
+
+### F7.3 — Código (extras, eventos, provider seguro)
+
+```bash
+grep -Eq 'INTERNAL_ROUTE|SESSION_HINT|OPERATOR_MODE|RECEIPT_ID' $SRC/platform/*.kt && echo OK
+grep -Eq 'exported_activity_opened|exported_receiver_called' $SRC/platform/*.kt && echo OK
+grep -q 'MatrixCursor' $SRC/platform/ObsidianNotesProvider.kt && echo OK
+# o provider só devolve preview do token, nunca o token inteiro:
+grep -q 'token_preview' $SRC/platform/ObsidianNotesProvider.kt && echo OK
+grep -q 'getSafeDebugValuesForProvider' $SRC/storage/InsecureSessionStore.kt && echo OK
+```
+
+### F7.4 — Efeitos no app (emulador, app instalado)
+
+Com o app instalado, dispare os componentes por `adb` (exemplos completos no
+`WALKTHROUGH.md`, documento de instrutor) e observe a tela interna **Local
+State**: aparecem eventos `exported_*`/`external_debug_*`, `operatorHint` e o
+`lastExportedEvent`. O `/debug` do provider mostra `token_preview` (mascarado),
+nunca o token completo.
+
+### Critérios de aceite (Fase 7)
+
+- [ ] `validate-phase1/2/3/4/5/6.sh` continuam passando.
+- [ ] `validate-phase7.sh` passa.
+- [ ] `platform/InternalOpsActivity.kt` (Activity exportada) criada.
+- [ ] `platform/DebugCommandReceiver.kt` (Receiver exportado) criado.
+- [ ] `platform/ObsidianNotesProvider.kt` (Provider exportado) criado.
+- [ ] Manifest com actions `INTERNAL_OPS`/`DEBUG_COMMAND` e authority `provider.notes`.
+- [ ] Provider devolve apenas `token_preview` (nunca o token completo).
+- [ ] Sem `FLAG{` em docs públicos e nos componentes.
+- [ ] Sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README.
+- [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.

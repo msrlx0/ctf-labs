@@ -1,9 +1,10 @@
-# ObsidianPay — App Android (Fase 6)
+# ObsidianPay — App Android (Fase 7)
 
 App Android nativo (Kotlin + Jetpack Compose) que consome a API mobile do
 **Lab 08 — ObsidianPay Mobile**. Mantém cache local/offline (Fase 4), suporta
-**deep links**, uma tela **QR Payment** e um **Web Support** em WebView (Fase 5)
-e, a partir da Fase 6, uma **support bridge** JavaScript na WebView de suporte.
+**deep links**, uma tela **QR Payment** e um **Web Support** em WebView (Fase 5),
+uma **support bridge** JavaScript na WebView (Fase 6) e, a partir da Fase 7,
+**componentes Android internos** (pacote `platform/`) para operações/diagnóstico.
 
 > **Ambiente somente local.** O app só fala com o backend do lab em
 > `http://10.0.2.2:8102` (alias do emulador para o `127.0.0.1` do host).
@@ -81,8 +82,11 @@ android-app/
         ├── java/com/obsidianpay/mobile/
         │   ├── MainActivity.kt          # shell Compose + navegação simples
         │   ├── api/                      # ApiClient (OkHttp), modelos, ApiResult
+        │   ├── deeplink/                 # DeepLinkRouter + modelos (Fase 5)
+        │   ├── platform/                 # componentes Android exportados (Fase 7)
         │   ├── storage/                  # InsecureSessionStore, ObsidianLocalDb (SQLite), LocalCacheManager
-        │   ├── ui/                       # telas Login/Home/Receipts/Cards/Support/Transfer
+        │   ├── ui/                       # telas Login/Home/Receipts/Cards/Support/Transfer/WebSupport
+        │   ├── webview/                  # ObsidianSupportBridge (Fase 6)
         │   └── util/Constants.kt         # base URL, chaves de storage, header de debug
         └── res/ (values/, xml/network_security_config.xml)
 ```
@@ -146,6 +150,25 @@ Educacionalmente: vale observar **o que** uma ponte de suporte como essa
 disponibiliza para a página da WebView e **quem** pode acioná-la. Este README não
 descreve abuso nem entrega solução — isso faz parte do exercício. (Sem flags.)
 
+## Componentes internos (Fase 7)
+
+O app inclui um pacote `platform/` com componentes Android usados para
+integrações internas de operações/diagnóstico — declarados no `AndroidManifest`:
+
+- `platform/InternalOpsActivity.kt` — tela interna "Internal Operations"
+  (suporte/diagnóstico) acionável por intent.
+- `platform/DebugCommandReceiver.kt` — `BroadcastReceiver` que recebe comandos de
+  debug/automação e atualiza apenas o estado local do app.
+- `platform/ObsidianNotesProvider.kt` — `ContentProvider` de notas/estado de
+  suporte (authority `com.obsidianpay.mobile.provider.notes`).
+
+Para desenvolvimento/teste, esses componentes podem ser acionados via `adb`
+(`am start`, `am broadcast`, `content query`). Educacionalmente: ao analisar um
+app Android, vale revisar o `AndroidManifest` e perguntar **quais** componentes
+ficam acessíveis a outros apps e **o que** cada um faz com o estado local. Este
+README não trata isso como solução final nem entrega exploração — a investigação
+faz parte do exercício. (Sem flags; o provedor nunca devolve o token inteiro.)
+
 ## Notas técnicas (Fase 3)
 
 - **HTTP local:** `usesCleartextTraffic` + `network_security_config.xml`
@@ -153,9 +176,10 @@ descreve abuso nem entrega solução — isso faz parte do exercício. (Sem flag
   em produção.
 - **Armazenamento local:** `InsecureSessionStore` grava token/perfil em
   `SharedPreferences` em texto puro, **de propósito** (ver seção acima).
-- **Componentes exportados:** apenas `MainActivity` é exportada (exigência do
-  launcher). Componentes exportados vulneráveis ficam para uma fase futura.
+- **Componentes exportados:** além de `MainActivity` (launcher + deep links), a
+  Fase 7 adiciona componentes do pacote `platform/` exportados de propósito
+  (Activity/Receiver/Provider) — ver "Componentes internos (Fase 7)" acima.
 - **Fora de escopo nesta fase:** Frida, pinning real, lib nativa, root/biometria
-  bypass, binary patching, WebView bridge avançada e scanner de QR real.
+  bypass, binary patching e scanner de QR por câmera real.
 
 > Sem flags e sem soluções aqui. A investigação faz parte do desafio.

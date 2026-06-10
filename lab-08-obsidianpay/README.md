@@ -2,7 +2,7 @@
 
 **Tema:** Segurança de aplicações mobile (Android) — backend + app
 **Porta oficial:** http://127.0.0.1:8102
-**Status:** Fase 6 (app com **deep links, QR Payment, Web Support e WebView bridge**). O APK final ainda não foi publicado.
+**Status:** Fase 7 (app com **deep links, QR Payment, Web Support, WebView bridge e componentes Android internos**). O APK final ainda não foi publicado.
 **Dificuldade alvo:** Hard / realista (acima de labs introdutórios como AndroGoat).
 
 ---
@@ -162,7 +162,8 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 - ✅ App Android base (telas + cliente HTTP) — Fase 3
 - ✅ Cache local/offline do app (perfil, config, recibos, cartões) — Fase 4
 - ✅ Deep links, QR Payment e Web Support no app — Fase 5
-- ✅ WebView **support bridge** para suporte mobile assistido — **Fase 6**
+- ✅ WebView **support bridge** para suporte mobile assistido — Fase 6
+- ✅ **Componentes Android internos** (integrações de operações/diagnóstico) — **Fase 7**
 - ✅ Documentação base e arquitetura
 - 🔜 APK final publicado
 - 🔜 Cadeias completas app ↔ API
@@ -176,6 +177,12 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 > para mostrar contexto local do app (resumo de sessão, status, diagnóstico).
 > Como em apps reais, observe **o que** essa ponte de suporte disponibiliza para
 > a página — a investigação faz parte do exercício.
+
+> A Fase 7 adiciona **componentes Android internos** que simulam integrações de
+> um app real (uma tela interna de operações/diagnóstico, um gancho de automação
+> de debug e um provedor de notas de suporte). Como em qualquer app Android, vale
+> observar **quais** componentes o app expõe ao sistema e **o que** cada um
+> disponibiliza — a investigação faz parte do exercício. (Sem flags.)
 
 > **O APK final ainda não foi publicado.** A Fase 3 entrega o código-fonte do
 > app base. Trate o app e a API como alvos reais: explore, observe e questione.

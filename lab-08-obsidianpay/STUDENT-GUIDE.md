@@ -83,6 +83,14 @@ Com o backend no ar (`127.0.0.1:8102`):
 > Vale observar **o que** fica guardado e **onde** — isso faz parte do raciocínio
 > de segurança mobile. (Este guia não diz como extrair nada; a investigação é sua.)
 
+> **Integração Android (fluxos internos):** como muitos apps reais, o ObsidianPay
+> tem fluxos internos de operações/diagnóstico e expõe alguns **componentes
+> Android** para integração com o sistema (telas e ganchos internos, além de um
+> provedor de notas de suporte). No estudo de um app Android, vale sempre olhar o
+> `AndroidManifest` e perguntar **quais** componentes ficam acessíveis a outros
+> apps e **o que** cada um faz com o estado local. (Este guia não entrega os
+> comandos de exploração; a investigação é sua.)
+
 Detalhes e build via linha de comando em
 [android-app/README.md](./android-app/README.md).
 

@@ -102,6 +102,26 @@ QR payload (colado/digitado) ─┴─▶ DeepLinkRouter ─▶ tela interna:
 > marcadores de progresso nem credenciais internas. É uma fronteira de estudo,
 > não uma feature segura.
 
+### Fluxo de componentes Android exportados (Fase 7)
+
+```
+Outro app / adb ──┬─ am start  -a com.obsidianpay.mobile.INTERNAL_OPS  ─▶ InternalOpsActivity ─┐
+                  ├─ am broadcast -a com.obsidianpay.mobile.DEBUG_COMMAND ─▶ DebugCommandReceiver ┤
+                  └─ content query content://com.obsidianpay.mobile.provider.notes/{notes,debug,cache}
+                                                              │                                   │
+                                                              ▼                                   ▼
+                                              ObsidianNotesProvider              LocalCacheManager / InsecureSessionStore
+                                              (MatrixCursor, token_preview)      SQLite debug_events / SharedPreferences
+        (eventos: exported_activity_opened / exported_receiver_called / external_debug_* /
+         exported_provider_query → cache local)
+```
+
+> Os componentes do pacote `platform/` são **exportados de propósito** com
+> actions/authority/extras previsíveis e sem auth forte. São controlados: só
+> tocam o estado local do app, não executam comandos de sistema nem rede, e o
+> provider só devolve `token_preview` (nunca o token inteiro). Fronteira de
+> estudo, não feature segura.
+
 ### Fluxo de storage local
 
 ```

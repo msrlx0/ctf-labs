@@ -75,6 +75,21 @@ fun LocalStateScreen(
             if (bridgeEvents.isEmpty()) Mono("(nenhum)")
             bridgeEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
 
+            Section("Integração Android (componentes internos)")
+            Mono("operatorHint = ${preview(debugValues[Constants.KEY_OPERATOR_HINT])}")
+            Mono("lastExternalCommand = ${preview(debugValues[Constants.KEY_LAST_EXTERNAL_DEBUG_COMMAND])}")
+            Mono("lastExportedEvent = ${preview(debugValues[Constants.KEY_LAST_EXPORTED_EVENT])}")
+            val exportedEvents = events.filter {
+                it.eventType.startsWith("exported_") ||
+                    it.eventType.startsWith("external_debug") ||
+                    it.eventType.startsWith("external_set_last_receipt") ||
+                    it.eventType == "operator_hint_set" ||
+                    it.eventType == "enable_operator_hint" ||
+                    it.eventType == "write_debug_export"
+            }
+            if (exportedEvents.isEmpty()) Mono("(nenhum)")
+            exportedEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
+
             Section("Artefatos locais (arquivos)")
             if (artifacts.isEmpty()) Mono("(nenhum)")
             artifacts.forEach { Mono(it) }

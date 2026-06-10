@@ -10,10 +10,14 @@
       Android Emulator setup (http://10.0.2.2:8102) and must never be used in
       production.
 
-      NOTE (instructor): exported Service/Receiver/Provider components used as
-      controlled vulnerabilities are a FUTURE phase. In this phase only
-      MainActivity is exported — required by the launcher and to receive the
-      obsidianpay:// deep links below.
+      NOTE (instructor): besides MainActivity (launcher + obsidianpay:// deep
+      links), Phase 7 adds intentionally over-exported platform components used as
+      controlled vulnerabilities:
+        - .platform.InternalOpsActivity   (action INTERNAL_OPS)
+        - .platform.DebugCommandReceiver  (action DEBUG_COMMAND)
+        - .platform.ObsidianNotesProvider (authority provider.notes)
+      All are exported with predictable actions/authority and no strong auth, by
+      design. They only touch the app's own local state — no flags, no creds.
     -->
     <application
         android:allowBackup="true"
@@ -48,6 +52,47 @@
                 <data android:scheme="obsidianpay" android:host="receipt" />
             </intent-filter>
         </activity>
+
+        <!--
+          Phase 7 — intentionally over-exported internal "operations" Activity.
+          Launchable by any app via the predictable INTERNAL_OPS action with
+          predictable obsidian.intent.extra.* extras. Controlled: echoes context
+          and tracks last opened receipt only.
+        -->
+        <activity
+            android:name=".platform.InternalOpsActivity"
+            android:exported="true"
+            android:label="Internal Operations">
+            <intent-filter>
+                <action android:name="com.obsidianpay.mobile.INTERNAL_OPS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          Phase 7 — exported debug command receiver. Any app can broadcast
+          com.obsidianpay.mobile.DEBUG_COMMAND with a "command" extra. Controlled:
+          only mutates local state; no system commands, no network, no flags.
+        -->
+        <receiver
+            android:name=".platform.DebugCommandReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.obsidianpay.mobile.DEBUG_COMMAND" />
+            </intent-filter>
+        </receiver>
+
+        <!--
+          Phase 7 — exported support-notes ContentProvider. Any app can query
+          content://com.obsidianpay.mobile.provider.notes/{notes,debug,cache}.
+          Controlled: /debug never returns the full token (only token_preview);
+          no FLAG{ and no internal credentials.
+        -->
+        <provider
+            android:name=".platform.ObsidianNotesProvider"
+            android:authorities="com.obsidianpay.mobile.provider.notes"
+            android:exported="true"
+            android:grantUriPermissions="true" />
 
     </application>
 

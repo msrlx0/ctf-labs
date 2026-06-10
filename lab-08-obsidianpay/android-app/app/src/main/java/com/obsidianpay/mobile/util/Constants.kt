@@ -42,6 +42,24 @@ object Constants {
     const val KEY_LAST_QR_PAYLOAD: String = "obsidian.debug.last_qr_payload"
     const val KEY_LAST_WEBVIEW_URL: String = "obsidian.debug.last_webview_url"
 
+    // Exported Android components (Phase 7). These local values are written by
+    // the exported Activity/Receiver and surfaced by the exported Provider — all
+    // intentionally reachable by other apps, as a controlled study seam.
+    const val KEY_OPERATOR_HINT: String = "obsidian.support.operator_hint"
+    const val KEY_LAST_EXTERNAL_DEBUG_COMMAND: String = "obsidian.debug.last_external_command"
+    const val KEY_LAST_EXPORTED_EVENT: String = "obsidian.debug.last_exported_event"
+
+    // Predictable intent action / extra keys for the exported components (Phase 7).
+    // Predictability is intentional: any app can craft these intents.
+    const val ACTION_INTERNAL_OPS: String = "com.obsidianpay.mobile.INTERNAL_OPS"
+    const val ACTION_DEBUG_COMMAND: String = "com.obsidianpay.mobile.DEBUG_COMMAND"
+    const val PROVIDER_AUTHORITY: String = "com.obsidianpay.mobile.provider.notes"
+
+    const val EXTRA_INTERNAL_ROUTE: String = "obsidian.intent.extra.INTERNAL_ROUTE"
+    const val EXTRA_SESSION_HINT: String = "obsidian.intent.extra.SESSION_HINT"
+    const val EXTRA_OPERATOR_MODE: String = "obsidian.intent.extra.OPERATOR_MODE"
+    const val EXTRA_RECEIPT_ID: String = "obsidian.intent.extra.RECEIPT_ID"
+
     // Default WebView support path on the backend.
     const val WEBVIEW_SUPPORT_PATH: String = "/api/mobile/webview/support"
 

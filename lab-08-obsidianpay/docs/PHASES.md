@@ -9,10 +9,10 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 | **Fase 3** | App Android base (Kotlin + Compose): telas, cliente HTTP, SharedPreferences inseguro, enumeração manual por ID, suporte/diagnostics, transfer preview. | ✅ Concluída |
 | **Fase 4** | Armazenamento local inseguro: SharedPreferences rico, SQLite (`obsidianpay_local.db`), arquivos em filesDir/cacheDir, export app-specific externo, eventos de debug, cache offline. | ✅ Concluída |
 | **Fase 5** | Deep links (`obsidianpay://transfer/support/receipt`), QR Payment (input textual), Web Support (WebView com JS), reflexão controlada no portal, cache de eventos deep link/QR/WebView. | ✅ Concluída |
-| **Fase 6** | WebView **JavaScript bridge** (`ObsidianBridge` via `@JavascriptInterface`): leitura controlada de sessão/caches/artefatos locais a partir do portal de suporte; cadeia deep link/QR → WebView → bridge → cache local. | ✅ Atual |
-| Fase 7 | Recon estático do app + trilha network/API (interceptação, legado/HTTP, pinning). | 🔜 Planejada |
+| **Fase 6** | WebView **JavaScript bridge** (`ObsidianBridge` via `@JavascriptInterface`): leitura controlada de sessão/caches/artefatos locais a partir do portal de suporte; cadeia deep link/QR → WebView → bridge → cache local. | ✅ Concluída |
+| **Fase 7** | **Componentes Android exportados** (`platform/`): Activity interna (`InternalOpsActivity`), BroadcastReceiver de debug (`DebugCommandReceiver`) e ContentProvider (`ObsidianNotesProvider`) — todos `exported=true` com actions/authority/extras previsíveis, integrados ao cache/SQLite/debug events de forma controlada. | ✅ Atual |
 | Fase 8 | Trilha storage/RE avançada: segredos hardcoded, cripto fraca, RE do binário. | 🔜 Planejada |
-| Fase 9 | Trilha platform: componentes exportados (Service/Receiver/Provider). | 🔜 Planejada |
+| Fase 9 | Trilha network/API: interceptação HTTPS, pinning, lib nativa. | 🔜 Planejada |
 | Fase 10 | Trilha anti-analysis/auth: root/emulador/biometria, binary patching, BAC/mass assignment. | 🔜 Planejada |
 | Fase 11 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
 
@@ -77,6 +77,29 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
   recente (deep link/QR/WebView) e eventos do Web Support.
 - Limites por design: sem marcadores de progresso, sem credenciais internas,
   token apenas em preview. Script `scripts/validate-phase6.sh`.
+
+## Escopo da Fase 7 (entregue)
+
+- Pacote `platform/` com três componentes intencionalmente **exportados**:
+  - `InternalOpsActivity.kt` — Activity de "Internal Operations" (`exported=true`,
+    action `com.obsidianpay.mobile.INTERNAL_OPS`), lê extras previsíveis
+    (`obsidian.intent.extra.INTERNAL_ROUTE/SESSION_HINT/OPERATOR_MODE/RECEIPT_ID`),
+    registra `exported_activity_opened` e grava `lastOpenedReceiptId` quando há
+    `RECEIPT_ID`.
+  - `DebugCommandReceiver.kt` — BroadcastReceiver (`exported=true`, action
+    `com.obsidianpay.mobile.DEBUG_COMMAND`) com comandos controlados
+    (`sync_marker`, `set_last_receipt`, `write_debug_export`,
+    `enable_operator_hint`); sempre registra `exported_receiver_called`. Sem
+    comandos de sistema, sem rede, sem flags.
+  - `ObsidianNotesProvider.kt` — ContentProvider (`exported=true`, authority
+    `com.obsidianpay.mobile.provider.notes`) com `MatrixCursor` para `/notes`,
+    `/debug` e `/cache`; o token só aparece como `token_preview` mascarado.
+- `InsecureSessionStore`/`LocalCacheManager` ganham `getTokenPreview`,
+  `getSafeDebugValuesForProvider`, `saveOperatorHint`, `saveExternalDebugCommand`
+  e `recordExportedEvent`; `LocalStateScreen` mostra os eventos/estado desses
+  componentes (sem rótulo de "vulnerabilidade").
+- `AndroidManifest.xml` declara os três componentes exportados. Script
+  `scripts/validate-phase7.sh` (inclui reforço dos typos de bridge da Fase 6).
 
 ## Princípios entre fases
 
