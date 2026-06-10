@@ -535,3 +535,60 @@ nunca o token completo.
 - [ ] Sem `FLAG{` em docs públicos e nos componentes.
 - [ ] Sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README.
 - [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+## Fase 8 — Hardcoded secrets / weak crypto / Device Trust
+
+> Atalho: `bash scripts/validate-phase8.sh` (estrutura). Reforça também os typos
+> de bridge da Fase 6.
+
+### F8.1 — Arquivos do pacote `security/` + tela
+
+```bash
+SRC=android-app/app/src/main/java/com/obsidianpay/mobile
+ls $SRC/security/HardcodedSecrets.kt \
+   $SRC/security/WeakCrypto.kt \
+   $SRC/security/LegacyRequestSigner.kt \
+   $SRC/ui/DeviceTrustScreen.kt
+```
+
+### F8.2 — Código (segredos, cripto fraca, headers, eventos)
+
+```bash
+grep -Eq 'INTERNAL_CLIENT_PART|LEGACY_SIGNING_SALT' $SRC/security/HardcodedSecrets.kt && echo OK
+grep -Eq 'base64Encode|base64Decode|weakXor' $SRC/security/WeakCrypto.kt && echo OK
+grep -Eq 'sha1Hex|md5Hex' $SRC/security/WeakCrypto.kt && echo OK
+grep -Eq 'X-Obsidian-(Client|Device|Timestamp|Signature)' $SRC/security/LegacyRequestSigner.kt && echo OK
+grep -Eq 'device_trust_check_started|weak_signature_generated|device_trust_response_cached|encoded_hint_decoded' \
+  $SRC/ui/DeviceTrustScreen.kt && echo OK
+```
+
+### F8.3 — Backend device-trust (com backend no ar)
+
+```bash
+SALT='obsidian-legacy-attestation-2026'
+TS=1700000000000
+SIG=$(printf '%s' "guest:android-emulator-obsidian:$TS:$SALT" | sha1sum | cut -d' ' -f1)
+curl -s -X POST http://127.0.0.1:8102/api/mobile/internal/device-trust \
+  -H "Authorization: Bearer obsidian-mobile-token-guest-1001" \
+  -H "X-Obsidian-Client: obsidian-mobile-legacy-client" \
+  -H "X-Obsidian-Device: android-emulator-obsidian" \
+  -H "X-Obsidian-Timestamp: $TS" -H "X-Obsidian-Signature: $SIG" \
+  -H 'Content-Type: application/json' \
+  -d '{"deviceId":"android-emulator-obsidian","attestationMode":"legacy","operatorHint":"x"}'
+```
+
+Esperado: JSON com `"status":"trusted-legacy"` e `"mode":"legacy-attestation"`.
+Assinatura errada → 403. `GET /api/mobile/internal/reverse-hint` com o
+`X-Obsidian-Client` correto retorna a dica didática (sem flag).
+
+### Critérios de aceite (Fase 8)
+
+- [ ] `validate-phase1..7.sh` continuam passando.
+- [ ] `validate-phase8.sh` passa.
+- [ ] `security/HardcodedSecrets.kt`, `WeakCrypto.kt`, `LegacyRequestSigner.kt` criados.
+- [ ] `ui/DeviceTrustScreen.kt` criado e acessível pela Início.
+- [ ] Backend implementa `POST /internal/device-trust` (assinatura SHA-1 fraca) e `GET /internal/reverse-hint`.
+- [ ] `config`/`legacy/routes` referenciam os paths internos.
+- [ ] Sem `FLAG{` em docs públicos e nas novas classes/endpoints.
+- [ ] Sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README e nas classes `security/`.
+- [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.

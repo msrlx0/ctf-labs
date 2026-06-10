@@ -329,6 +329,74 @@ adb shell content query --uri content://com.obsidianpay.mobile.provider.notes/ca
 - `bash scripts/validate-phase7.sh` (estrutura; reforça também os typos de bridge
   da Fase 6). Sem Android SDK, o build do APK não roda (esperado).
 
+## 3.7 Fase 8 — Hardcoded secrets / weak crypto / reverse trail (app + backend)
+
+A Fase 8 adiciona o pacote `security/` e o fluxo **Device Trust**, material clássico
+de reverse engineering mobile (JADX/apktool/`strings`). Pontos de instrutor:
+
+- **HardcodedSecrets** (`security/HardcodedSecrets.kt`): segredos **fragmentados**
+  reassemblados em runtime — escondem dos `strings` ingênuos, mas são triviais no
+  JADX:
+  - client id = `INTERNAL_CLIENT_PART_A+B+C` → `obsidian-mobile-legacy-client`;
+  - salt = `LEGACY_SIGNING_SALT_PART_1+2` → `obsidian-legacy-attestation-2026`;
+  - `getEncodedOperatorHint()` → Base64 de `operator-hint:mobile-support`;
+  - `getHiddenRoutes()` → `/device-trust`, `/legacy-attestation`, `/reverse-hint`.
+- **WeakCrypto** (`security/WeakCrypto.kt`): Base64 (codificação, não cripto),
+  XOR de chave repetida (reversível) e SHA-1/MD5 (quebrados). Base64 é usado como
+  **falsa proteção** do hint.
+- **LegacyRequestSigner** (`security/LegacyRequestSigner.kt`): assinatura =
+  `sha1(username:deviceId:timestamp:salt)` — **sem HMAC, sem nonce**. Quem
+  recupera o salt forja a assinatura offline. `buildHeaders()` monta
+  `X-Obsidian-Client/Device/Timestamp/Signature`.
+- **DeviceTrustScreen** (`ui/DeviceTrustScreen.kt`): monta a assinatura, decodifica
+  o hint Base64 e chama o endpoint interno; cacheia
+  `lastDeviceTrustJson`/`lastLegacySignature`/`lastEncodedOperatorHint` e registra
+  os eventos `device_trust_*` / `weak_signature_generated` / `encoded_hint_decoded`.
+- **Backend** (`api/src/server.js` + `data.js`):
+  - `POST /api/mobile/internal/device-trust` exige token válido + os 4 headers, e
+    **recomputa a mesma assinatura SHA-1 fraca** (salt hardcoded em
+    `legacyMobileTrust`). Assinatura ok → `{status:"trusted-legacy",
+    mode:"legacy-attestation", ...}`; errada → 403.
+  - `GET /api/mobile/internal/reverse-hint` exige o client id correto e devolve
+    "Legacy mobile clients assemble trust headers locally."
+  - `config`/`legacy/routes` referenciam `enableLegacyDeviceTrust`,
+    `internalDeviceTrustPath`, `internalReverseHintPath` (sem expor salt/client id).
+
+### Como será encontrado (reverse engineering)
+
+1. JADX no APK → ler `security/HardcodedSecrets.kt` e reassemblar client id + salt.
+2. Reconhecer Base64 do hint e decodá-lo (`WeakCrypto.base64Decode`).
+3. Reproduzir `sha1(username:deviceId:timestamp:salt)` offline e forjar headers.
+4. Chamar `/api/mobile/internal/device-trust` (e `/reverse-hint`) fora do app.
+
+### Exemplo (instrutor) — forjar a assinatura via shell
+
+```bash
+SALT='obsidian-legacy-attestation-2026'
+SIG=$(printf '%s' "guest:android-emulator-obsidian:1700000000000:$SALT" | sha1sum | cut -d' ' -f1)
+curl -s -X POST http://127.0.0.1:8102/api/mobile/internal/device-trust \
+  -H "Authorization: Bearer obsidian-mobile-token-guest-1001" \
+  -H "X-Obsidian-Client: obsidian-mobile-legacy-client" \
+  -H "X-Obsidian-Device: android-emulator-obsidian" \
+  -H "X-Obsidian-Timestamp: 1700000000000" \
+  -H "X-Obsidian-Signature: $SIG" \
+  -H 'Content-Type: application/json' \
+  -d '{"deviceId":"android-emulator-obsidian","attestationMode":"legacy","operatorHint":"x"}'
+```
+
+### Limites/guardas da Fase 8 (por design)
+
+- Nenhum segredo real; salt/client id são didáticos e existem para serem recuperados.
+- Sem `FLAG{` nas classes `security/`, na `DeviceTrustScreen` nem nos novos endpoints.
+- Sem `analyst123`/`operator123` nessas classes.
+- Fora de escopo: pinning real, lib nativa/JNI, Frida, root real, biometria,
+  binary patching, scanner de QR por câmera.
+
+### Validação rápida (instrutor)
+
+- `bash scripts/validate-phase8.sh` (estrutura; reforça também os typos de bridge).
+  Sem Android SDK, o build do APK não roda (esperado).
+
 ## 4. Matriz de vulnerabilidades planejadas
 
 Detalhe completo por trilha em [docs/VULNERABILITY-ROADMAP.md](./docs/VULNERABILITY-ROADMAP.md).
@@ -343,8 +411,8 @@ Resumo de status (atualizado na Fase 2):
 | 5 | Storage/RE | SharedPreferences token leak | implemented-app |
 | 6 | Storage/RE | SQLite sensitive data | implemented-app |
 | 7 | Storage/RE | Temp/cache file leak | implemented-app |
-| 8 | Storage/RE | Hardcoded/config secrets | planned |
-| 9 | Storage/RE | Weak crypto | planned |
+| 8 | Storage/RE | Hardcoded/config secrets | implemented-app |
+| 9 | Storage/RE | Weak crypto | implemented-app |
 | 10 | Platform | Exported Activity | implemented-app |
 | 11 | Platform | Exported Service | planned |
 | 12 | Platform | BroadcastReceiver debug trigger | implemented-app |

@@ -90,6 +90,18 @@ fun LocalStateScreen(
             if (exportedEvents.isEmpty()) Mono("(nenhum)")
             exportedEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
 
+            Section("Device Trust (security check)")
+            Mono("lastDeviceTrust = ${preview(debugValues[Constants.KEY_LAST_DEVICE_TRUST])}")
+            Mono("lastLegacySignature = ${preview(debugValues[Constants.KEY_LAST_LEGACY_SIGNATURE])}")
+            Mono("lastEncodedOperatorHint = ${preview(debugValues[Constants.KEY_LAST_ENCODED_OPERATOR_HINT])}")
+            val trustEvents = events.filter {
+                it.eventType.startsWith("device_trust") ||
+                    it.eventType == "weak_signature_generated" ||
+                    it.eventType == "encoded_hint_decoded"
+            }
+            if (trustEvents.isEmpty()) Mono("(nenhum)")
+            trustEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
+
             Section("Artefatos locais (arquivos)")
             if (artifacts.isEmpty()) Mono("(nenhum)")
             artifacts.forEach { Mono(it) }

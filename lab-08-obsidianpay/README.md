@@ -2,7 +2,7 @@
 
 **Tema:** Segurança de aplicações mobile (Android) — backend + app
 **Porta oficial:** http://127.0.0.1:8102
-**Status:** Fase 7 (app com **deep links, QR Payment, Web Support, WebView bridge e componentes Android internos**). O APK final ainda não foi publicado.
+**Status:** Fase 8 (app com **deep links, QR Payment, Web Support, WebView bridge, componentes Android internos e fluxo Device Trust legado**). O APK final ainda não foi publicado.
 **Dificuldade alvo:** Hard / realista (acima de labs introdutórios como AndroGoat).
 
 ---
@@ -163,7 +163,8 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 - ✅ Cache local/offline do app (perfil, config, recibos, cartões) — Fase 4
 - ✅ Deep links, QR Payment e Web Support no app — Fase 5
 - ✅ WebView **support bridge** para suporte mobile assistido — Fase 6
-- ✅ **Componentes Android internos** (integrações de operações/diagnóstico) — **Fase 7**
+- ✅ **Componentes Android internos** (integrações de operações/diagnóstico) — Fase 7
+- ✅ **Device Trust** legado + configurações internas para análise mobile — **Fase 8**
 - ✅ Documentação base e arquitetura
 - 🔜 APK final publicado
 - 🔜 Cadeias completas app ↔ API
@@ -183,6 +184,13 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 > de debug e um provedor de notas de suporte). Como em qualquer app Android, vale
 > observar **quais** componentes o app expõe ao sistema e **o que** cada um
 > disponibiliza — a investigação faz parte do exercício. (Sem flags.)
+
+> A Fase 8 adiciona um fluxo **Device Trust** (checagem de segurança/atestação do
+> dispositivo) e **configurações internas** embutidas no cliente. Como em apps
+> reais que montam credenciais localmente, a análise estática (JADX/apktool/
+> `strings`) do app revela como esse fluxo é construído. Vale observar **como** o
+> app prepara essa confiança e **o que** isso implica — a investigação faz parte
+> do exercício. (Sem flags; sem segredos reais.)
 
 > **O APK final ainda não foi publicado.** A Fase 3 entrega o código-fonte do
 > app base. Trate o app e a API como alvos reais: explore, observe e questione.

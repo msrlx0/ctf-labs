@@ -37,6 +37,7 @@ import com.obsidianpay.mobile.storage.InsecureSessionStore
 import com.obsidianpay.mobile.storage.LocalCacheManager
 import com.obsidianpay.mobile.storage.ObsidianLocalDb
 import com.obsidianpay.mobile.ui.CardsScreen
+import com.obsidianpay.mobile.ui.DeviceTrustScreen
 import com.obsidianpay.mobile.ui.HomeScreen
 import com.obsidianpay.mobile.ui.LocalStateScreen
 import com.obsidianpay.mobile.ui.LoginScreen
@@ -47,7 +48,7 @@ import com.obsidianpay.mobile.ui.TransferPreviewScreen
 import com.obsidianpay.mobile.ui.WebViewSupportScreen
 
 /** Top-level destinations. A tiny enum-based nav keeps the app dependency-free. */
-enum class Screen { Login, Home, Receipts, Cards, Support, Transfer, Qr, WebSupport, LocalState }
+enum class Screen { Login, Home, Receipts, Cards, Support, Transfer, Qr, WebSupport, LocalState, DeviceTrust }
 
 class MainActivity : ComponentActivity() {
 
@@ -186,6 +187,8 @@ fun ObsidianPayApp(
         }
 
         Screen.LocalState -> LocalStateScreen(cache) { screen = Screen.Home }
+
+        Screen.DeviceTrust -> DeviceTrustScreen(apiClient, store, cache) { screen = Screen.Home }
     }
 }
 

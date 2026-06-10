@@ -154,6 +154,21 @@ class LocalCacheManager(
     fun getSafeDebugValuesForProvider(): Map<String, String?> =
         store.getSafeDebugValuesForProvider()
 
+    // --- Device Trust / reverse-engineering trail (Phase 8) ---------------------
+    fun cacheDeviceTrust(rawJson: String) {
+        store.saveLastDeviceTrustJson(rawJson)
+        db.addDebugEvent("device_trust_response_cached", rawJson)
+    }
+
+    fun saveLegacySignature(signature: String) {
+        store.saveLastLegacySignature(signature)
+        db.addDebugEvent("weak_signature_generated", signature)
+    }
+
+    fun saveEncodedOperatorHint(value: String) {
+        store.saveLastEncodedOperatorHint(value)
+    }
+
     // --- File artifacts ---------------------------------------------------------
     fun writeTempSupportSnapshot(rawJson: String): String? =
         writeFile(File(context.cacheDir, "obsidian-support-last-sync.json"), rawJson)

@@ -10,8 +10,8 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 | **Fase 4** | Armazenamento local inseguro: SharedPreferences rico, SQLite (`obsidianpay_local.db`), arquivos em filesDir/cacheDir, export app-specific externo, eventos de debug, cache offline. | ✅ Concluída |
 | **Fase 5** | Deep links (`obsidianpay://transfer/support/receipt`), QR Payment (input textual), Web Support (WebView com JS), reflexão controlada no portal, cache de eventos deep link/QR/WebView. | ✅ Concluída |
 | **Fase 6** | WebView **JavaScript bridge** (`ObsidianBridge` via `@JavascriptInterface`): leitura controlada de sessão/caches/artefatos locais a partir do portal de suporte; cadeia deep link/QR → WebView → bridge → cache local. | ✅ Concluída |
-| **Fase 7** | **Componentes Android exportados** (`platform/`): Activity interna (`InternalOpsActivity`), BroadcastReceiver de debug (`DebugCommandReceiver`) e ContentProvider (`ObsidianNotesProvider`) — todos `exported=true` com actions/authority/extras previsíveis, integrados ao cache/SQLite/debug events de forma controlada. | ✅ Atual |
-| Fase 8 | Trilha storage/RE avançada: segredos hardcoded, cripto fraca, RE do binário. | 🔜 Planejada |
+| **Fase 7** | **Componentes Android exportados** (`platform/`): Activity interna (`InternalOpsActivity`), BroadcastReceiver de debug (`DebugCommandReceiver`) e ContentProvider (`ObsidianNotesProvider`) — todos `exported=true` com actions/authority/extras previsíveis, integrados ao cache/SQLite/debug events de forma controlada. | ✅ Concluída |
+| **Fase 8** | **Trilha de reverse engineering** (`security/`): segredos hardcoded fragmentados (`HardcodedSecrets`), cripto fraca didática (`WeakCrypto`: Base64/XOR/SHA-1), assinatura local fraca (`LegacyRequestSigner`) e fluxo **Device Trust** → endpoint interno `/api/mobile/internal/device-trust` (assinatura SHA-1 fraca aceita pelo backend) + `reverse-hint`. | ✅ Atual |
 | Fase 9 | Trilha network/API: interceptação HTTPS, pinning, lib nativa. | 🔜 Planejada |
 | Fase 10 | Trilha anti-analysis/auth: root/emulador/biometria, binary patching, BAC/mass assignment. | 🔜 Planejada |
 | Fase 11 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
@@ -100,6 +100,29 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
   componentes (sem rótulo de "vulnerabilidade").
 - `AndroidManifest.xml` declara os três componentes exportados. Script
   `scripts/validate-phase7.sh` (inclui reforço dos typos de bridge da Fase 6).
+
+## Escopo da Fase 8 (entregue)
+
+- Pacote `security/` com a trilha de reverse engineering:
+  - `HardcodedSecrets.kt` — segredos/config hardcoded **fragmentados**
+    (`INTERNAL_CLIENT_PART_*`, `LEGACY_SIGNING_SALT_PART_*`, hint Base64,
+    `getHiddenRoutes()`), reassemblados em runtime para análise estática.
+  - `WeakCrypto.kt` — `base64Encode/Decode`, `weakXor`/`weakXorToBase64`/
+    `weakXorFromBase64`, `sha1Hex`/`md5Hex` (tudo intencionalmente fraco).
+  - `LegacyRequestSigner.kt` — `sign()` = SHA-1 de
+    `username:deviceId:timestamp:salt` (sem HMAC) e `buildHeaders()`
+    (`X-Obsidian-Client/Device/Timestamp/Signature`).
+- `ui/DeviceTrustScreen.kt` — tela "Device Trust" que monta a assinatura fraca,
+  decodifica o hint Base64 e chama `/api/mobile/internal/device-trust`; salva
+  `lastDeviceTrustJson`/`lastLegacySignature`/`lastEncodedOperatorHint` e registra
+  `device_trust_check_started`, `weak_signature_generated`,
+  `device_trust_response_cached`, `encoded_hint_decoded`.
+- `ApiClient` ganha `checkDeviceTrust`/`getReverseHint`; `HomeScreen` tem botão
+  discreto "Device Trust"; `LocalStateScreen` mostra o estado do fluxo.
+- Backend: `POST /api/mobile/internal/device-trust` (verifica a assinatura SHA-1
+  fraca com salt hardcoded didático) e `GET /api/mobile/internal/reverse-hint`
+  (gated pelo client id correto). `config`/`legacy/routes` referenciam os paths.
+  Sem flags nas novas classes/endpoints. Script `scripts/validate-phase8.sh`.
 
 ## Princípios entre fases
 

@@ -91,6 +91,14 @@ Com o backend no ar (`127.0.0.1:8102`):
 > apps e **o que** cada um faz com o estado local. (Este guia não entrega os
 > comandos de exploração; a investigação é sua.)
 
+> **Device Trust:** a Início tem uma tela **Device Trust** (checagem de
+> segurança/atestação do dispositivo). Ela faz parte do produto — rode-a e
+> observe o resultado. Apps mobile às vezes montam credenciais/assinaturas
+> **localmente** no cliente; a análise estática (JADX/apktool/`strings`) é a
+> ferramenta natural para entender **como** isso é feito. Este guia não entrega
+> segredos, assinatura nem rotas internas completas — descobrir o "como" é a sua
+> parte do exercício. (Sem flags.)
+
 Detalhes e build via linha de comando em
 [android-app/README.md](./android-app/README.md).
 

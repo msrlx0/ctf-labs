@@ -96,6 +96,17 @@ class InsecureSessionStore(context: Context) {
     /** Last event triggered by any exported component (Activity/Receiver/Provider). */
     fun saveLastExportedEvent(value: String) = putAndTouch(Constants.KEY_LAST_EXPORTED_EVENT, value)
 
+    // --- Device Trust / reverse-engineering trail (Phase 8) ---------------------
+
+    fun saveLastDeviceTrustJson(rawJson: String) =
+        putAndTouch(Constants.KEY_LAST_DEVICE_TRUST, rawJson)
+
+    fun saveLastLegacySignature(signature: String) =
+        putAndTouch(Constants.KEY_LAST_LEGACY_SIGNATURE, signature)
+
+    fun saveLastEncodedOperatorHint(value: String) =
+        putAndTouch(Constants.KEY_LAST_ENCODED_OPERATOR_HINT, value)
+
     private fun putAndTouch(key: String, value: String) {
         prefs.edit()
             .putString(key, value)
@@ -128,6 +139,10 @@ class InsecureSessionStore(context: Context) {
     fun getLastExternalDebugCommand(): String? =
         prefs.getString(Constants.KEY_LAST_EXTERNAL_DEBUG_COMMAND, null)
     fun getLastExportedEvent(): String? = prefs.getString(Constants.KEY_LAST_EXPORTED_EVENT, null)
+    fun getLastDeviceTrustJson(): String? = prefs.getString(Constants.KEY_LAST_DEVICE_TRUST, null)
+    fun getLastLegacySignature(): String? = prefs.getString(Constants.KEY_LAST_LEGACY_SIGNATURE, null)
+    fun getLastEncodedOperatorHint(): String? =
+        prefs.getString(Constants.KEY_LAST_ENCODED_OPERATOR_HINT, null)
     fun getLastSyncTimestamp(): Long = prefs.getLong(Constants.KEY_DEBUG_LAST_SYNC, 0L)
 
     /**
@@ -172,6 +187,9 @@ class InsecureSessionStore(context: Context) {
         Constants.KEY_OPERATOR_HINT to getOperatorHint(),
         Constants.KEY_LAST_EXTERNAL_DEBUG_COMMAND to getLastExternalDebugCommand(),
         Constants.KEY_LAST_EXPORTED_EVENT to getLastExportedEvent(),
+        Constants.KEY_LAST_DEVICE_TRUST to getLastDeviceTrustJson(),
+        Constants.KEY_LAST_LEGACY_SIGNATURE to getLastLegacySignature(),
+        Constants.KEY_LAST_ENCODED_OPERATOR_HINT to getLastEncodedOperatorHint(),
         Constants.KEY_DEBUG_LAST_SYNC to getLastSyncTimestamp().takeIf { it > 0 }?.toString(),
     )
 

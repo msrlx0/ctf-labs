@@ -66,4 +66,14 @@ object Constants {
     // Debug header expected by the backend's diagnostics endpoint.
     const val DEBUG_HEADER_NAME: String = "X-Obsidian-Debug"
     const val DEBUG_HEADER_VALUE: String = "mobile-diagnostics"
+
+    // Device Trust / reverse-engineering trail (Phase 8).
+    const val DEFAULT_DEVICE_ID: String = "android-emulator-obsidian"
+    const val DEVICE_TRUST_PATH: String = "/api/mobile/internal/device-trust"
+    const val REVERSE_HINT_PATH: String = "/api/mobile/internal/reverse-hint"
+
+    // Local cache keys for the Device Trust flow (plaintext, intentional).
+    const val KEY_LAST_DEVICE_TRUST: String = "obsidian.debug.last_device_trust"
+    const val KEY_LAST_LEGACY_SIGNATURE: String = "obsidian.debug.last_legacy_signature"
+    const val KEY_LAST_ENCODED_OPERATOR_HINT: String = "obsidian.debug.last_encoded_operator_hint"
 }

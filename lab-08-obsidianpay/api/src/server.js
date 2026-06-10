@@ -17,6 +17,7 @@
  */
 
 const express = require('express');
+const crypto = require('crypto');
 const {
   LAB,
   users,
@@ -24,6 +25,7 @@ const {
   cards,
   featureFlags,
   vaultStatusByRole,
+  legacyMobileTrust,
   buildMobileConfig,
 } = require('./data');
 
@@ -466,6 +468,8 @@ app.get('/api/mobile/legacy/routes', requireAuth, (_req, res) => {
       '/api/mobile/webview/support',
       '/api/mobile/transfer/preview',
       '/api/mobile/internal/vault-status',
+      '/api/mobile/internal/device-trust',
+      '/api/mobile/internal/reverse-hint',
     ],
   });
 });
@@ -483,6 +487,57 @@ app.get('/api/mobile/internal/vault-status', requireAuth, (req, res) => {
     return sendError(res, 403, 'forbidden', 'Role not permitted for vault status.');
   }
   res.json(status);
+});
+
+// --- Internal legacy device trust (Phase 8) ----------------------------------
+// Weak, forgeable local request signing. The signature is a plain SHA-1 over
+// predictable fields joined with a HARDCODED salt that the mobile client also
+// embeds (fragmented) in security/HardcodedSecrets.kt. No HMAC, no nonce. This is
+// intentionally weak for the reverse-engineering trail. No flags are returned.
+function expectedLegacySignature(username, deviceId, timestamp) {
+  const base = `${username}:${deviceId}:${timestamp}:${legacyMobileTrust.signingSalt}`;
+  return crypto.createHash('sha1').update(base, 'utf8').digest('hex');
+}
+
+app.post('/api/mobile/internal/device-trust', requireAuth, (req, res) => {
+  const username = req.authUser.username;
+  const clientId = req.headers['x-obsidian-client'];
+  const deviceId = req.headers['x-obsidian-device'];
+  const timestamp = req.headers['x-obsidian-timestamp'];
+  const signature = req.headers['x-obsidian-signature'];
+
+  if (clientId !== legacyMobileTrust.internalClientId) {
+    return sendError(res, 403, 'forbidden', 'Unknown or missing legacy mobile client.');
+  }
+  if (!deviceId || !timestamp || !signature) {
+    return sendError(res, 400, 'bad_request', 'Missing legacy trust headers.');
+  }
+
+  const expected = expectedLegacySignature(username, deviceId, timestamp);
+  if (String(signature).toLowerCase() !== expected) {
+    return sendError(res, 403, 'forbidden', 'Invalid legacy device-trust signature.');
+  }
+
+  res.json({
+    status: 'trusted-legacy',
+    mode: 'legacy-attestation',
+    user: username,
+    deviceId,
+    trustLevel: 'support-diagnostics',
+    nextStepHint: 'review local operator hint and mobile config',
+  });
+});
+
+// Reverse-hint: gated only by the correct legacy client id header. Returns a
+// short didactic hint (no flag).
+app.get('/api/mobile/internal/reverse-hint', requireAuth, (req, res) => {
+  if (req.headers['x-obsidian-client'] !== legacyMobileTrust.internalClientId) {
+    return sendError(res, 403, 'forbidden', 'Reverse hint requires the legacy mobile client id.');
+  }
+  res.json({
+    hint: 'Legacy mobile clients assemble trust headers locally.',
+    mode: 'legacy-attestation',
+  });
 });
 
 // --- Error handling ----------------------------------------------------------

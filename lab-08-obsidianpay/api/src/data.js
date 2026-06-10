@@ -187,9 +187,24 @@ const featureFlags = {
   enableReceiptOfflineCache: true,
   enableQrTransferPreview: true,
   enableWebViewSupportPortal: true,
+  enableLegacyDeviceTrust: true,
   enableBiometricVault: false,
   enableNativePinningExperiment: false,
 };
+
+// --- Legacy mobile "device trust" (Phase 8) ----------------------------------
+// Didactic values mirrored by the mobile client's fragmented constants
+// (android-app .../security/HardcodedSecrets.kt). They let the backend verify the
+// app's WEAK local request signing: sha1(username:deviceId:timestamp:signingSalt).
+// NONE of this is a real secret and there is intentionally NO flag here — the
+// teaching point is that a salt embedded in a client can be recovered and the
+// signature forged offline.
+const legacyMobileTrust = Object.freeze({
+  signingSalt: 'obsidian-legacy-attestation-2026',
+  internalClientId: 'obsidian-mobile-legacy-client',
+  deviceTrustPath: '/api/mobile/internal/device-trust',
+  reverseHintPath: '/api/mobile/internal/reverse-hint',
+});
 
 // --- Vault status by role ----------------------------------------------------
 // Used by GET /api/mobile/internal/vault-status. customer is denied (403) at the
@@ -226,6 +241,11 @@ function buildMobileConfig() {
     qrTransferScheme: 'obsidianpay://transfer',
     supportDeepLinkScheme: 'obsidianpay://support',
     webViewSupportPath: '/api/mobile/webview/support',
+    // Discreet references to the internal legacy device-trust trail (Phase 8).
+    // The path names are disclosed; the client id / signing salt are NOT.
+    enableLegacyDeviceTrust: featureFlags.enableLegacyDeviceTrust,
+    internalDeviceTrustPath: legacyMobileTrust.deviceTrustPath,
+    internalReverseHintPath: legacyMobileTrust.reverseHintPath,
     mobileFeatureFlags: { ...featureFlags },
     clientStorageKeys: {
       sessionToken: 'obsidian.session.token',
@@ -245,5 +265,6 @@ module.exports = {
   cards,
   featureFlags,
   vaultStatusByRole,
+  legacyMobileTrust,
   buildMobileConfig,
 };

@@ -122,6 +122,33 @@ Outro app / adb ──┬─ am start  -a com.obsidianpay.mobile.INTERNAL_OPS  �
 > provider só devolve `token_preview` (nunca o token inteiro). Fronteira de
 > estudo, não feature segura.
 
+### Fluxo de Device Trust / reverse engineering (Fase 8)
+
+```
+DeviceTrustScreen (ui/)
+   │  monta credenciais locais a partir de security/:
+   │   ├─ HardcodedSecrets  → client id + salt (fragmentados) + hint Base64 + rotas
+   │   ├─ WeakCrypto        → base64Decode(hint), sha1Hex(...)
+   │   └─ LegacyRequestSigner → sha1(username:deviceId:timestamp:salt) + headers
+   ▼
+ApiClient.checkDeviceTrust ──▶ POST 10.0.2.2:8102/api/mobile/internal/device-trust
+   (X-Obsidian-Client/Device/Timestamp/Signature)        │
+                                                          ▼
+                                   backend recomputa a MESMA assinatura SHA-1 fraca
+                                   (salt hardcoded em data.js → legacyMobileTrust)
+                                   ok → {status:"trusted-legacy", mode:"legacy-attestation"}
+                                          │
+                                          ▼
+                       LocalCacheManager / InsecureSessionStore (cache local)
+        (eventos: device_trust_check_started / weak_signature_generated /
+         device_trust_response_cached / encoded_hint_decoded → cache local)
+```
+
+> A trilha da Fase 8 é **falsa proteção por design**: Base64 não é cripto, a
+> assinatura SHA-1 sem HMAC/nonce é forjável, e o salt/client id são didáticos e
+> embutidos no cliente (e espelhados no backend) para serem recuperados em
+> reverse engineering. Não há segredos reais nem flags nessas classes/endpoints.
+
 ### Fluxo de storage local
 
 ```

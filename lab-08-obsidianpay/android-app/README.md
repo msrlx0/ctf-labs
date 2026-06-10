@@ -1,10 +1,11 @@
-# ObsidianPay — App Android (Fase 7)
+# ObsidianPay — App Android (Fase 8)
 
 App Android nativo (Kotlin + Jetpack Compose) que consome a API mobile do
 **Lab 08 — ObsidianPay Mobile**. Mantém cache local/offline (Fase 4), suporta
 **deep links**, uma tela **QR Payment** e um **Web Support** em WebView (Fase 5),
-uma **support bridge** JavaScript na WebView (Fase 6) e, a partir da Fase 7,
-**componentes Android internos** (pacote `platform/`) para operações/diagnóstico.
+uma **support bridge** JavaScript na WebView (Fase 6), **componentes Android
+internos** (pacote `platform/`, Fase 7) e, a partir da Fase 8, um fluxo
+**Device Trust** com trilha de reverse engineering (pacote `security/`).
 
 > **Ambiente somente local.** O app só fala com o backend do lab em
 > `http://10.0.2.2:8102` (alias do emulador para o `127.0.0.1` do host).
@@ -84,6 +85,7 @@ android-app/
         │   ├── api/                      # ApiClient (OkHttp), modelos, ApiResult
         │   ├── deeplink/                 # DeepLinkRouter + modelos (Fase 5)
         │   ├── platform/                 # componentes Android exportados (Fase 7)
+        │   ├── security/                 # HardcodedSecrets, WeakCrypto, LegacyRequestSigner (Fase 8)
         │   ├── storage/                  # InsecureSessionStore, ObsidianLocalDb (SQLite), LocalCacheManager
         │   ├── ui/                       # telas Login/Home/Receipts/Cards/Support/Transfer/WebSupport
         │   ├── webview/                  # ObsidianSupportBridge (Fase 6)
@@ -168,6 +170,26 @@ app Android, vale revisar o `AndroidManifest` e perguntar **quais** componentes
 ficam acessíveis a outros apps e **o que** cada um faz com o estado local. Este
 README não trata isso como solução final nem entrega exploração — a investigação
 faz parte do exercício. (Sem flags; o provedor nunca devolve o token inteiro.)
+
+## Device Trust e trilha de reverse engineering (Fase 8)
+
+O app inclui um pacote `security/` e uma tela **Device Trust** (na Início) que
+simulam um fluxo de atestação/segurança "legado":
+
+- `security/HardcodedSecrets.kt` — config/segredos hardcoded **fragmentados**
+  (client id, salt de assinatura, hint em Base64, rotas internas), reassemblados
+  em runtime. São didáticos, **não** são segredos reais.
+- `security/WeakCrypto.kt` — Base64, XOR de chave repetida e SHA-1/MD5
+  (intencionalmente fracos; Base64 não é criptografia).
+- `security/LegacyRequestSigner.kt` — monta os headers
+  `X-Obsidian-Client/Device/Timestamp/Signature` com uma assinatura SHA-1 local.
+- `ui/DeviceTrustScreen.kt` — chama `POST /api/mobile/internal/device-trust`.
+
+Para desenvolvimento/teste, este material é exatamente o tipo de coisa que se
+analisa com **JADX/apktool/`strings`**. Este README descreve a existência do
+fluxo, **não** entrega a solução completa (assinatura/segredo/rota interna) — a
+investigação faz parte do exercício. (Sem flags; o app nunca embute segredos
+reais.)
 
 ## Notas técnicas (Fase 3)
 

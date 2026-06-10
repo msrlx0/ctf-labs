@@ -142,6 +142,43 @@ class ApiClient(private val baseUrl: String = Constants.DEFAULT_BASE_URL) {
         return execute(req).mapBody { TransferPreviewResponse.fromJson(JSONObject(it)) }
     }
 
+    // --- Internal device trust (Phase 8) ------------------------------------
+    /**
+     * Calls the internal legacy device-trust endpoint. The trust headers
+     * (`X-Obsidian-Client/Device/Timestamp/Signature`) are assembled locally by
+     * [com.obsidianpay.mobile.security.LegacyRequestSigner] — a weak, forgeable
+     * scheme by design. Returns the raw JSON body.
+     */
+    fun checkDeviceTrust(
+        token: String,
+        deviceId: String,
+        attestationMode: String,
+        operatorHint: String,
+        legacyHeaders: Map<String, String>,
+    ): ApiResult<String> {
+        val payload = JSONObject().apply {
+            put("deviceId", deviceId)
+            put("attestationMode", attestationMode)
+            put("operatorHint", operatorHint)
+        }.toString()
+        val b = builder(Constants.DEVICE_TRUST_PATH, token)
+            .post(payload.toRequestBody(jsonMedia))
+        legacyHeaders.forEach { (k, v) -> b.header(k, v) }
+        return execute(b.build())
+    }
+
+    /**
+     * Calls the internal reverse-hint endpoint, gated by the correct
+     * `X-Obsidian-Client` header. Returns the raw JSON body.
+     */
+    fun getReverseHint(token: String, clientId: String): ApiResult<String> =
+        execute(
+            builder(Constants.REVERSE_HINT_PATH, token)
+                .header("X-Obsidian-Client", clientId)
+                .get()
+                .build()
+        )
+
     companion object {
         private const val TAG = "ObsidianApi"
     }
