@@ -187,6 +187,121 @@ para a camada de instrumentação em runtime (bypass de checks client-side).
 
 ---
 
+## 4.2 Desafio final — Challenge Chain
+
+O Lab 08 tem uma **cadeia oficial de CTF** com **9 estágios** e pontuação. Esta
+seção explica **como** participar e registrar progresso — **sem** entregar a
+solução de nenhum estágio. Detalhes públicos de pontuação estão em
+[docs/CHALLENGE-SCORING.md](./docs/CHALLENGE-SCORING.md).
+
+### Objetivo final
+
+**Objetivo final:** resolver, na ordem que fizer sentido para você, os 9 estágios
+da cadeia `obsidianpay-mobile-final-chain`, encontrando a flag de cada trilha,
+submetendo-a com a evidência, e por fim destravar a **etapa final do operador**
+(`stage-09-final-operator-chain`), que consolida o domínio das trilhas internas.
+O placar completo é `2000` pontos.
+
+> Você descobre as flags **resolvendo** cada trilha. Elas não estão em nenhum
+> arquivo público; "achar no código" não é o objetivo e não vale.
+
+### Como pensar na investigação mobile
+
+- **Entenda o produto primeiro.** O que cada tela faz? Que dados o app guarda e
+  que requisições ele envia? Recon antes de exploração.
+- **Estático × dinâmico.** O que dá para aprender do código/binário sem rodar
+  (JADX/apktool/`strings`) e o que só aparece em runtime/tráfego (Burp/Frida/adb)?
+- **Cliente ↔ servidor.** Muitos achados só fazem sentido ligando o app ao
+  comportamento da API. O que o servidor **confia** que veio do app?
+- **Questione cada checagem.** Onde a confiança é client-side? O que o servidor
+  valida de fato? Onde um valor afirmado pelo cliente é aceito sem verificação?
+
+### Ordem sugerida de análise
+
+A progressão didática sugerida (não é rígida) acompanha a dificuldade crescente:
+
+1. Mobile recon / config review (mais fácil)
+2. Insecure local storage
+3. Exported Android components
+4. WebView JavaScript bridge
+5. Legacy device trust
+6. Biometric vault
+7. Network / pinning review
+8. App integrity / NativeGate
+9. Final operator chain (mais difícil — destrava ao consolidar as anteriores)
+
+### Como registrar progresso
+
+Todos os endpoints da cadeia exigem um **Bearer token** (login `guest`/`guest123`).
+
+**Ver progresso** — estado por estágio, dicas e evidência esperada (nunca retorna
+flags):
+
+```
+GET /api/mobile/challenge/progress
+Authorization: Bearer <token>
+```
+
+**Submeter a flag de um estágio** — substitua `<flag_redacted>` pela flag que
+você encontrou:
+
+```
+POST /api/mobile/challenge/submit
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "stageId": "stage-01-recon",
+  "flag": "<flag_redacted>",
+  "evidence": "descrição curta de como você obteve a flag"
+}
+```
+
+- **Correto:** `accepted: true` com `pointsAwarded` e `totalScore`.
+- **Incorreto:** `accepted: false`.
+- **Idempotente:** reenviar uma flag já aceita não duplica pontos.
+
+**Ver o placar:**
+
+```
+GET /api/mobile/challenge/scoreboard
+Authorization: Bearer <token>
+```
+
+Retorna `totalScore`, `solvedStages`, `completionPercent` e `finalUnlocked`.
+
+### Como registrar evidências
+
+Use o campo `evidence` do submit para anotar **como** chegou à flag (endpoint,
+header, payload, hook/patch, captura de tráfego). Mantenha uma linha objetiva por
+estágio e guarde artefatos em `evidence/` quando fizer sentido. **Não** cole a
+flag dentro do texto de evidência — ela já vai no campo `flag`.
+
+### Dicas graduais
+
+- Cada estágio expõe **duas dicas** (`hintLevel1`, `hintLevel2`) e um resumo
+  público via `GET /api/mobile/challenge/progress`. Comece pela dica de nível 1.
+- Vários checkpoints são **disparados por um header de revisão** ou um **campo de
+  body** específico — pense em "modo de auditoria/revisão" das rotas que você já
+  conhece. Os valores exatos fazem parte do desafio.
+- Quando a trilha for de app (componentes exportados, bridge, device trust,
+  vault, integridade), correlacione o que você vê no app/`adb`/Frida com o que o
+  backend aceita.
+- A etapa final só responde quando você prova que dominou as trilhas internas — e
+  só com o estado de confiança correto. Os requisitos exatos fazem parte do
+  desafio.
+
+### Troubleshooting
+
+- **`/health` não responde:** confirme `docker compose up` e a porta `8102`.
+- **`401`/sem dados:** seu token expirou — refaça login `guest`/`guest123`.
+- **Submit `accepted:false`:** confira o `stageId` e a flag exata (sem espaços).
+- **Emulador não conecta:** o app deve usar `http://10.0.2.2:8102`.
+- **Celular físico não conecta:** use a tela **API Host** com `http://<IP_DO_PC>:8102`.
+- **Placar zerou:** o scoreboard é em memória e reinicia junto com o backend.
+
+---
+
 ## 5. O que NÃO fazer
 
 - ❌ **Não** use estas técnicas contra apps, sistemas ou pessoas reais.

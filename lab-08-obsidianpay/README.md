@@ -115,8 +115,25 @@ A API mobile expõe, entre outros:
 |---|---|---|
 | `guest` | `guest123` | customer |
 
+Use **guest / guest123** no app e em `POST /api/mobile/login`.
+
 > Estas são credenciais didáticas controladas, não segredos. Não há flags reais
 > neste repositório público.
+
+---
+
+## Documentação
+
+- **Guia do aluno (sem spoilers):** [STUDENT-GUIDE.md](./STUDENT-GUIDE.md) — por
+  onde começar, como pensar a investigação e como participar da **Challenge
+  Chain** (9 estágios) registrando progresso e evidências.
+- **Pontuação da cadeia (público):** [docs/CHALLENGE-SCORING.md](./docs/CHALLENGE-SCORING.md).
+- **Validação técnica:** [VALIDATION.md](./VALIDATION.md).
+- **Playbook de pentest mobile:** [docs/mobile-pentest/PLAYBOOK.md](./docs/mobile-pentest/PLAYBOOK.md).
+
+> **`WALKTHROUGH.md` é material de instrutor** (contém a solução completa e as
+> flags). Não é destinado ao aluno — comece sempre por
+> [STUDENT-GUIDE.md](./STUDENT-GUIDE.md).
 
 ---
 

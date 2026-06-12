@@ -895,3 +895,77 @@ docker compose down
 - [ ] `WALKTHROUGH.md` contém a seção "Fase 14 — Final Challenge Chain" com as flags.
 - [ ] Sem `FLAG{` em docs públicos e em tools/; sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README/tools.
 - [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+## Fase 15 — Documentação final (walkthrough, guia do aluno, scoring)
+
+> A Fase 15 não altera o backend nem o app: é o **passe final de documentação**.
+> Entrega o `WALKTHROUGH.md` manual completo (instrutor), o `STUDENT-GUIDE.md` sem
+> spoilers, o `README.md` final, o `PLAYBOOK.md` alinhado à cadeia, o
+> `CHALLENGE-SCORING.md` mais útil e os guards anti-leak reforçados.
+>
+> Atalho: `bash scripts/validate-phase15.sh`. Roda sempre a validação estrutural,
+> chama `validate-phase14.sh` internamente e tenta os testes dinâmicos de Docker
+> via Fase 14. Não exige Android SDK.
+
+### F15.1 — Validação da Fase 15
+
+```bash
+bash scripts/validate-phase15.sh
+```
+
+Esperado: todos os checks PASS (e a Fase 14 embutida também).
+
+### F15.2 — Validação de docs (conteúdo)
+
+O script confere que:
+
+- `WALKTHROUGH.md` contém `Stage 01`..`Stage 09`, `Final Operator Chain`,
+  `/api/mobile/challenge/submit` e a flag final do estágio 9 (material de
+  instrutor).
+- `STUDENT-GUIDE.md` contém `Objetivo final`, `Como registrar progresso`,
+  `/api/mobile/challenge/progress`, `/api/mobile/challenge/submit` e
+  `<flag_redacted>`.
+- `README.md` contém `Lab 08`, `ObsidianPay Mobile`, `8102`, `guest / guest123`
+  e aponta para `STUDENT-GUIDE.md`.
+- `docs/CHALLENGE-SCORING.md` contém `completionPercent`, `finalUnlocked`,
+  `idempotente` e `<flag_redacted>`.
+- `docs/mobile-pentest/PLAYBOOK.md` contém `stage-01`, `stage-09`,
+  `dynamic instrumentation`, `ContentProvider`, `WebView bridge` e `App Integrity`.
+
+### F15.3 — Anti-leak (sem FLAG{ em docs públicos)
+
+O script rejeita `FLAG{` em: `README.md`, `STUDENT-GUIDE.md`, `docs/ARCHITECTURE.md`,
+`docs/PHASES.md`, `docs/VULNERABILITY-ROADMAP.md`, `docs/CHALLENGE-SCORING.md`,
+`docs/mobile-pentest/SETUP.md`, `docs/mobile-pentest/PLAYBOOK.md`,
+`android-app/README.md` e `tools/`.
+
+`FLAG{` é permitido apenas em: `WALKTHROUGH.md`, `api/src/flags.js`,
+`scripts/validate-phase14.sh` e `scripts/validate-phase15.sh`.
+
+Também rejeita `analyst123`/`operator123` em `README.md`, `STUDENT-GUIDE.md`,
+`android-app/README.md` e `tools/`.
+
+### F15.4 — Scripts e typos
+
+O script confere que `scripts/validate-phase1.sh`..`validate-phase14.sh` existem e
+re-verifica os typos conhecidos (`network-config-cleartext-overrie`, `PinningPolicyy`,
+`TamperCheckk`, `getSessionSummay`, `getSessionSummar`, `@JavascriptInterfac`,
+`webVieClient`, `LegacyRequestSigne`, `WeakCryptosha1Hex`, `WeakCryptomd5Hex`,
+`apiClientsetBaseUrlForSession`, `getLastNativeGatStatus`, `App Integrit`).
+
+### F15.5 — Docker dynamic tests e Android SDK
+
+- Os testes dinâmicos (login `guest`/`guest123` + progress/submit/scoreboard) são
+  herdados da Fase 14 (rodam apenas se Docker estiver disponível — best-effort).
+- Android SDK continua **best-effort**: a ausência do SDK não falha a Fase 15.
+
+### Critérios de aceite (Fase 15)
+
+- [ ] `validate-phase1..14.sh` continuam passando.
+- [ ] `validate-phase15.sh` passa (inclui a Fase 14 embutida).
+- [ ] `WALKTHROUGH.md` traz o walkthrough manual completo (Stages 01–09 + final), com flags.
+- [ ] `STUDENT-GUIDE.md` cobre objetivo final, progresso/submit e troubleshooting — **sem** solução/flags.
+- [ ] `README.md` aponta para `STUDENT-GUIDE.md` e marca `WALKTHROUGH.md` como instrutor.
+- [ ] `docs/CHALLENGE-SCORING.md` e `docs/mobile-pentest/PLAYBOOK.md` alinhados à cadeia, sem flags.
+- [ ] Sem `FLAG{` em docs públicos/tools; sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README/tools.
+- [ ] Nenhum lab 1..7 alterado; `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
