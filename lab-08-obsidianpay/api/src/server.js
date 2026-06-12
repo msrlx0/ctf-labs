@@ -28,6 +28,7 @@ const {
   legacyMobileTrust,
   environmentConfig,
   mobileVaultConfig,
+  networkProfileConfig,
   buildMobileConfig,
 } = require('./data');
 
@@ -475,6 +476,7 @@ app.get('/api/mobile/legacy/routes', requireAuth, (_req, res) => {
       '/api/mobile/internal/environment-report',
       '/api/mobile/internal/vault-mobile/status',
       '/api/mobile/internal/vault-mobile/unlock',
+      '/api/mobile/internal/network-profile',
     ],
   });
 });
@@ -619,6 +621,34 @@ app.post('/api/mobile/internal/vault-mobile/unlock', requireAuth, (req, res) => 
     method: typeof method === 'string' ? method : 'unknown',
     serverTrust: 'client-asserted',
     nextStepHint: 'server trusts local auth assertion in this lab',
+  });
+});
+
+// --- Network security profile (Phase 11) -------------------------------------
+// Returns the active network-security posture for the mobile client: pinning
+// mode ("report-only" in this lab), cleartext policy and bypass hint IDs.
+// Auth required — students must obtain a valid token first.
+// No flags, no credentials in the response.
+// nextStepHint: "configure the app base URL to reach the lab API from emulator or phone"
+app.get('/api/mobile/internal/network-profile', requireAuth, (_req, res) => {
+  if (!networkProfileConfig.enableNetworkProfile) {
+    return sendError(res, 503, 'disabled', 'Network profile endpoint is not enabled.');
+  }
+  // pinningMode is "report-only" for the local lab (cleartext HTTP only).
+  res.json({
+    status: 'ok',
+    profile: 'burp-proxy-ready',
+    pinningMode: networkProfileConfig.pinningMode,   // "report-only"
+    cleartextAllowed: networkProfileConfig.cleartextAllowed,
+    defaultEmulatorBaseUrl: networkProfileConfig.defaultEmulatorBaseUrl,
+    phoneLanExample: networkProfileConfig.phoneLanExample,
+    bypassHintIds: [
+      'trust-user-ca',
+      'okhttp-certificate-pinner-hook',
+      'network-config-cleartext-override',
+    ],
+    nextStepHint: networkProfileConfig.note,
+    // configure the app base URL to reach the lab API from emulator or phone
   });
 });
 

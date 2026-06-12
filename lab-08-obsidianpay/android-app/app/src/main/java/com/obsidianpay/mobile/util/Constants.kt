@@ -89,4 +89,12 @@ object Constants {
     const val KEY_VAULT_UNLOCK_REASON: String = "obsidian.vault.unlock_reason"
     const val KEY_LAST_VAULT_STATUS_JSON: String = "obsidian.debug.last_vault_status"
     const val KEY_LAST_VAULT_UNLOCK_JSON: String = "obsidian.debug.last_vault_unlock"
+
+    // Network security / certificate pinning scaffold (Phase 11).
+    // The override is stored in plaintext SharedPreferences — intentional teaching seam.
+    const val NETWORK_PROFILE_PATH: String = "/api/mobile/internal/network-profile"
+    const val KEY_API_BASE_URL_OVERRIDE: String = "obsidian.network.api_base_url_override"
+    const val KEY_LAST_NETWORK_PROFILE_JSON: String = "obsidian.debug.last_network_profile"
+    const val KEY_LAST_PINNING_MODE: String = "obsidian.debug.last_pinning_mode"
+    const val KEY_LAST_PINNING_HINT: String = "obsidian.debug.last_pinning_hint"
 }

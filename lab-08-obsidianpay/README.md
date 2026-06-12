@@ -2,7 +2,7 @@
 
 **Tema:** Segurança de aplicações mobile (Android) — backend + app
 **Porta oficial:** http://127.0.0.1:8102
-**Status:** Fase 10 (app com **deep links, QR Payment, Web Support, WebView bridge, componentes Android internos, fluxo Device Trust legado, checagem local de ambiente/dispositivo e Secure Vault com fluxo local de autenticação**). O APK final ainda não foi publicado.
+**Status:** Fase 11 (app com **deep links, QR Payment, Web Support, WebView bridge, componentes Android internos, fluxo Device Trust legado, checagem local de ambiente/dispositivo, Secure Vault com fluxo local de autenticação e Network Security / API Host override para emulador e celular físico**). O APK final ainda não foi publicado.
 **Dificuldade alvo:** Hard / realista (acima de labs introdutórios como AndroGoat).
 
 ---
@@ -151,6 +151,8 @@ A partir da Fase 3 existe um **app Android base** (Kotlin + Jetpack Compose) em
 
 - No **Android Emulator**, o app usa `http://10.0.2.2:8102` (alias do emulador
   para o `127.0.0.1` do host).
+- Em um **celular físico**, use a tela **API Host** (Fase 11) para apontar o app
+  ao IP do PC na rede, por exemplo `http://192.168.0.50:8102`.
 - Abra a pasta `android-app/` no Android Studio e rode em um emulador (API 24+).
 - Login de teste: `guest` / `guest123`.
 
@@ -167,6 +169,7 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 - ✅ **Device Trust** legado + configurações internas para análise mobile — **Fase 8**
 - ✅ **Security Check** (root/emulator detection) — **Fase 9**
 - ✅ **Secure Vault** com fluxo local de autenticação (biometria scaffold + fallback PIN fraco) — **Fase 10**
+- ✅ **Network Security / API Host override** (emulador ↔ celular físico, pinning scaffold, backend network-profile) — **Fase 11**
 - ✅ Documentação base e arquitetura
 - 🔜 APK final publicado
 - 🔜 Cadeias completas app ↔ API
@@ -199,6 +202,14 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 > financeiros reais, o app decide localmente se o vault está desbloqueado e informa
 > o servidor — observe o que o servidor efetivamente verifica e **o que** isso
 > implica para a segurança do fluxo. A investigação faz parte do exercício.
+
+> A Fase 11 adiciona suporte a **API Host override** para facilitar testes em
+> emulador (`10.0.2.2`) e celular físico (IP do PC na LAN). A tela "API Host"
+> permite trocar a base URL sem rebuildar o app — o override é salvo localmente.
+> A fase também introduz um scaffold de **certificate pinning** para estudo
+> futuro: `NetworkSecurityProfile`, `PinningPolicy` e um comentário no `ApiClient`
+> mostrando onde o `CertificatePinner` seria anexado. O backend expõe
+> `/api/mobile/internal/network-profile` com o perfil de rede atual.
 
 > **O APK final ainda não foi publicado.** A Fase 3 entrega o código-fonte do
 > app base. Trate o app e a API como alvos reais: explore, observe e questione.

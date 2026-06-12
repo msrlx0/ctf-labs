@@ -681,3 +681,63 @@ Esperado: `"status":"received"` e `"serverPolicy":"monitor-only"` e
 - [ ] Sem `FLAG{` em docs públicos e nas novas classes.
 - [ ] Sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README e nas classes `environment/`.
 - [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+---
+
+## Fase 11 — Network Security / Certificate Pinning Scaffold
+
+### F11.1 — Arquivos
+
+```bash
+SRC="android-app/app/src/main/java/com/obsidianpay/mobile"
+test -f $SRC/network/NetworkSecurityProfile.kt && echo OK
+test -f $SRC/network/PinningPolicy.kt && echo OK
+test -f $SRC/ui/ApiHostOverrideScreen.kt && echo OK
+```
+
+### F11.2 — Código (strings-chave)
+
+```bash
+grep -rqF 'DEFAULT_EMULATOR_BASE_URL' $SRC/network/ && echo OK
+grep -rqF 'DEFAULT_LOCALHOST_BASE_URL' $SRC/network/ && echo OK
+grep -rqF 'SAMPLE_PHONE_BASE_URL' $SRC/network/ && echo OK
+grep -rqF 'cleartext-local' $SRC/network/ && echo OK
+grep -rqF 'burp-proxy-ready' $SRC/network/ && echo OK
+grep -rqF 'pinning-scaffold' $SRC/network/ && echo OK
+grep -rqF 'trust-user-ca' $SRC/network/ && echo OK
+grep -rqF 'okhttp-certificate-pinner-hook' $SRC/network/ && echo OK
+grep -rqF 'network-config-cleartext-override' $SRC/network/ && echo OK
+grep -rqF 'CertificatePinner' $SRC/api/ && echo OK
+grep -rqF 'user-ca-not-trusted-by-default' $SRC/network/ && echo OK
+grep -rqF 'report-only' $SRC/network/ && echo OK
+grep -rqF 'setBaseUrlForSession' $SRC/api/ && echo OK
+grep -rqF 'getNetworkProfile' $SRC/api/ && echo OK
+grep -rqF 'api_base_url_override_saved' $SRC/ui/ApiHostOverrideScreen.kt && echo OK
+grep -rqF 'api_base_url_override_cleared' $SRC/ui/ApiHostOverrideScreen.kt && echo OK
+grep -rqF 'network_profile_fetched' $SRC/ui/ApiHostOverrideScreen.kt && echo OK
+grep -rqF 'pinning_mode_observed' $SRC/ui/ApiHostOverrideScreen.kt && echo OK
+grep -rqF 'API Host' $SRC/ui/ApiHostOverrideScreen.kt && echo OK
+```
+
+### F11.3 — Backend (com backend no ar)
+
+```bash
+TOKEN="obsidian-mobile-token-guest-1001"
+curl -s http://127.0.0.1:8102/api/mobile/internal/network-profile \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Esperado: `"status":"ok"` e `"pinningMode":"report-only"` e `"cleartextAllowed":true` e
+array `"bypassHintIds"` contendo `"trust-user-ca"`.
+
+### Critérios de aceite (Fase 11)
+
+- [ ] `validate-phase1..10.sh` continuam passando.
+- [ ] `validate-phase11.sh` passa.
+- [ ] `network/NetworkSecurityProfile.kt` e `network/PinningPolicy.kt` criados.
+- [ ] `ui/ApiHostOverrideScreen.kt` criado e acessível pela Início.
+- [ ] Backend implementa `GET /api/mobile/internal/network-profile` (auth required).
+- [ ] `data.js` tem `networkProfileConfig` com `enableNetworkProfile`, `pinningMode`, `cleartextAllowed`.
+- [ ] Sem `FLAG{` em docs públicos e nas novas classes `network/` e `ApiHostOverrideScreen`.
+- [ ] Sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README.
+- [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.

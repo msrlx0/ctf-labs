@@ -124,6 +124,9 @@ fun HomeScreen(
             // Secure Vault (Phase 10): local auth / biometric gate.
             OutlinedButton(onClick = { onNavigate(Screen.Vault) }, modifier = Modifier.fillMaxWidth()) { Text("Secure Vault") }
 
+            // API host override (Phase 11): switch between emulator and physical device.
+            OutlinedButton(onClick = { onNavigate(Screen.ApiHost) }, modifier = Modifier.fillMaxWidth()) { Text("API Host") }
+
             // Internal support/dev tooling — local state inspector.
             OutlinedButton(onClick = { onNavigate(Screen.LocalState) }, modifier = Modifier.fillMaxWidth()) { Text("Local State") }
             OutlinedButton(

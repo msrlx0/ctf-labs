@@ -1,6 +1,8 @@
 package com.obsidianpay.mobile.api
 
 import android.util.Log
+import com.obsidianpay.mobile.network.NetworkSecurityProfile
+import com.obsidianpay.mobile.network.PinningPolicy
 import com.obsidianpay.mobile.util.Constants
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -15,19 +17,50 @@ import java.util.concurrent.TimeUnit
  * All methods block; call them from a background dispatcher (the UI uses
  * Dispatchers.IO). Cleartext HTTP to the local lab host is allowed via the
  * app's network security config.
+ *
+ * Phase 11 — dynamic base URL:
+ *   The base URL can be changed at runtime via [setBaseUrlForSession] so the app
+ *   can reach the lab backend from an Android Emulator (10.0.2.2) or a physical
+ *   device on the LAN (e.g. 192.168.x.x) without rebuilding.
+ *
+ * Certificate-pinning scaffold (Phase 11):
+ *   A real OkHttp CertificatePinner would be attached here when
+ *   PinningPolicy.shouldAttachCertificatePinner(baseUrl) returns true.
+ *   For the local lab the policy is "disabled-local-lab" (cleartext HTTP),
+ *   so no pinner is attached. Bypass hint: okhttp-certificate-pinner-hook.
+ *   See PinningPolicy.buildPinningBypassHints() for the full list.
  */
-class ApiClient(private val baseUrl: String = Constants.DEFAULT_BASE_URL) {
+class ApiClient(initialBaseUrl: String = Constants.DEFAULT_BASE_URL) {
 
+    private var currentBaseUrl: String =
+        NetworkSecurityProfile.normalizeBaseUrl(initialBaseUrl)
+
+    // Phase 11: CertificatePinner scaffold.
+    // When PinningPolicy.shouldAttachCertificatePinner(currentBaseUrl) is true,
+    // attach a CertificatePinner built from PinningPolicy.getSamplePins() here.
+    // For the local lab the pinner is intentionally omitted (HTTP cleartext).
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)
+        // .certificatePinner(buildPinner())  // Phase 11 scaffold — enable for HTTPS
         .build()
+
+    /** Changes the target base URL for all subsequent requests in this session. */
+    fun setBaseUrlForSession(baseUrl: String) {
+        currentBaseUrl = NetworkSecurityProfile.normalizeBaseUrl(baseUrl)
+        Log.d(TAG, "base URL updated → $currentBaseUrl " +
+            "(pinning: ${PinningPolicy.shouldAttachCertificatePinner(currentBaseUrl)}, " +
+            "hints: ${PinningPolicy.buildPinningBypassHints().take(2)})")
+    }
+
+    /** Returns the currently active base URL. */
+    fun getBaseUrl(): String = currentBaseUrl
 
     private val jsonMedia = "application/json; charset=utf-8".toMediaType()
 
     private fun builder(path: String, token: String?): Request.Builder {
-        val b = Request.Builder().url(baseUrl + path)
+        val b = Request.Builder().url(currentBaseUrl + path)
         if (!token.isNullOrEmpty()) b.header("Authorization", "Bearer $token")
         return b
     }
@@ -234,6 +267,21 @@ class ApiClient(private val baseUrl: String = Constants.DEFAULT_BASE_URL) {
                 .get()
                 .build()
         )
+
+    // --- Network security profile (Phase 11) --------------------------------
+
+    /**
+     * Fetches the server-side network-security profile.
+     *
+     * The endpoint returns the active pinning mode, cleartext policy and bypass
+     * hint IDs — all teaching anchors with no production secrets. Requires a
+     * valid Bearer token. Returns raw JSON.
+     *
+     * Bypass hints surfaced here: okhttp-certificate-pinner-hook, trust-user-ca,
+     * network-config-cleartext-override.
+     */
+    fun getNetworkProfile(token: String): ApiResult<String> =
+        execute(builder(Constants.NETWORK_PROFILE_PATH, token).get().build())
 
     companion object {
         private const val TAG = "ObsidianApi"

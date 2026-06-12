@@ -1,4 +1,4 @@
-# ObsidianPay — App Android (Fase 10)
+# ObsidianPay — App Android (Fase 11)
 
 App Android nativo (Kotlin + Jetpack Compose) que consome a API mobile do
 **Lab 08 — ObsidianPay Mobile**. Mantém cache local/offline (Fase 4), suporta
@@ -7,11 +7,14 @@ uma **support bridge** JavaScript na WebView (Fase 6), **componentes Android
 internos** (pacote `platform/`, Fase 7), um fluxo **Device Trust** com trilha de
 reverse engineering (pacote `security/`, Fase 8), uma tela **Security Check** com
 checagem local de ambiente/dispositivo (root e emulador, pacote `environment/`,
-Fase 9) e, a partir da Fase 10, um **Secure Vault** com fluxo local de
-autenticação (biometria scaffold + fallback PIN, pacote `auth/`).
+Fase 9), um **Secure Vault** com fluxo local de autenticação (biometria scaffold +
+fallback PIN, pacote `auth/`, Fase 10) e, a partir da Fase 11, um scaffold de
+**Network Security / Certificate Pinning** (pacote `network/`) com tela **API Host**
+para override de base URL (emulador ↔ celular físico).
 
-> **Ambiente somente local.** O app só fala com o backend do lab em
-> `http://10.0.2.2:8102` (alias do emulador para o `127.0.0.1` do host).
+> **Ambiente somente local.** O app fala com o backend do lab em
+> `http://10.0.2.2:8102` (emulador) ou em um IP de LAN configurável via tela
+> "API Host" (celular físico). Veja a nota de dev abaixo.
 >
 > **Ainda não há APK final publicado.** Esta fase entrega o código-fonte do app.
 
@@ -199,8 +202,14 @@ reais.)
 ## Notas técnicas (Fase 3)
 
 - **HTTP local:** `usesCleartextTraffic` + `network_security_config.xml`
-  permitem cleartext **apenas** para `10.0.2.2`/`127.0.0.1`/`localhost`. Não use
-  em produção.
+  permitem cleartext **apenas** para `10.0.2.2`/`127.0.0.1`/`localhost`. Para
+  celular físico, o override de base URL usa o flag `usesCleartextTraffic` do
+  manifest (válido para qualquer host, intencional para o lab). Não use em produção.
+- **Nota de dev — emulador vs. celular físico (Fase 11):**
+  - Emulador: `http://10.0.2.2:8102` (padrão, sem configuração extra).
+  - Celular real: use a tela **API Host** para definir `http://IP_DO_PC:8102`
+    (onde `IP_DO_PC` é o IP do seu computador na rede local, ex. `192.168.0.50`).
+  - O override é salvo em SharedPreferences e restaurado na próxima inicialização.
 - **Armazenamento local:** `InsecureSessionStore` grava token/perfil em
   `SharedPreferences` em texto puro, **de propósito** (ver seção acima).
 - **Componentes exportados:** além de `MainActivity` (launcher + deep links), a

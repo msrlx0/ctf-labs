@@ -36,6 +36,7 @@ import com.obsidianpay.mobile.deeplink.DeepLinkType
 import com.obsidianpay.mobile.storage.InsecureSessionStore
 import com.obsidianpay.mobile.storage.LocalCacheManager
 import com.obsidianpay.mobile.storage.ObsidianLocalDb
+import com.obsidianpay.mobile.ui.ApiHostOverrideScreen
 import com.obsidianpay.mobile.ui.CardsScreen
 import com.obsidianpay.mobile.ui.DeviceTrustScreen
 import com.obsidianpay.mobile.ui.HomeScreen
@@ -50,7 +51,7 @@ import com.obsidianpay.mobile.ui.VaultScreen
 import com.obsidianpay.mobile.ui.WebViewSupportScreen
 
 /** Top-level destinations. A tiny enum-based nav keeps the app dependency-free. */
-enum class Screen { Login, Home, Receipts, Cards, Support, Transfer, Qr, WebSupport, LocalState, DeviceTrust, SecurityCheck, Vault }
+enum class Screen { Login, Home, Receipts, Cards, Support, Transfer, Qr, WebSupport, LocalState, DeviceTrust, SecurityCheck, Vault, ApiHost }
 
 class MainActivity : ComponentActivity() {
 
@@ -85,8 +86,14 @@ fun ObsidianPayApp(
     onDeepLinkConsumed: () -> Unit = {},
 ) {
     val context = LocalContext.current
-    val apiClient = remember { ApiClient() }
     val store = remember { InsecureSessionStore(context) }
+    // Phase 11: restore persisted base URL override on startup so the app
+    // continues reaching the correct host (emulator or physical device) after
+    // a restart without asking the user to re-enter the URL.
+    val apiClient = remember {
+        val override = store.getApiBaseUrlOverride()
+        if (override != null) ApiClient(override) else ApiClient()
+    }
     val db = remember { ObsidianLocalDb(context) }
     val cache = remember { LocalCacheManager(context.applicationContext, store, db) }
 
@@ -195,6 +202,9 @@ fun ObsidianPayApp(
         Screen.SecurityCheck -> SecurityCheckScreen(apiClient, store, cache) { screen = Screen.Home }
 
         Screen.Vault -> VaultScreen(apiClient, store, cache) { screen = Screen.Home }
+
+        // Phase 11 — API host configuration (emulator ↔ physical device).
+        Screen.ApiHost -> ApiHostOverrideScreen(apiClient, store, cache) { screen = Screen.Home }
     }
 }
 

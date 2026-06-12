@@ -164,6 +164,37 @@ class InsecureSessionStore(context: Context) {
             .apply()
     }
 
+    // --- Network security / API host override (Phase 11) ------------------------
+    // Stored in plaintext SharedPreferences — intentional teaching seam.
+
+    fun saveApiBaseUrlOverride(value: String) =
+        putAndTouch(Constants.KEY_API_BASE_URL_OVERRIDE, value)
+
+    fun getApiBaseUrlOverride(): String? =
+        prefs.getString(Constants.KEY_API_BASE_URL_OVERRIDE, null)
+
+    fun clearApiBaseUrlOverride() {
+        prefs.edit().remove(Constants.KEY_API_BASE_URL_OVERRIDE).apply()
+    }
+
+    fun saveLastNetworkProfileJson(rawJson: String) =
+        putAndTouch(Constants.KEY_LAST_NETWORK_PROFILE_JSON, rawJson)
+
+    fun getLastNetworkProfileJson(): String? =
+        prefs.getString(Constants.KEY_LAST_NETWORK_PROFILE_JSON, null)
+
+    fun saveLastPinningMode(value: String) =
+        putAndTouch(Constants.KEY_LAST_PINNING_MODE, value)
+
+    fun getLastPinningMode(): String? =
+        prefs.getString(Constants.KEY_LAST_PINNING_MODE, null)
+
+    fun saveLastPinningHint(value: String) =
+        putAndTouch(Constants.KEY_LAST_PINNING_HINT, value)
+
+    fun getLastPinningHint(): String? =
+        prefs.getString(Constants.KEY_LAST_PINNING_HINT, null)
+
     private fun putAndTouch(key: String, value: String) {
         prefs.edit()
             .putString(key, value)
@@ -253,6 +284,11 @@ class InsecureSessionStore(context: Context) {
         Constants.KEY_VAULT_UNLOCK_REASON to getLastVaultUnlockReason(),
         Constants.KEY_LAST_VAULT_STATUS_JSON to getLastVaultStatusJson(),
         Constants.KEY_LAST_VAULT_UNLOCK_JSON to getLastVaultUnlockJson(),
+        // Phase 11 — network security / API host override (preview only, not full URL token).
+        Constants.KEY_API_BASE_URL_OVERRIDE to getApiBaseUrlOverride(),
+        Constants.KEY_LAST_NETWORK_PROFILE_JSON to getLastNetworkProfileJson(),
+        Constants.KEY_LAST_PINNING_MODE to getLastPinningMode(),
+        Constants.KEY_LAST_PINNING_HINT to getLastPinningHint(),
         Constants.KEY_DEBUG_LAST_SYNC to getLastSyncTimestamp().takeIf { it > 0 }?.toString(),
     )
 

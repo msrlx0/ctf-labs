@@ -217,15 +217,54 @@ VaultScreen (ui/)
 > `bypassHintId`s apontam o caminho: `biometric-result-hook`,
 > `force-auth-decision-true`, `patch-local-auth-state`.
 
+### Fluxo de network security / API host override (Fase 11)
+
+```
+ApiHostOverrideScreen (ui/)
+   │  acionada a partir do HomeScreen ("API Host")
+   ├─ NetworkSecurityProfile.normalizeBaseUrl(input)
+   │   → valida e normaliza a URL digitada
+   ├─ InsecureSessionStore.saveApiBaseUrlOverride(normalized)
+   │   → obsidian.network.api_base_url_override (SharedPreferences, texto puro)
+   ├─ ApiClient.setBaseUrlForSession(normalized)
+   │   → atualiza currentBaseUrl para todas as chamadas subsequentes
+   │   → loga PinningPolicy.shouldAttachCertificatePinner + buildPinningBypassHints
+   │   (eventos: api_base_url_override_saved / api_base_url_override_cleared)
+   └─ ApiClient.getNetworkProfile(token)
+       → GET <currentBaseUrl>/api/mobile/internal/network-profile
+         Authorization: Bearer <token>
+         { status:"ok", profile:"burp-proxy-ready", pinningMode:"report-only",
+           cleartextAllowed:true, defaultEmulatorBaseUrl:"http://10.0.2.2:8102",
+           phoneLanExample:"http://192.168.0.50:8102",
+           bypassHintIds:["trust-user-ca","okhttp-certificate-pinner-hook","network-config-cleartext-override"],
+           nextStepHint:"configure the app base URL to reach the lab API from emulator or phone" }
+       → InsecureSessionStore.saveLastNetworkProfileJson / saveLastPinningMode / saveLastPinningHint
+         (eventos: network_profile_fetched / pinning_mode_observed)
+
+MainActivity (inicialização)
+   └─ store.getApiBaseUrlOverride()
+       → se existe → ApiClient(override)   // restaura override após reinício
+       → se não existe → ApiClient()        // usa DEFAULT_BASE_URL (10.0.2.2)
+```
+
+> A Fase 11 implementa **cleartext local e override de base URL** por design. O
+> override é armazenado em texto puro no SharedPreferences — seam didático de
+> armazenamento inseguro. O `CertificatePinner` existe apenas como scaffold
+> comentado no `ApiClient`; para HTTP local não é ativado. Os `bypassHintId`s
+> (`trust-user-ca`, `okhttp-certificate-pinner-hook`, `network-config-cleartext-override`)
+> são âncoras para estudo futuro de Frida/proxy, não passos de solução.
+
 ### Fluxo de storage local
 
 ```
-App Android ─┬─▶ SharedPreferences (sessão, token, cache de perfil/config)
+App Android ─┬─▶ SharedPreferences (sessão, token, cache de perfil/config,
+             │                       api_base_url_override, network_profile, pinning_mode)
              ├─▶ SQLite obsidianpay_local.db (cached_receipts/cards, debug_events)
              ├─▶ filesDir/ (receipts/*.json, debug/export.json) e cacheDir/ (snapshot)
              └─▶ external app-specific (obsidian-export.txt)
                      ▲
-                     └── alimentado pelas respostas da API em 10.0.2.2:8102
+                     └── alimentado pelas respostas da API em <currentBaseUrl>
+                         (padrão: 10.0.2.2:8102; override: qualquer IP/porta)
 ```
 
 ### Fluxo de comunicação

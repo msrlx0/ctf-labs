@@ -250,6 +250,19 @@ const mobileVaultConfig = Object.freeze({
   note: 'Server trusts local auth assertion in this lab. Bypass: hook localAuth to true before the unlock request.',
 });
 
+// --- Network security profile config (Phase 11) ------------------------------
+// Surfaced by GET /api/mobile/internal/network-profile (auth required).
+// Teaching anchors only — no flags, no credentials.
+const networkProfileConfig = Object.freeze({
+  enableNetworkProfile: true,
+  networkProfilePath: '/api/mobile/internal/network-profile',
+  pinningMode: 'report-only',
+  cleartextAllowed: true,
+  defaultEmulatorBaseUrl: 'http://10.0.2.2:8102',
+  phoneLanExample: 'http://192.168.0.50:8102',
+  note: 'configure the app base URL to reach the lab API from emulator or phone',
+});
+
 // --- Mobile config -----------------------------------------------------------
 // Leaks internal resource NAMES (storage keys, deep link schemes, routes) that
 // help map the future APK, but never returns a flag directly.
@@ -273,6 +286,11 @@ function buildMobileConfig() {
     enableMobileVault: mobileVaultConfig.enableMobileVault,
     mobileVaultStatusPath: mobileVaultConfig.mobileVaultStatusPath,
     mobileVaultUnlockPath: mobileVaultConfig.mobileVaultUnlockPath,
+    // Network security profile (Phase 11).
+    enableNetworkProfile: networkProfileConfig.enableNetworkProfile,
+    networkProfilePath: networkProfileConfig.networkProfilePath,
+    pinningMode: networkProfileConfig.pinningMode,
+    cleartextAllowed: networkProfileConfig.cleartextAllowed,
     mobileFeatureFlags: { ...featureFlags },
     clientStorageKeys: {
       sessionToken: 'obsidian.session.token',
@@ -295,5 +313,6 @@ module.exports = {
   legacyMobileTrust,
   environmentConfig,
   mobileVaultConfig,
+  networkProfileConfig,
   buildMobileConfig,
 };

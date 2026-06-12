@@ -588,7 +588,99 @@ VaultScreen
 
 ---
 
-## 5. Notas de manutenção
+---
+
+## 5. Fase 11 — Network Security / Certificate Pinning Scaffold (INSTRUTOR)
+
+### Objetivo desta fase
+
+Introduzir a superfície de análise de tráfego de rede de forma controlada:
+- Permitir que o app funcione em emulador **e** celular físico sem rebuild.
+- Plantar o scaffold de certificate pinning como âncora para futuro estudo via
+  Frida/proxy, sem ainda forçar pinning real.
+- Expor um endpoint interno `/api/mobile/internal/network-profile` que mostra
+  o perfil de rede do lab e os hint IDs de bypass.
+
+### Arquivos novos
+
+| Arquivo | Descrição |
+|---|---|
+| `network/NetworkSecurityProfile.kt` | Constantes de URL (emulador/localhost/LAN), perfis de rede, helpers de normalização e hint IDs didáticos. |
+| `network/PinningPolicy.kt` | Scaffold de certificate pinning: modos, SHA-256 placeholder, `shouldAttachCertificatePinner` (false para HTTP). |
+| `ui/ApiHostOverrideScreen.kt` | Tela "API Host" para override de base URL em runtime; fetch do network-profile. |
+
+### Diferença emulador vs. celular físico
+
+| Ambiente | URL padrão | Como funciona |
+|---|---|---|
+| Android Emulator | `http://10.0.2.2:8102` | `10.0.2.2` é o alias do emulador para `127.0.0.1` do host. Funciona sem configuração extra. |
+| Celular físico | `http://<IP_DO_PC>:8102` | O celular precisa alcançar o PC na LAN. O IP do PC deve ser digitado na tela API Host. |
+
+**Por que não funciona `127.0.0.1` no celular físico?**
+`127.0.0.1` no celular físico é o loopback do **próprio dispositivo**, não do PC.
+O lab resolve isso via override de base URL.
+
+### Como usar Burp Suite com o app (cenário futuro)
+
+Quando o lab evoluir para HTTPS real:
+1. Instalar certificado Burp no dispositivo.
+2. Android 7+: user-installed CAs não são confiáveis por padrão para apps com
+   `targetSdkVersion >= 24`. Soluções didáticas: Frida hook no TrustManager,
+   `network-security-config` com `<certificates src="user"/>`, ou objection.
+3. O hint `user-ca-not-trusted-by-default` aponta exatamente para esse bloqueio.
+
+### Certificate pinning scaffold — onde hookar futuramente
+
+O `ApiClient` tem um comentário indicando onde o `CertificatePinner` seria
+anexado:
+```kotlin
+// .certificatePinner(buildPinner())  // Phase 11 scaffold — enable for HTTPS
+```
+O `PinningPolicy.shouldAttachCertificatePinner` retorna `false` para HTTP.
+Para HTTPS em `strict-scaffold`: retornaria `true` → pinner seria construído com
+`PinningPolicy.getSamplePins()` (placeholder SHA-256).
+
+Bypass hints para quando pinning for ativado:
+- `okhttp-certificate-pinner-hook` → Frida: hookar `CertificatePinner.check()`
+- `trust-manager-hook` → Frida: hookar `X509TrustManager.checkServerTrusted()`
+- `trust-user-ca` → usar CA de usuário + `network-security-config` adequado
+- `report-only` → modo de log sem bloqueio (didático)
+
+### Endpoint backend `/api/mobile/internal/network-profile`
+
+Requer Bearer válido. Resposta:
+```json
+{
+  "status": "ok",
+  "profile": "burp-proxy-ready",
+  "pinningMode": "report-only",
+  "cleartextAllowed": true,
+  "defaultEmulatorBaseUrl": "http://10.0.2.2:8102",
+  "phoneLanExample": "http://192.168.0.50:8102",
+  "bypassHintIds": ["trust-user-ca", "okhttp-certificate-pinner-hook", "network-config-cleartext-override"],
+  "nextStepHint": "configure the app base URL to reach the lab API from emulator or phone"
+}
+```
+
+Sem flags, sem credenciais. Apenas âncoras didáticas.
+
+### Eventos registrados (Fase 11)
+
+`api_base_url_override_saved`, `api_base_url_override_cleared`,
+`network_profile_fetched`, `pinning_mode_observed`
+
+### O que NÃO está nesta fase (Fase 11)
+
+- Frida scripts reais de bypass de pinning
+- Pinning HTTPS real ativo (ainda HTTP local)
+- Native lib / JNI
+- Binary patching real
+- QR scanner por câmera real
+- Pinning impossível de bypassar
+
+---
+
+## 6. Notas de manutenção
 
 - Flags reais **não** entram em `README.md` nem `STUDENT-GUIDE.md`.
 - Soluções e payloads só serão adicionados aqui (ou em SOLUTION.md) quando a

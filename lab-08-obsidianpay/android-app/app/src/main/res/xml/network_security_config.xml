@@ -1,8 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Local-lab network policy. Cleartext (HTTP) is allowed ONLY for the emulator
-  loopback host (10.0.2.2) and local hosts. Everything else stays HTTPS-only by
-  Android defaults. Intentional for the lab; never ship this in production.
+  Local-lab network policy — Phase 11 update.
+
+  Cleartext (HTTP) is explicitly permitted for the three local lab hosts:
+    • 10.0.2.2  — Android Emulator loopback alias (maps to host 127.0.0.1)
+    • 127.0.0.1 — direct localhost access
+    • localhost  — hostname alias
+
+  This is intentional for a fully local, controlled CTF environment.
+  Never ship this configuration in a production app.
+
+  Physical-device note (Phase 11):
+    When testing on a real Android device instead of an emulator, point the app
+    at the PC's LAN IP (e.g. http://192.168.0.50:8102) via the "API Host" screen.
+    Android's network-security-config does NOT support IP-range wildcards, so
+    individual LAN IPs cannot be allowlisted here without knowing the exact
+    address in advance.
+
+    The app's AndroidManifest already sets android:usesCleartextTraffic="true"
+    (application-level flag), which allows HTTP for any host not overridden by
+    this domain-config. This covers the LAN override used by physical devices
+    in the lab — intentional for the controlled test environment.
+
+  Certificate-pinning note (Phase 11):
+    A CertificatePinner scaffold is present in ApiClient but NOT active while
+    the backend is HTTP-only. Future phases may enable real pinning for HTTPS
+    endpoints; the bypass hints for that flow are:
+      - trust-user-ca
+      - okhttp-certificate-pinner-hook
+      - network-config-cleartext-override
+      - user-ca-not-trusted-by-default
 -->
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">

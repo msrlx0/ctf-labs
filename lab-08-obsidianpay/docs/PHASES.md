@@ -13,8 +13,9 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 | **Fase 7** | **Componentes Android exportados** (`platform/`): Activity interna (`InternalOpsActivity`), BroadcastReceiver de debug (`DebugCommandReceiver`) e ContentProvider (`ObsidianNotesProvider`) — todos `exported=true` com actions/authority/extras previsíveis, integrados ao cache/SQLite/debug events de forma controlada. | ✅ Concluída |
 | **Fase 8** | **Trilha de reverse engineering** (`security/`): segredos hardcoded fragmentados (`HardcodedSecrets`), cripto fraca didática (`WeakCrypto`: Base64/XOR/SHA-1), assinatura local fraca (`LegacyRequestSigner`) e fluxo **Device Trust** → endpoint interno `/api/mobile/internal/device-trust` (assinatura SHA-1 fraca aceita pelo backend) + `reverse-hint`. | ✅ Concluída |
 | **Fase 9** | **Checagem de ambiente** (`environment/`): detecção de root (`RootDetector`) e emulador (`EmulatorDetector`) didáticos, `EnvironmentRiskEngine` calculando nível de risco local, tela `SecurityCheckScreen` + backend `POST /api/mobile/internal/environment-report` (monitor-only). Scaffold para futura exploração via Frida/patching. | ✅ Concluída |
-| **Fase 10** | **Secure Vault / local auth** (`auth/`): `LocalAuthState` + `BiometricGate` scaffold + `VaultScreen`, fallback PIN fraco hardcoded, estado local de auth inseguro (SharedPreferences), backend `vault-mobile/status` e `vault-mobile/unlock` (server trusts client-side localAuth). | ✅ Atual |
-| Fase 11 | Trilha network/API: interceptação HTTPS, pinning, lib nativa. | 🔜 Planejada |
+| **Fase 10** | **Secure Vault / local auth** (`auth/`): `LocalAuthState` + `BiometricGate` scaffold + `VaultScreen`, fallback PIN fraco hardcoded, estado local de auth inseguro (SharedPreferences), backend `vault-mobile/status` e `vault-mobile/unlock` (server trusts client-side localAuth). | ✅ Concluída |
+| **Fase 11** | **Network security / certificate pinning scaffold** (`network/`): `NetworkSecurityProfile`, `PinningPolicy`, `ApiHostOverrideScreen` (override de base URL emulador/celular físico), backend `GET /api/mobile/internal/network-profile`, cleartext local, modos didáticos de pinning. | ✅ Atual |
+| Fase 12 | Trilha anti-analysis avançada: Frida scripts reais, binary patching. | 🔜 Planejada |
 | Fase 12 | Trilha anti-analysis avançada: Frida scripts reais, binary patching. | 🔜 Planejada |
 | Fase 13 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
 
@@ -176,6 +177,45 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
   `POST /api/mobile/internal/vault-mobile/unlock` (trusts `localAuth === true`);
   `data.js` com `mobileVaultConfig` e `enableBiometricVault: true` em `featureFlags`.
 - Script `scripts/validate-phase10.sh`.
+
+## Escopo da Fase 11 (entregue)
+
+- Pacote `network/` com dois objetos de política:
+  - `NetworkSecurityProfile.kt` — constantes de base URL (`DEFAULT_EMULATOR_BASE_URL`,
+    `DEFAULT_LOCALHOST_BASE_URL`, `SAMPLE_PHONE_BASE_URL`), perfis de rede
+    (`cleartext-local`, `burp-proxy-ready`, `pinning-scaffold`), helpers
+    `normalizeBaseUrl`, `isCleartext`, `isLikelyEmulatorUrl`,
+    `isLikelyPhoneLanUrl`, `buildProfile` e `buildBypassHintId`.
+  - `PinningPolicy.kt` — scaffold didático de certificate pinning: modos
+    `disabled-local-lab`, `report-only`, `strict-scaffold`; `SAMPLE_PIN_SHA256`
+    (placeholder); `shouldAttachCertificatePinner` (false para HTTP local);
+    `buildPinningBypassHints` com hints `trust-user-ca`,
+    `okhttp-certificate-pinner-hook`, `trust-manager-hook`,
+    `user-ca-not-trusted-by-default`, `report-only`.
+- `ui/ApiHostOverrideScreen.kt` — tela "API Host" para troca de base URL em
+  runtime (emulador ↔ celular físico); salva override em SharedPreferences;
+  botões "Use Emulator Default" / "Use Phone LAN Example" / "Save Base URL" /
+  "Clear Override" / "Fetch Network Profile"; registra eventos
+  `api_base_url_override_saved`, `api_base_url_override_cleared`,
+  `network_profile_fetched`, `pinning_mode_observed`.
+- `ApiClient` atualizado: `setBaseUrlForSession` / `getBaseUrl`, comentário de
+  scaffold de `CertificatePinner` / `PinningPolicy`, método `getNetworkProfile`.
+- `Constants` com `NETWORK_PROFILE_PATH`, `KEY_API_BASE_URL_OVERRIDE`,
+  `KEY_LAST_NETWORK_PROFILE_JSON`, `KEY_LAST_PINNING_MODE`, `KEY_LAST_PINNING_HINT`.
+- `InsecureSessionStore` com getters/setters para os novos campos de rede;
+  `getAllDebugValues`/`getSafeDebugValuesForProvider` incluem os novos campos.
+- `MainActivity` restaura o override de base URL na inicialização; adiciona
+  `Screen.ApiHost` e o case de navegação.
+- `HomeScreen` com botão "API Host"; `LocalStateScreen` com seção "Network
+  Security / API Host Override (Phase 11)" e eventos de rede.
+- `network_security_config.xml` com comentários expandidos explicando cleartext
+  para emulador/localhost e a abordagem para dispositivos físicos LAN.
+- Backend: `data.js` com `networkProfileConfig`; `server.js` com endpoint
+  `GET /api/mobile/internal/network-profile` (auth required, retorna perfil,
+  `pinningMode:"report-only"`, `cleartextAllowed:true`, hints de bypass, nota
+  de next step); `buildMobileConfig` expõe `enableNetworkProfile`,
+  `networkProfilePath`, `pinningMode`, `cleartextAllowed`.
+- Script `scripts/validate-phase11.sh`.
 
 ## Princípios entre fases
 

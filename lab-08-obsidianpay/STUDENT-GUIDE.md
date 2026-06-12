@@ -180,8 +180,32 @@ Mantenha tudo **local** e **autorizado**.
 - ✅ Conta de teste `guest` / `guest123`
 - ✅ Contratos mobile: perfil, recibos, cartões, suporte, transfer preview, WebView
 - ✅ **Secure Vault** com fluxo de autenticação local (biometria + fallback) — **Fase 10**
+- ✅ **API Host override** para emulador e celular físico; scaffold de pinning — **Fase 11**
 - 🔜 APK Android (próximas fases)
 - 🔜 Integração app ↔ API e cadeias completas
+
+---
+
+## 7. Testando em emulador e celular físico (Fase 11)
+
+O app foi construído para funcionar em dois ambientes sem rebuild:
+
+**Android Emulator:**
+O emulador Android usa `10.0.2.2` como alias para o `127.0.0.1` do computador.
+A URL padrão do app já aponta para esse endereço. Nenhuma configuração extra é
+necessária.
+
+**Celular físico (dispositivo real na mesma rede):**
+O celular não consegue alcançar `127.0.0.1` do seu computador. Para conectar:
+1. Descubra o IP do seu PC na rede local (ex.: `192.168.0.50`).
+2. No app, abra a tela **API Host** (no menu principal).
+3. Digite a URL com o IP do PC: `http://192.168.0.50:8102`.
+4. Toque **Save Base URL**.
+
+O override é salvo localmente no app e mantido entre reinicializações.
+
+> O objetivo dessas configurações é facilitar o ambiente de teste, não entregar
+> uma solução. Explore o que o app registra localmente quando você troca a URL.
 
 > A API já é um alvo de verdade para análise manual. Explore os contratos,
 > valide o ambiente e entenda o produto. O componente Android — onde mora boa

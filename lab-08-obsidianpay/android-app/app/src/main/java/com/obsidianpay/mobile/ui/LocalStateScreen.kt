@@ -127,6 +127,20 @@ fun LocalStateScreen(
             if (vaultEvents.isEmpty()) Mono("(nenhum)")
             vaultEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
 
+            Section("Network Security / API Host Override (Phase 11)")
+            Mono("apiBaseUrlOverride = ${preview(debugValues[Constants.KEY_API_BASE_URL_OVERRIDE])}")
+            Mono("lastNetworkProfile = ${preview(debugValues[Constants.KEY_LAST_NETWORK_PROFILE_JSON])}")
+            Mono("lastPinningMode = ${preview(debugValues[Constants.KEY_LAST_PINNING_MODE])}")
+            Mono("lastPinningHint = ${preview(debugValues[Constants.KEY_LAST_PINNING_HINT])}")
+            val networkEvents = events.filter {
+                it.eventType == "api_base_url_override_saved" ||
+                    it.eventType == "api_base_url_override_cleared" ||
+                    it.eventType == "network_profile_fetched" ||
+                    it.eventType == "pinning_mode_observed"
+            }
+            if (networkEvents.isEmpty()) Mono("(nenhum)")
+            networkEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
+
             Section("Artefatos locais (arquivos)")
             if (artifacts.isEmpty()) Mono("(nenhum)")
             artifacts.forEach { Mono(it) }
