@@ -820,6 +820,85 @@ local autorizado. Não devem ser usados contra apps reais.
 
 ---
 
+## 10. Fase 14 — Final Challenge Chain (instrutor)
+
+A Fase 14 fecha o lab com a **cadeia oficial de CTF**: 9 estágios, flags
+internas, scoring local e endpoint de submissão. Esta seção é **material de
+instrutor** e contém as flags reais e o fluxo completo.
+
+> Os valores das flags vivem em `api/src/flags.js`. O `api/src/challenge-chain.js`
+> referencia apenas `flagKey`. Os docs públicos (`README`, `STUDENT-GUIDE`,
+> `docs/CHALLENGE-SCORING.md`, etc.) **não** contêm flags.
+
+### 10.1 Chain ID e endpoints
+
+- **chainId:** `obsidianpay-mobile-final-chain` · **totalStages:** 9 · **máx:** 2000 pts
+- `GET  /api/mobile/challenge/progress` — overview + estado por estágio (sem flags).
+- `POST /api/mobile/challenge/submit` — valida flag, pontua (idempotente).
+- `GET  /api/mobile/challenge/scoreboard` — placar do usuário.
+- `POST /api/mobile/internal/finalize-operator` — etapa final (flag 09).
+
+Todos exigem `Authorization: Bearer <token>` (login em `POST /api/mobile/login`).
+
+### 10.2 Ordem oficial, flags e checkpoints
+
+| # | Stage ID | Pts | Flag real | Como obter o checkpoint |
+|---|---|---|---|---|
+| 1 | `stage-01-recon` | 100 | `FLAG{obsidianpay_mobile_recon_01}` | `GET /api/mobile/config` + header `X-Obsidian-Recon: mobile-config-review` → `reconCheckpoint.flag` |
+| 2 | `stage-02-insecure-storage` | 150 | `FLAG{obsidianpay_insecure_storage_02}` | `POST /api/mobile/support/sync` body `{"message":"...","cacheCheckpoint":"local-storage-review"}` → `localStorageCheckpoint.flag` |
+| 3 | `stage-03-exported-components` | 200 | `FLAG{obsidianpay_exported_components_03}` | Trilha Android (Fase 7): `adb shell content query` no provider `com.obsidianpay.mobile.provider.notes` / `am broadcast` / `am start`. Flag validada no submit. |
+| 4 | `stage-04-webview-bridge` | 200 | `FLAG{obsidianpay_webview_bridge_04}` | `GET /api/mobile/webview/support?topic=bridge-audit&message=cache-review` → bloco `bridgeCheckpoint` no HTML |
+| 5 | `stage-05-device-trust` | 250 | `FLAG{obsidianpay_device_trust_05}` | `POST /api/mobile/internal/device-trust` com client id legacy + assinatura SHA-1 forjada → `deviceTrustCheckpoint.flag` |
+| 6 | `stage-06-biometric-vault` | 250 | `FLAG{obsidianpay_biometric_vault_06}` | `POST /api/mobile/internal/vault-mobile/unlock` body `{"localAuth":true,"vaultUnlocked":true}` → `vaultCheckpoint.flag` |
+| 7 | `stage-07-network-pinning` | 250 | `FLAG{obsidianpay_network_pinning_07}` | `GET /api/mobile/internal/network-profile` + header `X-Obsidian-Network-Review: burp-pinning-check` → `networkCheckpoint.flag` |
+| 8 | `stage-08-app-integrity` | 300 | `FLAG{obsidianpay_integrity_bypass_08}` | `POST /api/mobile/internal/app-integrity` body `{"bypassHintIds":["jni-return-value-hook"]}` (ou `patch-native-gate-result`) → `integrityCheckpoint.flag` |
+| 9 | `stage-09-final-operator-chain` | 400 | `FLAG{obsidianpay_final_operator_chain_09}` | `POST /api/mobile/internal/finalize-operator` (ver 10.4) |
+
+### 10.3 Fluxo de submit
+
+```bash
+TOKEN=$(curl -s -X POST http://127.0.0.1:8102/api/mobile/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"guest","password":"guest123"}' | jq -r .token)
+
+# Submeter a flag do estágio 1
+curl -s -X POST http://127.0.0.1:8102/api/mobile/challenge/submit \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"stageId":"stage-01-recon","flag":"FLAG{obsidianpay_mobile_recon_01}","evidence":"config recon header"}'
+# => { "accepted": true, "pointsAwarded": 100, "totalScore": 100, "nextStageHint": "..." }
+```
+
+- Flag errada → `{ "accepted": false, "message": "Flag inválida para este estágio." }`.
+- Reenvio de flag correta → `duplicate: true`, `pointsAwarded: 0` (idempotente).
+- `GET /challenge/scoreboard` → `totalScore`, `solvedStages`, `completionPercent`, `finalUnlocked`.
+
+### 10.4 Final operator chain
+
+`POST /api/mobile/internal/finalize-operator` exige:
+
+- Header `X-Obsidian-Device-Trust: trusted-legacy`.
+- Body com as 4 provas (qualquer valor truthy): `deviceTrustProof`, `vaultProof`,
+  `integrityProof`, `networkProof`.
+
+```bash
+curl -s -X POST http://127.0.0.1:8102/api/mobile/internal/finalize-operator \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'X-Obsidian-Device-Trust: trusted-legacy' -H 'Content-Type: application/json' \
+  -d '{"deviceTrustProof":"sig","vaultProof":"unlock","integrityProof":"nativegate","networkProof":"pinning"}'
+# => { "flag": "FLAG{obsidianpay_final_operator_chain_09}", ... }
+```
+
+Faltando header ou qualquer prova → `403` sem vazar a flag. A flag final é então
+submetida em `/challenge/submit` com `stageId` `stage-09-final-operator-chain`.
+
+### 10.5 Validação
+
+`bash scripts/validate-phase14.sh` confere estrutura (arquivos, endpoints, 9
+flags em `flags.js`, ausência de FLAG nos docs públicos) e, com Docker, sobe o
+backend e exercita login/progress/submit/scoreboard.
+
+---
+
 ## 9. Notas de manutenção
 
 - Flags reais **não** entram em `README.md` nem `STUDENT-GUIDE.md`.

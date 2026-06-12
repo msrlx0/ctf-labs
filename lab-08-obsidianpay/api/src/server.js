@@ -30,8 +30,11 @@ const {
   mobileVaultConfig,
   networkProfileConfig,
   appIntegrityConfig,
+  challengeConfig,
   buildMobileConfig,
 } = require('./data');
+const flagsRegistry = require('./flags');
+const challengeChain = require('./challenge-chain');
 
 const app = express();
 const HOST = '0.0.0.0';
@@ -86,6 +89,34 @@ function requireAuth(req, res, next) {
   }
   req.authUser = user;
   next();
+}
+
+// --- Challenge progress state (Phase 14) -------------------------------------
+// Simple in-memory, per-user progress for the final CTF chain. Resets when the
+// process restarts — this is a local teaching lab, not a persistent scoreboard.
+// Shape: Map<userId, { solved: Map<stageId, { points, evidence, ... }> }>.
+const challengeProgress = new Map();
+
+function getUserProgress(userId) {
+  let progress = challengeProgress.get(userId);
+  if (!progress) {
+    progress = { solved: new Map() };
+    challengeProgress.set(userId, progress);
+  }
+  return progress;
+}
+
+function computeScore(progress) {
+  let total = 0;
+  for (const entry of progress.solved.values()) total += entry.points;
+  return total;
+}
+
+// The final stage is "unlocked" once every non-final stage has been solved.
+function isFinalUnlocked(progress) {
+  return challengeChain.stages
+    .filter((s) => s.id !== 'stage-09-final-operator-chain')
+    .every((s) => progress.solved.has(s.id));
 }
 
 // --- Serializers -------------------------------------------------------------
@@ -217,8 +248,19 @@ app.patch('/api/mobile/profile', requireAuth, (req, res) => {
 });
 
 // --- Config ------------------------------------------------------------------
-app.get('/api/mobile/config', (_req, res) => {
-  res.json(buildMobileConfig());
+// Stage 1 (recon) checkpoint: sending the recon-review header surfaces a
+// reconCheckpoint block with the stage-01 flag. Without the header the response
+// is unchanged (backwards compatible with earlier phases).
+app.get('/api/mobile/config', (req, res) => {
+  const config = buildMobileConfig();
+  if (req.headers['x-obsidian-recon'] === 'mobile-config-review') {
+    config.reconCheckpoint = {
+      stageId: 'stage-01-recon',
+      note: 'Mobile config review checkpoint reached.',
+      flag: flagsRegistry.getFlagByStageId('stage-01-recon'),
+    };
+  }
+  res.json(config);
 });
 
 // --- Receipts ----------------------------------------------------------------
@@ -290,18 +332,28 @@ app.get('/api/mobile/cards/:cardId', requireAuth, (req, res) => {
 
 // --- Support: legacy sync (Phase 1 stub, kept) ------------------------------
 app.post('/api/mobile/support/sync', (req, res) => {
-  const { message, ticketRef } = req.body || {};
+  const { message, ticketRef, cacheCheckpoint } = req.body || {};
   if (typeof message !== 'string' || message.length === 0) {
     return sendError(res, 400, 'bad_request', 'A non-empty message is required.');
   }
-  res.json({
+  const response = {
     accepted: true,
     mode: 'legacy-http',
     ticketRef: typeof ticketRef === 'string' ? ticketRef : 'OP-SUP-AUTO',
     echo: message,
     syncedAt: new Date().toISOString(),
     note: 'Legacy support sync stub.',
-  });
+  };
+  // Stage 2 (insecure local storage) checkpoint: the legacy sync echoes back a
+  // local-storage marker when the client asserts a cache review.
+  if (cacheCheckpoint === 'local-storage-review') {
+    response.localStorageCheckpoint = {
+      stageId: 'stage-02-insecure-storage',
+      note: 'Local storage cache review checkpoint reached.',
+      flag: flagsRegistry.getFlagByStageId('stage-02-insecure-storage'),
+    };
+  }
+  res.json(response);
 });
 
 // --- Support: diagnostics (weak debug gate) ----------------------------------
@@ -368,6 +420,15 @@ app.post('/api/mobile/transfer/preview', requireAuth, (req, res) => {
 app.get('/api/mobile/webview/support', (req, res) => {
   const topic = typeof req.query.topic === 'string' ? req.query.topic : 'home';
   const message = typeof req.query.message === 'string' ? req.query.message : '';
+  // Stage 4 (WebView bridge) checkpoint: a bridge-audit topic combined with a
+  // cache-review message surfaces a bridgeCheckpoint marker in the portal.
+  const bridgeCheckpointHtml =
+    topic === 'bridge-audit' && message === 'cache-review'
+      ? `\n      <div class="card" id="bridgeCheckpoint" data-stage="stage-04-webview-bridge">
+        <div class="muted">Bridge audit checkpoint</div>
+        <div>${flagsRegistry.getFlagByStageId('stage-04-webview-bridge')}</div>
+      </div>`
+      : '';
   res
     .type('html')
     .send(
@@ -406,6 +467,7 @@ app.get('/api/mobile/webview/support', (req, res) => {
         <div class="muted" style="margin-top:8px">Mensagem</div>
         <div id="message">${message}</div>
       </div>
+${bridgeCheckpointHtml}
 
       <div class="card">
         <div>Status do app: <span id="bridgeStatus" class="pill off">verificando…</span></div>
@@ -479,6 +541,10 @@ app.get('/api/mobile/legacy/routes', requireAuth, (_req, res) => {
       '/api/mobile/internal/vault-mobile/unlock',
       '/api/mobile/internal/network-profile',
       '/api/mobile/internal/app-integrity',
+      '/api/mobile/challenge/progress',
+      '/api/mobile/challenge/submit',
+      '/api/mobile/challenge/scoreboard',
+      '/api/mobile/internal/finalize-operator',
     ],
   });
 });
@@ -527,6 +593,8 @@ app.post('/api/mobile/internal/device-trust', requireAuth, (req, res) => {
     return sendError(res, 403, 'forbidden', 'Invalid legacy device-trust signature.');
   }
 
+  // Stage 5 (legacy device trust) checkpoint: a forged-but-valid legacy
+  // signature is accepted and the response carries the stage-05 marker.
   res.json({
     status: 'trusted-legacy',
     mode: 'legacy-attestation',
@@ -534,6 +602,11 @@ app.post('/api/mobile/internal/device-trust', requireAuth, (req, res) => {
     deviceId,
     trustLevel: 'support-diagnostics',
     nextStepHint: 'review local operator hint and mobile config',
+    deviceTrustCheckpoint: {
+      stageId: 'stage-05-device-trust',
+      note: 'Legacy device-trust signature accepted.',
+      flag: flagsRegistry.getFlagByStageId('stage-05-device-trust'),
+    },
   });
 });
 
@@ -607,7 +680,7 @@ app.post('/api/mobile/internal/vault-mobile/unlock', requireAuth, (req, res) => 
     return sendError(res, 503, 'disabled', 'Mobile vault is not enabled.');
   }
 
-  const { localAuth, method, bypassHintId } = req.body || {};
+  const { localAuth, method, bypassHintId, vaultUnlocked, authDecision } = req.body || {};
 
   if (localAuth !== true) {
     return sendError(
@@ -618,12 +691,26 @@ app.post('/api/mobile/internal/vault-mobile/unlock', requireAuth, (req, res) => 
     );
   }
 
-  res.json({
+  const response = {
     status: 'vault-access-granted',
     method: typeof method === 'string' ? method : 'unknown',
     serverTrust: 'client-asserted',
     nextStepHint: 'server trusts local auth assertion in this lab',
-  });
+  };
+
+  // Stage 6 (biometric vault) checkpoint: the client asserts a coherent local
+  // auth decision (vaultUnlocked / authDecision) alongside localAuth=true.
+  const decisionGranted = authDecision === 'granted' || authDecision === true;
+  const coherent = vaultUnlocked === true || decisionGranted || vaultUnlocked === undefined;
+  if (coherent) {
+    response.vaultCheckpoint = {
+      stageId: 'stage-06-biometric-vault',
+      note: 'Local auth assertion accepted; vault unlocked.',
+      flag: flagsRegistry.getFlagByStageId('stage-06-biometric-vault'),
+    };
+  }
+
+  res.json(response);
 });
 
 // --- Network security profile (Phase 11) -------------------------------------
@@ -632,12 +719,12 @@ app.post('/api/mobile/internal/vault-mobile/unlock', requireAuth, (req, res) => 
 // Auth required — students must obtain a valid token first.
 // No flags, no credentials in the response.
 // nextStepHint: "configure the app base URL to reach the lab API from emulator or phone"
-app.get('/api/mobile/internal/network-profile', requireAuth, (_req, res) => {
+app.get('/api/mobile/internal/network-profile', requireAuth, (req, res) => {
   if (!networkProfileConfig.enableNetworkProfile) {
     return sendError(res, 503, 'disabled', 'Network profile endpoint is not enabled.');
   }
   // pinningMode is "report-only" for the local lab (cleartext HTTP only).
-  res.json({
+  const response = {
     status: 'ok',
     profile: 'burp-proxy-ready',
     pinningMode: networkProfileConfig.pinningMode,   // "report-only"
@@ -651,7 +738,19 @@ app.get('/api/mobile/internal/network-profile', requireAuth, (_req, res) => {
     ],
     nextStepHint: networkProfileConfig.note,
     // configure the app base URL to reach the lab API from emulator or phone
-  });
+  };
+
+  // Stage 7 (network pinning) checkpoint: a Burp/pinning review header surfaces
+  // the stage-07 marker.
+  if (req.headers['x-obsidian-network-review'] === 'burp-pinning-check') {
+    response.networkCheckpoint = {
+      stageId: 'stage-07-network-pinning',
+      note: 'Burp / pinning review checkpoint reached.',
+      flag: flagsRegistry.getFlagByStageId('stage-07-network-pinning'),
+    };
+  }
+
+  res.json(response);
 });
 
 // --- App integrity attestation (Phase 12) ------------------------------------
@@ -681,13 +780,174 @@ app.post('/api/mobile/internal/app-integrity', requireAuth, (req, res) => {
   // Either way the server does not block — report-only policy.
   const integrityDecision = score >= 50 ? 'review-required' : 'accepted';
 
-  res.json({
+  const response = {
     status: 'received',
     integrityDecision,
     integrityPolicy: appIntegrityConfig.integrityPolicy,       // "report-only"
     nativeGatePolicy: appIntegrityConfig.nativeGatePolicy,     // "fallback-allowed"
     serverTrust: 'client-asserted-integrity',
     nextStepHint: 'client-side integrity checks are patchable in this lab',
+  };
+
+  // Stage 8 (app integrity / NativeGate) checkpoint: a report indicating a
+  // native-gate bypass hint surfaces the stage-08 marker.
+  const hints = Array.isArray(bypassHintIds) ? bypassHintIds : [];
+  const nativeGateBypassed =
+    hints.includes('jni-return-value-hook') ||
+    hints.includes('patch-native-gate-result') ||
+    nativeGateStatus === 'jni-return-value-hook' ||
+    nativeGateStatus === 'patch-native-gate-result';
+  if (nativeGateBypassed) {
+    response.integrityCheckpoint = {
+      stageId: 'stage-08-app-integrity',
+      note: 'NativeGate bypass reported; report-only server accepts it.',
+      flag: flagsRegistry.getFlagByStageId('stage-08-app-integrity'),
+    };
+  }
+
+  res.json(response);
+});
+
+// --- Final challenge chain (Phase 14) ----------------------------------------
+// Local scoring + submission for the 9-stage final CTF chain. Flag values are
+// never returned by progress/scoreboard; submission validates against flags.js.
+
+// Public stage view augmented with this user's submitted/score state.
+function stageProgressView(stage, progress) {
+  const entry = progress.solved.get(stage.id);
+  return {
+    ...challengeChain.toPublicStage(stage),
+    submitted: Boolean(entry),
+    pointsAwarded: entry ? entry.points : 0,
+  };
+}
+
+// GET progress — chain overview + this user's per-stage submitted/score state.
+app.get('/api/mobile/challenge/progress', requireAuth, (req, res) => {
+  const progress = getUserProgress(req.authUser.id);
+  res.json({
+    chainId: challengeChain.chainId,
+    totalStages: challengeChain.totalFlags,
+    totalPoints: challengeChain.totalPoints,
+    user: req.authUser.username,
+    totalScore: computeScore(progress),
+    finalUnlocked: isFinalUnlocked(progress),
+    stages: challengeChain.stages.map((s) => stageProgressView(s, progress)),
+  });
+});
+
+// POST submit — validate a stage flag and award points (idempotent per stage).
+app.post('/api/mobile/challenge/submit', requireAuth, (req, res) => {
+  const body = req.body || {};
+  const { stageId, flag, evidence } = body;
+
+  if (typeof stageId !== 'string' || typeof flag !== 'string') {
+    return sendError(res, 400, 'bad_request', 'stageId and flag are required strings.');
+  }
+
+  const stage = challengeChain.getStage(stageId);
+  if (!stage) {
+    // Generic message: do not confirm which stage ids exist beyond the public chain.
+    return sendError(res, 404, 'not_found', 'Unknown stage.');
+  }
+
+  if (!flagsRegistry.isValidFlag(stageId, flag)) {
+    // Generic failure message — no hint about how close the submission was.
+    return res.json({
+      accepted: false,
+      stageId,
+      message: 'Flag inválida para este estágio.',
+    });
+  }
+
+  const progress = getUserProgress(req.authUser.id);
+  const already = progress.solved.get(stageId);
+
+  // Idempotent: a correct resubmission does not duplicate points.
+  if (!already) {
+    progress.solved.set(stageId, {
+      points: stage.points,
+      evidence: typeof evidence === 'string' ? evidence : '',
+      title: stage.title,
+    });
+  }
+
+  const totalScore = computeScore(progress);
+  const currentIndex = challengeChain.stages.findIndex((s) => s.id === stageId);
+  const next =
+    currentIndex >= 0 && currentIndex < challengeChain.stages.length - 1
+      ? challengeChain.stages[currentIndex + 1]
+      : null;
+
+  res.json({
+    accepted: true,
+    stageId,
+    duplicate: Boolean(already),
+    pointsAwarded: already ? 0 : stage.points,
+    totalScore,
+    nextStageHint: next ? next.hintLevel1 : 'Cadeia concluída. Finalize a operator chain.',
+  });
+});
+
+// GET scoreboard — compact per-user score summary.
+app.get('/api/mobile/challenge/scoreboard', requireAuth, (req, res) => {
+  const progress = getUserProgress(req.authUser.id);
+  const solvedStages = Array.from(progress.solved.keys());
+  const totalStages = challengeChain.totalFlags;
+  const completionPercent = Math.round((solvedStages.length / totalStages) * 100);
+  res.json({
+    user: req.authUser.username,
+    totalScore: computeScore(progress),
+    solvedStages,
+    totalStages,
+    completionPercent,
+    finalUnlocked: isFinalUnlocked(progress),
+  });
+});
+
+// POST finalize-operator — Stage 9. Requires the device-trust header and all
+// four proofs in the body. Only then is the final flag returned. Missing any
+// requirement returns 403 without leaking the flag.
+app.post('/api/mobile/internal/finalize-operator', requireAuth, (req, res) => {
+  if (req.headers['x-obsidian-device-trust'] !== 'trusted-legacy') {
+    return sendError(
+      res,
+      403,
+      'forbidden',
+      'finalize-operator requires a trusted-legacy device-trust header.',
+    );
+  }
+
+  const { deviceTrustProof, vaultProof, integrityProof, networkProof } = req.body || {};
+  const proofs = { deviceTrustProof, vaultProof, integrityProof, networkProof };
+  const missing = Object.keys(proofs).filter((k) => !proofs[k]);
+  if (missing.length > 0) {
+    return sendError(
+      res,
+      403,
+      'forbidden',
+      `finalize-operator requires all chain proofs. Missing: ${missing.join(', ')}`,
+    );
+  }
+
+  // All requirements met — release the final flag and record stage-09 progress.
+  const progress = getUserProgress(req.authUser.id);
+  const finalStage = challengeChain.getStage('stage-09-final-operator-chain');
+  if (!progress.solved.has(finalStage.id)) {
+    progress.solved.set(finalStage.id, {
+      points: finalStage.points,
+      evidence: 'finalize-operator chain completed',
+      title: finalStage.title,
+    });
+  }
+
+  res.json({
+    status: 'operator-chain-finalized',
+    stageId: 'stage-09-final-operator-chain',
+    user: req.authUser.username,
+    totalScore: computeScore(progress),
+    flag: flagsRegistry.getFlagByStageId('stage-09-final-operator-chain'),
+    note: 'Final operator chain complete. Submit this flag to /api/mobile/challenge/submit to record stage-09.',
   });
 });
 

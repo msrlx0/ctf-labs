@@ -277,6 +277,22 @@ const appIntegrityConfig = Object.freeze({
   note: 'client-side integrity checks are patchable in this lab',
 });
 
+// --- Final challenge chain config (Phase 14) ---------------------------------
+// Public-safe descriptor for the final CTF chain. Surfaced inside the mobile
+// config so the app/student can discover the scoring/submit/progress paths.
+// Contains NO flags and NO credentials — only the chain id, counts and the
+// public hint. Flag values live exclusively in flags.js.
+const challengeConfig = Object.freeze({
+  chainId: 'obsidianpay-mobile-final-chain',
+  totalStages: 9,
+  scoringPath: '/api/mobile/challenge/scoreboard',
+  submitPath: '/api/mobile/challenge/submit',
+  progressPath: '/api/mobile/challenge/progress',
+  finalizePath: '/api/mobile/internal/finalize-operator',
+  publicHint:
+    'Resolva as 9 trilhas mobile na ordem oficial e submeta cada flag em /api/mobile/challenge/submit. Veja docs/CHALLENGE-SCORING.md.',
+});
+
 // --- Mobile config -----------------------------------------------------------
 // Leaks internal resource NAMES (storage keys, deep link schemes, routes) that
 // help map the future APK, but never returns a flag directly.
@@ -310,6 +326,15 @@ function buildMobileConfig() {
     appIntegrityPath: appIntegrityConfig.appIntegrityPath,
     integrityPolicy: appIntegrityConfig.integrityPolicy,
     nativeGatePolicy: appIntegrityConfig.nativeGatePolicy,
+    // Final challenge chain descriptor (Phase 14). No flags here.
+    challenge: {
+      chainId: challengeConfig.chainId,
+      totalStages: challengeConfig.totalStages,
+      scoringPath: challengeConfig.scoringPath,
+      submitPath: challengeConfig.submitPath,
+      progressPath: challengeConfig.progressPath,
+      publicHint: challengeConfig.publicHint,
+    },
     mobileFeatureFlags: { ...featureFlags },
     clientStorageKeys: {
       sessionToken: 'obsidian.session.token',
@@ -334,5 +359,6 @@ module.exports = {
   mobileVaultConfig,
   networkProfileConfig,
   appIntegrityConfig,
+  challengeConfig,
   buildMobileConfig,
 };

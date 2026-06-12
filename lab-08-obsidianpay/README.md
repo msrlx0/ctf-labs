@@ -2,7 +2,7 @@
 
 **Tema:** Segurança de aplicações mobile (Android) — backend + app
 **Porta oficial:** http://127.0.0.1:8102
-**Status:** Fase 13 (app com **deep links, QR Payment, Web Support, WebView bridge, componentes Android internos, fluxo Device Trust legado, checagem local de ambiente/dispositivo, Secure Vault com fluxo local de autenticação, Network Security / API Host override, App Integrity / NativeGate / TamperCheck scaffold** e **Dynamic Instrumentation scaffold** com scripts Frida e playbook ADB). O APK final ainda não foi publicado.
+**Status:** Fase 14 (app com **deep links, QR Payment, Web Support, WebView bridge, componentes Android internos, fluxo Device Trust legado, checagem local de ambiente/dispositivo, Secure Vault com fluxo local de autenticação, Network Security / API Host override, App Integrity / NativeGate / TamperCheck scaffold**, **Dynamic Instrumentation scaffold** com scripts Frida e playbook ADB, e a **Final Challenge Chain** — 9 estágios, scoring local e endpoint de submissão). O APK final ainda não foi publicado.
 **Dificuldade alvo:** Hard / realista (acima de labs introdutórios como AndroGoat).
 
 ---
@@ -172,6 +172,7 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 - ✅ **Network Security / API Host override** (emulador ↔ celular físico, pinning scaffold, backend network-profile) — **Fase 11**
 - ✅ **App Integrity / NativeGate / TamperCheck scaffold** — **Fase 12**
 - ✅ **Dynamic Instrumentation scaffold** (scripts Frida, playbook ADB, docs de pentest mobile) — **Fase 13**
+- ✅ **Final Challenge Chain** (9 estágios, flags internas, scoring local, endpoint de submissão — ver `docs/CHALLENGE-SCORING.md`) — **Fase 14**
 - ✅ Documentação base e arquitetura
 - 🔜 APK final publicado
 - 🔜 Cadeias completas app ↔ API

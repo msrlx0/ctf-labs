@@ -846,3 +846,52 @@ ls docs/mobile-pentest/
 - [ ] Sem `FLAG{` em docs públicos e em tools/.
 - [ ] Sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README.
 - [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+## Fase 14 — Final Challenge Chain
+
+> Atalho: `bash scripts/validate-phase14.sh`. Faz validação estrutural sempre e,
+> se houver Docker, sobe o backend e exercita a cadeia. Não exige Android SDK.
+
+### F14.1 — Estrutural + dinâmico
+
+```bash
+bash scripts/validate-phase14.sh
+```
+
+Esperado: todos os checks PASS.
+
+### F14.2 — Arquivos obrigatórios
+
+```bash
+ls -la api/src/flags.js api/src/challenge-chain.js \
+       docs/CHALLENGE-SCORING.md scripts/validate-phase14.sh
+```
+
+### F14.3 — Exercitar a cadeia (com backend de pé)
+
+```bash
+docker compose up --build -d
+TOKEN=$(curl -s -X POST http://127.0.0.1:8102/api/mobile/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"guest","password":"guest123"}' | jq -r .token)
+
+curl -s http://127.0.0.1:8102/api/mobile/challenge/progress \
+  -H "Authorization: Bearer $TOKEN" | jq .chainId
+# => "obsidianpay-mobile-final-chain"  (sem flags na resposta)
+
+curl -s http://127.0.0.1:8102/api/mobile/challenge/scoreboard \
+  -H "Authorization: Bearer $TOKEN" | jq '{totalStages, completionPercent}'
+docker compose down
+```
+
+### Critérios de aceite (Fase 14)
+
+- [ ] `validate-phase1..13.sh` continuam passando.
+- [ ] `validate-phase14.sh` passa.
+- [ ] `api/src/flags.js`, `api/src/challenge-chain.js`, `docs/CHALLENGE-SCORING.md` e `scripts/validate-phase14.sh` criados.
+- [ ] `server.js` registra `challenge/progress`, `challenge/submit`, `challenge/scoreboard`, `internal/finalize-operator`.
+- [ ] `flags.js` contém as 9 flags `FLAG{obsidianpay_...}`.
+- [ ] `challenge-chain.js` referencia apenas `flagKey` (sem valores de flag).
+- [ ] `WALKTHROUGH.md` contém a seção "Fase 14 — Final Challenge Chain" com as flags.
+- [ ] Sem `FLAG{` em docs públicos e em tools/; sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README/tools.
+- [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.

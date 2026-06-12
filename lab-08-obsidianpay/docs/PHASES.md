@@ -16,8 +16,8 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 | **Fase 10** | **Secure Vault / local auth** (`auth/`): `LocalAuthState` + `BiometricGate` scaffold + `VaultScreen`, fallback PIN fraco hardcoded, estado local de auth inseguro (SharedPreferences), backend `vault-mobile/status` e `vault-mobile/unlock` (server trusts client-side localAuth). | ✅ Concluída |
 | **Fase 11** | **Network security / certificate pinning scaffold** (`network/`): `NetworkSecurityProfile`, `PinningPolicy`, `ApiHostOverrideScreen` (override de base URL emulador/celular físico), backend `GET /api/mobile/internal/network-profile`, cleartext local, modos didáticos de pinning. | ✅ Concluída |
 | **Fase 12** | **App Integrity / NativeGate / TamperCheck scaffold** (`integrity/`): `NativeGate` (JNI opcional/fallback-safe), `TamperCheck` (debuggable/installer/signature/packageName), `IntegrityScreen`, backend `POST /api/mobile/internal/app-integrity` (report-only). | ✅ Concluída |
-| **Fase 13** | **Dynamic Instrumentation scaffold**: scripts Frida didáticos (`tools/frida/`, 5 scripts por domínio), playbook ADB (`tools/adb/`), documentação de pentest mobile (`docs/mobile-pentest/`). | ✅ Atual |
-| Fase 14 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
+| **Fase 13** | **Dynamic Instrumentation scaffold**: scripts Frida didáticos (`tools/frida/`, 5 scripts por domínio), playbook ADB (`tools/adb/`), documentação de pentest mobile (`docs/mobile-pentest/`). | ✅ Concluída |
+| **Fase 14** | **Final Challenge Chain**: cadeia oficial de 9 estágios (`api/src/challenge-chain.js`), flags internas (`api/src/flags.js`), scoring local e endpoints `challenge/progress`, `challenge/submit`, `challenge/scoreboard`, `internal/finalize-operator`; scoring público em `docs/CHALLENGE-SCORING.md`. | ✅ Atual |
 
 ## Escopo da Fase 1 (entregue)
 

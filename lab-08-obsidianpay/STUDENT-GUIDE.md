@@ -207,6 +207,8 @@ Mantenha tudo **local** e **autorizado**.
 - ✅ **Secure Vault** com fluxo de autenticação local (biometria + fallback) — **Fase 10**
 - ✅ **API Host override** para emulador e celular físico; scaffold de pinning — **Fase 11**
 - ✅ **App Integrity** com NativeGate e TamperCheck scaffold — **Fase 12**
+- ✅ **Dynamic Instrumentation** (scripts Frida, playbook ADB) — **Fase 13**
+- ✅ **Final Challenge Chain** — 9 estágios, scoring local e submissão de flags (`docs/CHALLENGE-SCORING.md`) — **Fase 14**
 - 🔜 APK Android (próximas fases)
 - 🔜 Integração app ↔ API e cadeias completas
 
