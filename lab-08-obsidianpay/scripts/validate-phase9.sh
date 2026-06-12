@@ -83,7 +83,19 @@ need_grep_tree "EnvironmentRiskEngine" "$ENV_PKG" "classe EnvironmentRiskEngine"
 need_grep_tree "bypassHintId" "$ENV_PKG" "campo bypassHintId"
 need_grep_tree "env-check-local-only" "$ENV_PKG" "bypassHintId env-check-local-only"
 need_grep_tree "hooks-change-return-values" "$ENV_PKG" "bypassHintId hooks-change-return-values"
-need_grep_tree "patch-risk-engine-result" "$ENV_PKG" "bypassHintId patch-risk-engine-result"
+# Checagem positiva: exige a sintaxe completa com aspas de abertura e fechamento.
+need_grep_file 'else -> "patch-risk-engine-result"' \
+  "$ENV_PKG/EnvironmentRiskEngine.kt" \
+  'bypassHintId sintaxe correta: else -> "patch-risk-engine-result"'
+# Checagem negativa: detecta a versão quebrada sem aspas de abertura
+# (ex.: else -> patch-risk-engine-result" ou else -> patch-risk-engine-result).
+# Na linha correta há `-> "patch`, então `->` seguido de espaços e depois `patch`
+# diretamente SEM aspas não pode aparecer no código Kotlin de produção.
+if grep -qE -- '->[[:space:]]+patch-risk-engine-result' "$ENV_PKG/EnvironmentRiskEngine.kt" 2>/dev/null; then
+  fail 'typo: encontrado "-> patch-risk-engine-result" sem aspas de abertura em EnvironmentRiskEngine.kt'
+else
+  pass 'sem typo "else -> patch-risk-engine-result" (aspas de abertura presente)'
+fi
 
 # --- SecurityCheckScreen -----------------------------------------------------
 info "Conferindo SecurityCheckScreen..."
