@@ -128,12 +128,34 @@ Use **guest / guest123** no app e em `POST /api/mobile/login`.
   onde começar, como pensar a investigação e como participar da **Challenge
   Chain** (9 estágios) registrando progresso e evidências.
 - **Pontuação da cadeia (público):** [docs/CHALLENGE-SCORING.md](./docs/CHALLENGE-SCORING.md).
+- **Setup de pentest mobile:** [docs/mobile-pentest/SETUP.md](./docs/mobile-pentest/SETUP.md).
+- **Checklist de build Android:** [docs/ANDROID-BUILD-CHECKLIST.md](./docs/ANDROID-BUILD-CHECKLIST.md).
+- **QA final (release readiness):** [docs/FINAL-QA.md](./docs/FINAL-QA.md).
 - **Validação técnica:** [VALIDATION.md](./VALIDATION.md).
 - **Playbook de pentest mobile:** [docs/mobile-pentest/PLAYBOOK.md](./docs/mobile-pentest/PLAYBOOK.md).
 
 > **`WALKTHROUGH.md` é material de instrutor** (contém a solução completa e as
 > flags). Não é destinado ao aluno — comece sempre por
 > [STUDENT-GUIDE.md](./STUDENT-GUIDE.md).
+
+---
+
+## Status final e QA (Fase 16)
+
+- **Status do lab:** completo (Fases 1–15 entregues). O backend mobile na porta
+  `8102`, o app Android (código-fonte) e a Challenge Chain de 9 estágios estão
+  prontos. **Pendência conhecida:** o build/publicação do **APK real**.
+- **Fase atual:** **QA final** — validação consolidada, revisão de docs
+  (anti-spoiler/anti-leak) e preparação para o build Android real.
+- **Antes do build real**, consulte:
+  - [STUDENT-GUIDE.md](./STUDENT-GUIDE.md) — guia do aluno (sem spoilers).
+  - [docs/CHALLENGE-SCORING.md](./docs/CHALLENGE-SCORING.md) — pontuação da cadeia.
+  - [docs/mobile-pentest/SETUP.md](./docs/mobile-pentest/SETUP.md) — ambiente de pentest mobile.
+  - [docs/ANDROID-BUILD-CHECKLIST.md](./docs/ANDROID-BUILD-CHECKLIST.md) — passo a passo do build no Android Studio.
+  - [docs/FINAL-QA.md](./docs/FINAL-QA.md) — matriz de validação e checklist de release.
+
+> **`WALKTHROUGH.md` é instrutor-facing** (solução completa + flags). O aluno
+> nunca precisa dele.
 
 ---
 

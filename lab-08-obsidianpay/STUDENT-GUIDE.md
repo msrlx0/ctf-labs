@@ -353,3 +353,70 @@ O override é salvo localmente no app e mantido entre reinicializações.
 > A API já é um alvo de verdade para análise manual. Explore os contratos,
 > valide o ambiente e entenda o produto. O componente Android — onde mora boa
 > parte do desafio — vem a seguir.
+
+---
+
+## 8. Fechamento — guia prático do aluno
+
+Esta seção reúne o essencial para você começar com o pé direito e entregar um
+trabalho bem documentado. **Sem solução e sem flags** — só método.
+
+### Antes de começar
+
+- **Suba o backend** (`docker compose up --build -d`) e confirme `/health` em
+  `http://127.0.0.1:8102`.
+- **Faça o build do app** no Android Studio e instale num emulador (API 24+).
+  O passo a passo está em [docs/ANDROID-BUILD-CHECKLIST.md](./docs/ANDROID-BUILD-CHECKLIST.md).
+- **Confirme o API Host:** emulador usa `http://10.0.2.2:8102`; celular físico
+  usa `http://<IP_DO_PC>:8102` via tela **API Host**.
+- **Tenha as ferramentas à mão:** `adb`, Burp Suite, JADX, apktool, Frida,
+  objection (ver seção 4). Ambiente de pentest detalhado em
+  [docs/mobile-pentest/SETUP.md](./docs/mobile-pentest/SETUP.md).
+- **Leia a pontuação pública:** [docs/CHALLENGE-SCORING.md](./docs/CHALLENGE-SCORING.md).
+
+### Checklist do aluno
+
+- [ ] Backend no ar (`/health` ok) e login `guest` / `guest123` funcionando.
+- [ ] App instalado e Home carregando no emulador (ou celular físico).
+- [ ] Token obtido (`POST /api/mobile/login`) para os endpoints autenticados.
+- [ ] `GET /api/mobile/challenge/progress` consultado para ver os 9 estágios e as dicas.
+- [ ] Recon feito (telas, storage local, config, fluxos do app) antes de atacar.
+- [ ] Para cada estágio: flag obtida **resolvendo a trilha**, não procurando no código.
+- [ ] Flag submetida em `POST /api/mobile/challenge/submit` com `evidence`.
+- [ ] Scoreboard acompanhado (`GET /api/mobile/challenge/scoreboard`).
+- [ ] Evidências guardadas em `evidence/` quando fizer sentido.
+
+### Quando pedir ajuda
+
+- Releia as **duas dicas** de cada estágio (`hintLevel1`, `hintLevel2`) via
+  `GET /api/mobile/challenge/progress` antes de pedir ajuda.
+- Se travar **mais de ~30 min** sem progresso novo em um estágio, peça uma dica
+  ao instrutor — descrevendo **o que já tentou**, não pedindo a resposta.
+- Em problema de ambiente (app não conecta, porta ocupada, emulador), volte ao
+  **Troubleshooting** (seção 4.2) e ao checklist de build antes de pedir ajuda.
+
+### Como evitar falsos positivos
+
+- **Não confunda "achar no repositório" com resolver.** Não há flags reais nos
+  arquivos públicos; uma string parecida em doc/código **não vale**.
+- **Confirme com o backend.** Uma flag só conta quando `POST /challenge/submit`
+  responde `accepted: true`. `accepted: false` = flag errada para aquele estágio.
+- **Cuidado com o `stageId`.** Submeter a flag certa no `stageId` errado falha.
+- **Espaços e caixa.** Copie a flag exata, sem espaços extras.
+- **Idempotência ≠ erro.** Reenviar uma flag já aceita devolve `duplicate: true`
+  e `pointsAwarded: 0` — é o comportamento esperado, não uma falha.
+- **Resultado client-side não é prova.** O app pode mostrar "desbloqueado" sem o
+  servidor concordar — valide sempre pela resposta do backend.
+
+### O que entregar como evidência
+
+Para cada estágio resolvido, registre uma evidência objetiva:
+
+- **No submit:** preencha o campo `evidence` com **como** chegou à flag (endpoint,
+  header, payload, hook/patch, captura de tráfego) — uma linha por estágio.
+- **Não cole a flag** dentro do texto de evidência — ela já vai no campo `flag`
+  (use `<flag_redacted>` se precisar referenciar uma flag em anotações públicas).
+- **Artefatos:** salve logs, capturas (Burp), scripts Frida usados e saídas de
+  `adb` em `evidence/`, nomeando por estágio (ex.: `stage-04-bridge.txt`).
+- **Reprodutibilidade:** a evidência deve permitir que outra pessoa repita o passo
+  decisivo.

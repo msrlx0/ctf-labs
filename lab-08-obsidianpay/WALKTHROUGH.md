@@ -1362,3 +1362,71 @@ curl -s http://127.0.0.1:8102/api/mobile/challenge/scoreboard \
 - Soluções e payloads só serão adicionados aqui (ou em SOLUTION.md) quando a
   vulnerabilidade correspondente for implementada.
 - Manter tudo **local**: porta `127.0.0.1:8102`, sem dependências externas.
+
+---
+
+## 12. Fase 16 — Encerramento e QA final (instrutor)
+
+> Seção de instrutor para o fechamento da turma e o QA final antes do build real
+> do APK. Material complementar: `docs/FINAL-QA.md` (matriz de validação e
+> checklist de release) e `docs/ANDROID-BUILD-CHECKLIST.md` (build no Android
+> Studio). As flags reais já estão na seção 10 e em `api/src/flags.js`; não é
+> preciso repetir a tabela aqui.
+
+### 12.1 Checklist de encerramento
+
+- [ ] `docker compose config` renderiza o serviço em `127.0.0.1:8102`.
+- [ ] `bash scripts/validate-phase14.sh` passa (estrutural + dinâmico se houver Docker).
+- [ ] `bash scripts/validate-phase15.sh` passa (documentação / anti-leak).
+- [ ] `bash scripts/validate-phase16.sh` passa (QA final / release readiness).
+- [ ] Docs públicos sem `FLAG{`; `FLAG{` apenas em `WALKTHROUGH.md`,
+      `api/src/flags.js` e nos `validate-phase14/15/16.sh`.
+- [ ] Sem `analyst123`/`operator123` em material público.
+- [ ] **Final Operator Chain** (Stage 09) revisada de ponta a ponta no ambiente.
+- [ ] Build Android verificado no Android Studio (ver `docs/ANDROID-BUILD-CHECKLIST.md`).
+
+### 12.2 Como resetar o backend
+
+O placar e o estado da cadeia são **em memória** — reiniciar o backend zera tudo:
+
+```bash
+docker compose down
+docker compose up --build -d
+curl -s http://127.0.0.1:8102/health
+```
+
+Use isso entre turmas ou para limpar o scoreboard de um aluno.
+
+### 12.3 Como validar o score
+
+Com o token do aluno (login `guest`/`guest123`):
+
+```bash
+curl -s http://127.0.0.1:8102/api/mobile/challenge/scoreboard \
+  -H "Authorization: Bearer $TOKEN" \
+  | jq '{totalScore, solvedStages, totalStages, completionPercent, finalUnlocked}'
+```
+
+- Cadeia completa: `totalScore=2000`, `solvedStages=9`, `completionPercent=100`,
+  `finalUnlocked=true`.
+- `GET /api/mobile/challenge/progress` mostra, por estágio, `submitted` e
+  `pointsAwarded` (nunca flags).
+
+### 12.4 Como conferir se o aluno terminou
+
+- `finalUnlocked: true` **e** `solvedStages: 9` no scoreboard ⇒ cadeia concluída.
+- Confirme que o **Stage 09** (`stage-09-final-operator-chain`) consta como
+  submetido no `progress` — ele só é aceito após o `finalize-operator` (header
+  `X-Obsidian-Device-Trust: trusted-legacy` + as 4 provas).
+- Peça as **evidências** registradas (campo `evidence` de cada submit + artefatos
+  em `evidence/`).
+
+### 12.5 Problemas de Android / emulador
+
+| Sintoma | Ação |
+|---|---|
+| Sem Android SDK | os checkpoints de backend rodam por `curl`; só Stage 03 (adb) e a instrumentação dependem do SDK. A validação de shell **não** exige SDK. |
+| Emulador não conecta | base URL deve ser `http://10.0.2.2:8102`. |
+| Celular físico não conecta | tela **API Host** com `http://<IP_DO_PC>:8102` na mesma LAN; backend acessível na rede. |
+| Build falha no `assembleDebug` | abra no Android Studio (provisiona o SDK); ver `docs/ANDROID-BUILD-CHECKLIST.md`. |
+| Porta 8102 ocupada | `lsof -i :8102`, encerre o processo, ou ajuste o mapeamento do compose localmente. |

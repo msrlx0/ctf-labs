@@ -18,7 +18,8 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 | **Fase 12** | **App Integrity / NativeGate / TamperCheck scaffold** (`integrity/`): `NativeGate` (JNI opcional/fallback-safe), `TamperCheck` (debuggable/installer/signature/packageName), `IntegrityScreen`, backend `POST /api/mobile/internal/app-integrity` (report-only). | ✅ Concluída |
 | **Fase 13** | **Dynamic Instrumentation scaffold**: scripts Frida didáticos (`tools/frida/`, 5 scripts por domínio), playbook ADB (`tools/adb/`), documentação de pentest mobile (`docs/mobile-pentest/`). | ✅ Concluída |
 | **Fase 14** | **Final Challenge Chain**: cadeia oficial de 9 estágios (`api/src/challenge-chain.js`), flags internas (`api/src/flags.js`), scoring local e endpoints `challenge/progress`, `challenge/submit`, `challenge/scoreboard`, `internal/finalize-operator`; scoring público em `docs/CHALLENGE-SCORING.md`. | ✅ Concluída |
-| **Fase 15** | **Documentação final**: `WALKTHROUGH.md` manual completo de instrutor (Stages 01–09 + final operator chain, passo a passo, com flags); `STUDENT-GUIDE.md` polido (objetivo final, trilha de raciocínio, progress/submit, checklist) sem spoilers; `README.md`/`PLAYBOOK.md` alinhados à cadeia; `CHALLENGE-SCORING.md` mais útil; guards anti-spoiler/anti-leak reforçados em `scripts/validate-phase15.sh`. | ✅ Atual |
+| **Fase 15** | **Documentação final**: `WALKTHROUGH.md` manual completo de instrutor (Stages 01–09 + final operator chain, passo a passo, com flags); `STUDENT-GUIDE.md` polido (objetivo final, trilha de raciocínio, progress/submit, checklist) sem spoilers; `README.md`/`PLAYBOOK.md` alinhados à cadeia; `CHALLENGE-SCORING.md` mais útil; guards anti-spoiler/anti-leak reforçados em `scripts/validate-phase15.sh`. | ✅ Concluída |
+| **Fase 16** | **QA final / release readiness**: validação consolidada (`scripts/validate-phase16.sh`), revisão de docs (anti-spoiler/anti-leak), detecção de typos/placeholders perigosos, `docs/FINAL-QA.md` (matriz de validação + checklist de release) e `docs/ANDROID-BUILD-CHECKLIST.md` (preparação do build Android real no Android Studio). Não adiciona vulnerabilidades nem altera flags; build do APK continua best-effort no shell. | ✅ Atual |
 
 ## Escopo da Fase 1 (entregue)
 
@@ -217,6 +218,27 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
   de next step); `buildMobileConfig` expõe `enableNetworkProfile`,
   `networkProfilePath`, `pinningMode`, `cleartextAllowed`.
 - Script `scripts/validate-phase11.sh`.
+
+## Escopo da Fase 16 (entregue)
+
+- **QA final consolidado**: `docs/FINAL-QA.md` com status do lab, portas/URLs
+  (`127.0.0.1:8102`, `10.0.2.2:8102`, IP de LAN para celular físico), matriz de
+  validação por domínio, lista dos scripts `validate-phase1..16`, política
+  anti-leak e checklist de release.
+- **Preparação do build Android real**: `docs/ANDROID-BUILD-CHECKLIST.md` com
+  pré-requisitos, abertura do projeto, SDK/`local.properties`, Gradle sync, build
+  do debug APK, instalação no emulador, configuração do API Host, smoke test e
+  troubleshooting. Build documentado, não executado obrigatoriamente.
+- **Atualização de docs**: `README.md` (status final + links), `STUDENT-GUIDE.md`
+  (fechamento do aluno: antes de começar, checklist, quando pedir ajuda, falsos
+  positivos, evidência) e `WALKTHROUGH.md` (encerramento de instrutor: reset do
+  backend, validação de score, problemas de Android/emulador).
+- **Guards de release**: `scripts/validate-phase16.sh` reforça anti-leak
+  (marcadores de flag e credenciais internas), falha em typos conhecidos e em
+  marcadores de rascunho perigosos
+  (`TODO`/`FIXME`/`TBD`/`changeme`/`placeholder`/`lorem ipsum`) nos docs finais,
+  e roda `validate-phase14.sh` + `validate-phase15.sh` internamente. Não exige
+  Android SDK; não adiciona vulnerabilidades; não altera flags.
 
 ## Princípios entre fases
 

@@ -969,3 +969,81 @@ re-verifica os typos conhecidos (`network-config-cleartext-overrie`, `PinningPol
 - [ ] `docs/CHALLENGE-SCORING.md` e `docs/mobile-pentest/PLAYBOOK.md` alinhados à cadeia, sem flags.
 - [ ] Sem `FLAG{` em docs públicos/tools; sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README/tools.
 - [ ] Nenhum lab 1..7 alterado; `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+---
+
+## Fase 16 — QA final / release readiness
+
+> A Fase 16 não altera o backend nem o app: é o **QA final consolidado** antes do
+> build real do APK. Entrega `docs/FINAL-QA.md` (matriz de validação + checklist
+> de release), `docs/ANDROID-BUILD-CHECKLIST.md` (build no Android Studio) e o
+> script `scripts/validate-phase16.sh`, que roda `validate-phase14.sh` e
+> `validate-phase15.sh` internamente. **Não exige Android SDK.**
+>
+> Atalho: `bash scripts/validate-phase16.sh`.
+
+### F16.1 — Validação da Fase 16
+
+```bash
+bash scripts/validate-phase16.sh
+```
+
+Esperado: todos os checks PASS (e as Fases 14 e 15 embutidas também).
+
+### F16.2 — Scripts e docs
+
+O script confere que:
+
+- `scripts/validate-phase1.sh`..`validate-phase15.sh` existem.
+- Docs obrigatórios presentes: `docs/FINAL-QA.md`, `docs/ANDROID-BUILD-CHECKLIST.md`,
+  `docs/CHALLENGE-SCORING.md`, `STUDENT-GUIDE.md`, `WALKTHROUGH.md`, `README.md`.
+- `docs/FINAL-QA.md` contém `Final QA`, `127.0.0.1:8102`, `10.0.2.2:8102`,
+  `Anti-leak`, `validate-phase16.sh` e `<flag_redacted>`.
+- `docs/ANDROID-BUILD-CHECKLIST.md` contém `Android Studio`, `Gradle`,
+  `debug APK`, `10.0.2.2:8102`, `API Host`, `guest / guest123`, `emulador` e
+  `celular físico`.
+- `README.md` aponta para `docs/ANDROID-BUILD-CHECKLIST.md` e `docs/FINAL-QA.md`.
+- `STUDENT-GUIDE.md` contém `Checklist do aluno`, `Como registrar progresso`,
+  `evidência` e referencia `challenge/progress`/`challenge/submit` com `<flag_redacted>`.
+- `WALKTHROUGH.md` contém `Checklist de encerramento`, `Final Operator Chain` e a
+  flag final do Stage 09.
+
+### F16.3 — Anti-leak
+
+- `FLAG{` rejeitado em `README.md`, `STUDENT-GUIDE.md`, `docs/ARCHITECTURE.md`,
+  `docs/PHASES.md`, `docs/VULNERABILITY-ROADMAP.md`, `docs/CHALLENGE-SCORING.md`,
+  `docs/FINAL-QA.md`, `docs/ANDROID-BUILD-CHECKLIST.md`,
+  `docs/mobile-pentest/SETUP.md`, `docs/mobile-pentest/PLAYBOOK.md`,
+  `android-app/README.md` e `tools/`.
+- `FLAG{` permitido apenas em `WALKTHROUGH.md`, `api/src/flags.js` e nos
+  `scripts/validate-phase14/15/16.sh`.
+- `analyst123`/`operator123` rejeitados em `README.md`, `STUDENT-GUIDE.md`,
+  `android-app/README.md`, `tools/`, `docs/FINAL-QA.md` e
+  `docs/ANDROID-BUILD-CHECKLIST.md`.
+
+### F16.4 — Typos e placeholders
+
+- Falha em typos conhecidos (`network-config-cleartext-overrie`, `PinningPolicyy`,
+  `TamperCheckk`, `getSessionSummay`, `getSessionSummar(`, `@JavascriptInterfac`,
+  `webVieClient`, `LegacyRequestSigne`, `WeakCryptosha1Hex`, `WeakCryptomd5Hex`,
+  `apiClientsetBaseUrlForSession`, `getLastNativeGatStatus`, `App Integrit` sem `y`).
+- Falha em placeholders perigosos (`TODO`, `FIXME`, `TBD`, `changeme`,
+  `placeholder`, `lorem ipsum`) nos **docs finais** (`docs/FINAL-QA.md`,
+  `docs/ANDROID-BUILD-CHECKLIST.md`).
+
+### F16.5 — Android SDK e Docker
+
+- **Android SDK** continua **best-effort**: a ausência do SDK não falha a Fase 16.
+  Se houver SDK, o script pode rodar `./gradlew tasks`/`assembleDebug` sem falhar
+  por ausência de SDK.
+- Os testes dinâmicos de Docker (login + cadeia) são herdados das Fases 14/15.
+
+### Critérios de aceite (Fase 16)
+
+- [ ] `validate-phase1..15.sh` continuam passando.
+- [ ] `validate-phase16.sh` passa (inclui as Fases 14 e 15 embutidas).
+- [ ] `docs/FINAL-QA.md` e `docs/ANDROID-BUILD-CHECKLIST.md` criados.
+- [ ] `README.md`/`STUDENT-GUIDE.md`/`WALKTHROUGH.md` atualizados com o fechamento da Fase 16.
+- [ ] Docs públicos sem `FLAG{`; sem `analyst123`/`operator123` em material público.
+- [ ] Sem typos/placeholders perigosos nos docs finais.
+- [ ] Nenhum lab 1..7 alterado; `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
