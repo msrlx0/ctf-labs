@@ -112,6 +112,14 @@ Com o backend no ar (`127.0.0.1:8102`):
 > localmente e questione o que o servidor efetivamente valida. (Este guia não
 > explica o mecanismo de bypass — a investigação é sua.)
 
+> **App Integrity:** a Início tem uma tela **App Integrity**. Ela executa uma
+> checagem de integridade do app (native gate, score de tamper, assinatura,
+> pacote) e pode enviar um relatório de integridade ao backend. Como de costume:
+> rode os checks, observe o que é registrado localmente e questione o que o
+> servidor efetivamente valida. Apps que dependem de checagens client-side de
+> integridade têm um ponto de investigação interessante. (Este guia não explica
+> como contornar as checagens — a investigação é sua.)
+
 Detalhes e build via linha de comando em
 [android-app/README.md](./android-app/README.md).
 
@@ -181,6 +189,7 @@ Mantenha tudo **local** e **autorizado**.
 - ✅ Contratos mobile: perfil, recibos, cartões, suporte, transfer preview, WebView
 - ✅ **Secure Vault** com fluxo de autenticação local (biometria + fallback) — **Fase 10**
 - ✅ **API Host override** para emulador e celular físico; scaffold de pinning — **Fase 11**
+- ✅ **App Integrity** com NativeGate e TamperCheck scaffold — **Fase 12**
 - 🔜 APK Android (próximas fases)
 - 🔜 Integração app ↔ API e cadeias completas
 

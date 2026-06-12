@@ -741,3 +741,60 @@ array `"bypassHintIds"` contendo `"trust-user-ca"`.
 - [ ] Sem `FLAG{` em docs públicos e nas novas classes `network/` e `ApiHostOverrideScreen`.
 - [ ] Sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README.
 - [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+---
+
+## Fase 12
+
+Para validar a Fase 12 (App Integrity / NativeGate / TamperCheck), rode:
+
+```bash
+bash scripts/validate-phase12.sh
+```
+
+O script verifica:
+- Existência de `integrity/NativeGate.kt`, `integrity/TamperCheck.kt` e `ui/IntegrityScreen.kt`.
+- Strings-chave: `obsidian_native_gate`, `native-library-missing-fallback`, `jni-return-value-hook`,
+  `patch-native-gate-result`, `strings-libobsidian-native`, `native-gate-kotlin-fallback`,
+  `debuggable-build`, `unknown-installer`, `signature-hash-observed`, `package-name-check`,
+  `tamper-score`, `patch-debuggable-check`, `hook-package-manager`, `repackage-signature-mismatch`.
+- Eventos: `integrity_check_started`, `tamper_check_completed`, `native_gate_checked`,
+  `tamper_score_calculated`, `native_gate_hint_viewed`, `integrity_report_sent`,
+  `integrity_report_cached`, `integrity_state_cleared`.
+- ApiClient, Constants e storage com as novas chaves.
+- Backend com endpoint `POST /api/mobile/internal/app-integrity`.
+- `data.js` com `appIntegrityConfig` (`enableAppIntegrity`, `integrityPolicy`, `nativeGatePolicy`).
+- Docs públicos sem `FLAG{` e sem `analyst123`/`operator123`.
+
+### F12.1 — Estrutural (sem backend)
+
+```bash
+bash scripts/validate-phase12.sh
+```
+
+Esperado: todos os checks PASS, sem necessidade de Android SDK ou NDK.
+
+### F12.2 — Backend (com backend no ar)
+
+```bash
+TOKEN="obsidian-mobile-token-guest-1001"
+curl -s -X POST http://127.0.0.1:8102/api/mobile/internal/app-integrity \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"tamperScore":0,"debuggable":true,"installerPackage":"unknown","packageNameStatus":"package-name-check:match","signatureHashPreview":"signature-hash-observed:abc123","nativeLibraryLoaded":false,"nativeGateStatus":"native-library-missing-fallback","bypassHintIds":[]}'
+```
+
+Esperado: `"status":"received"`, `"integrityDecision":"accepted"`, `"integrityPolicy":"report-only"`,
+`"nativeGatePolicy":"fallback-allowed"`, `"serverTrust":"client-asserted-integrity"`.
+
+### Critérios de aceite (Fase 12)
+
+- [ ] `validate-phase1..11.sh` continuam passando.
+- [ ] `validate-phase12.sh` passa.
+- [ ] `integrity/NativeGate.kt` e `integrity/TamperCheck.kt` criados.
+- [ ] `ui/IntegrityScreen.kt` criado e acessível pela Início.
+- [ ] Backend implementa `POST /api/mobile/internal/app-integrity` (auth required).
+- [ ] `data.js` tem `appIntegrityConfig` com `enableAppIntegrity`, `integrityPolicy`, `nativeGatePolicy`.
+- [ ] Sem `FLAG{` em docs públicos e nas novas classes `integrity/` e `IntegrityScreen`.
+- [ ] Sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README.
+- [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.

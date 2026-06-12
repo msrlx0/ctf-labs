@@ -97,4 +97,13 @@ object Constants {
     const val KEY_LAST_NETWORK_PROFILE_JSON: String = "obsidian.debug.last_network_profile"
     const val KEY_LAST_PINNING_MODE: String = "obsidian.debug.last_pinning_mode"
     const val KEY_LAST_PINNING_HINT: String = "obsidian.debug.last_pinning_hint"
+
+    // App integrity / NativeGate / TamperCheck (Phase 12).
+    // Stored in plaintext SharedPreferences — intentional teaching seam.
+    const val APP_INTEGRITY_PATH: String = "/api/mobile/internal/app-integrity"
+    const val KEY_LAST_APP_INTEGRITY_REPORT: String = "obsidian.debug.last_app_integrity_report"
+    const val KEY_LAST_APP_INTEGRITY_RESPONSE: String = "obsidian.debug.last_app_integrity_response"
+    const val KEY_LAST_NATIVE_GATE_STATUS: String = "obsidian.debug.last_native_gate_status"
+    const val KEY_LAST_TAMPER_SCORE: String = "obsidian.debug.last_tamper_score"
+    const val KEY_LAST_SIGNATURE_HASH_PREVIEW: String = "obsidian.debug.last_signature_hash_preview"
 }

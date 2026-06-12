@@ -2,7 +2,7 @@
 
 **Tema:** Segurança de aplicações mobile (Android) — backend + app
 **Porta oficial:** http://127.0.0.1:8102
-**Status:** Fase 11 (app com **deep links, QR Payment, Web Support, WebView bridge, componentes Android internos, fluxo Device Trust legado, checagem local de ambiente/dispositivo, Secure Vault com fluxo local de autenticação e Network Security / API Host override para emulador e celular físico**). O APK final ainda não foi publicado.
+**Status:** Fase 12 (app com **deep links, QR Payment, Web Support, WebView bridge, componentes Android internos, fluxo Device Trust legado, checagem local de ambiente/dispositivo, Secure Vault com fluxo local de autenticação, Network Security / API Host override e App Integrity / NativeGate / TamperCheck scaffold**). O APK final ainda não foi publicado.
 **Dificuldade alvo:** Hard / realista (acima de labs introdutórios como AndroGoat).
 
 ---

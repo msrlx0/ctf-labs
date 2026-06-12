@@ -254,11 +254,59 @@ MainActivity (inicialização)
 > (`trust-user-ca`, `okhttp-certificate-pinner-hook`, `network-config-cleartext-override`)
 > são âncoras para estudo futuro de Frida/proxy, não passos de solução.
 
+### Fluxo de App Integrity / NativeGate / TamperCheck (Fase 12)
+
+```
+IntegrityScreen (ui/)
+   │  acionada a partir do HomeScreen ("App Integrity")
+   ├─ NativeGate.isNativeLibraryLoaded()
+   │   → tenta System.loadLibrary("obsidian_native_gate")
+   │   → fallback Kotlin se ausente (sem NDK necessário)
+   ├─ NativeGate.getNativeGateStatus()
+   │   → NativeGateResult { loaded, statusCode, statusLabel, bypassHintId, patchTargetName, fallbackUsed }
+   ├─ TamperCheck.run(context)
+   │   → isDebuggable → ApplicationInfo.FLAG_DEBUGGABLE
+   │   → getInstallerPackage → getInstallerPackageName / getInstallSourceInfo
+   │   → getSignatureHashPreview → SHA-256(APK signing cert)[:16]
+   │   → getPackageNameStatus → "com.obsidianpay.mobile" match/mismatch
+   │   → tamperScore 0..100 (40=debuggable, 30=unknown-installer, 30=mismatch)
+   │   → TamperResult { debuggable, installerPackage, packageNameStatus,
+   │                     signatureHashPreview, tamperScore, bypassHints }
+   ├─ InsecureSessionStore: KEY_LAST_NATIVE_GATE_STATUS / KEY_LAST_TAMPER_SCORE /
+   │   KEY_LAST_SIGNATURE_HASH_PREVIEW / KEY_LAST_APP_INTEGRITY_REPORT
+   │   (SharedPreferences, texto puro — seam didático)
+   ├─ LocalCacheManager.saveAppIntegrityReport / saveAppIntegrityResponse
+   │   → db.addDebugEvent("integrity_report_cached")
+   │   (eventos: integrity_check_started / tamper_check_completed / native_gate_checked /
+   │    tamper_score_calculated / native_gate_hint_viewed / integrity_report_sent /
+   │    integrity_report_cached / integrity_state_cleared)
+   └─ ApiClient.sendAppIntegrityReport(token, reportJson)
+       → POST <currentBaseUrl>/api/mobile/internal/app-integrity
+         Authorization: Bearer <token>
+         body: { tamperScore, debuggable, installerPackage, packageNameStatus,
+                 signatureHashPreview, nativeLibraryLoaded, nativeGateStatus, bypassHintIds }
+         { status:"received", integrityDecision:"accepted"|"review-required",
+           integrityPolicy:"report-only", nativeGatePolicy:"fallback-allowed",
+           serverTrust:"client-asserted-integrity",
+           nextStepHint:"client-side integrity checks are patchable in this lab" }
+       → InsecureSessionStore.saveLastAppIntegrityResponse
+         (evento: integrity_report_cached)
+```
+
+> A trilha da Fase 12 é **falsa proteção por design**: todos os checks rodam
+> no processo do app (client-side), o backend usa `integrityPolicy:"report-only"`
+> e confia inteiramente no relatório do cliente (`serverTrust:"client-asserted-integrity"`).
+> Os `bypassHintId`s apontam o caminho: `jni-return-value-hook`,
+> `patch-native-gate-result`, `patch-debuggable-check`, `hook-package-manager`.
+> JNI/NDK é opcional — o app compila e funciona sem NDK (fallback Kotlin).
+
 ### Fluxo de storage local
 
 ```
 App Android ─┬─▶ SharedPreferences (sessão, token, cache de perfil/config,
-             │                       api_base_url_override, network_profile, pinning_mode)
+             │                       api_base_url_override, network_profile, pinning_mode,
+             │                       last_app_integrity_report, last_native_gate_status,
+             │                       last_tamper_score, last_signature_hash_preview)
              ├─▶ SQLite obsidianpay_local.db (cached_receipts/cards, debug_events)
              ├─▶ filesDir/ (receipts/*.json, debug/export.json) e cacheDir/ (snapshot)
              └─▶ external app-specific (obsidian-export.txt)

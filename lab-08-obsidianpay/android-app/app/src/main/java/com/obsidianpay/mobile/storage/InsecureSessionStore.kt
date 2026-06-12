@@ -195,6 +195,48 @@ class InsecureSessionStore(context: Context) {
     fun getLastPinningHint(): String? =
         prefs.getString(Constants.KEY_LAST_PINNING_HINT, null)
 
+    // --- App integrity / NativeGate / TamperCheck (Phase 12) --------------------
+
+    fun saveLastAppIntegrityReport(rawJson: String) =
+        putAndTouch(Constants.KEY_LAST_APP_INTEGRITY_REPORT, rawJson)
+
+    fun getLastAppIntegrityReport(): String? =
+        prefs.getString(Constants.KEY_LAST_APP_INTEGRITY_REPORT, null)
+
+    fun saveLastAppIntegrityResponse(rawJson: String) =
+        putAndTouch(Constants.KEY_LAST_APP_INTEGRITY_RESPONSE, rawJson)
+
+    fun getLastAppIntegrityResponse(): String? =
+        prefs.getString(Constants.KEY_LAST_APP_INTEGRITY_RESPONSE, null)
+
+    fun saveLastNativeGateStatus(value: String) =
+        putAndTouch(Constants.KEY_LAST_NATIVE_GATE_STATUS, value)
+
+    fun getLastNativeGateStatus(): String? =
+        prefs.getString(Constants.KEY_LAST_NATIVE_GATE_STATUS, null)
+
+    fun saveLastTamperScore(value: String) =
+        putAndTouch(Constants.KEY_LAST_TAMPER_SCORE, value)
+
+    fun getLastTamperScore(): String? =
+        prefs.getString(Constants.KEY_LAST_TAMPER_SCORE, null)
+
+    fun saveLastSignatureHashPreview(value: String) =
+        putAndTouch(Constants.KEY_LAST_SIGNATURE_HASH_PREVIEW, value)
+
+    fun getLastSignatureHashPreview(): String? =
+        prefs.getString(Constants.KEY_LAST_SIGNATURE_HASH_PREVIEW, null)
+
+    fun clearIntegrityState() {
+        prefs.edit()
+            .remove(Constants.KEY_LAST_APP_INTEGRITY_REPORT)
+            .remove(Constants.KEY_LAST_APP_INTEGRITY_RESPONSE)
+            .remove(Constants.KEY_LAST_NATIVE_GATE_STATUS)
+            .remove(Constants.KEY_LAST_TAMPER_SCORE)
+            .remove(Constants.KEY_LAST_SIGNATURE_HASH_PREVIEW)
+            .apply()
+    }
+
     private fun putAndTouch(key: String, value: String) {
         prefs.edit()
             .putString(key, value)
@@ -289,6 +331,12 @@ class InsecureSessionStore(context: Context) {
         Constants.KEY_LAST_NETWORK_PROFILE_JSON to getLastNetworkProfileJson(),
         Constants.KEY_LAST_PINNING_MODE to getLastPinningMode(),
         Constants.KEY_LAST_PINNING_HINT to getLastPinningHint(),
+        // Phase 12 — app integrity / NativeGate / TamperCheck (preview; no full token).
+        Constants.KEY_LAST_APP_INTEGRITY_REPORT to getLastAppIntegrityReport(),
+        Constants.KEY_LAST_APP_INTEGRITY_RESPONSE to getLastAppIntegrityResponse(),
+        Constants.KEY_LAST_NATIVE_GATE_STATUS to getLastNativeGateStatus(),
+        Constants.KEY_LAST_TAMPER_SCORE to getLastTamperScore(),
+        Constants.KEY_LAST_SIGNATURE_HASH_PREVIEW to getLastSignatureHashPreview(),
         Constants.KEY_DEBUG_LAST_SYNC to getLastSyncTimestamp().takeIf { it > 0 }?.toString(),
     )
 

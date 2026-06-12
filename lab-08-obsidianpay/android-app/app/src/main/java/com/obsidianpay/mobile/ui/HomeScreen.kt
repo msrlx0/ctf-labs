@@ -127,6 +127,9 @@ fun HomeScreen(
             // API host override (Phase 11): switch between emulator and physical device.
             OutlinedButton(onClick = { onNavigate(Screen.ApiHost) }, modifier = Modifier.fillMaxWidth()) { Text("API Host") }
 
+            // App Integrity (Phase 12): NativeGate / TamperCheck / attestation.
+            OutlinedButton(onClick = { onNavigate(Screen.Integrity) }, modifier = Modifier.fillMaxWidth()) { Text("App Integrity") }
+
             // Internal support/dev tooling — local state inspector.
             OutlinedButton(onClick = { onNavigate(Screen.LocalState) }, modifier = Modifier.fillMaxWidth()) { Text("Local State") }
             OutlinedButton(

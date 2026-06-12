@@ -40,6 +40,7 @@ import com.obsidianpay.mobile.ui.ApiHostOverrideScreen
 import com.obsidianpay.mobile.ui.CardsScreen
 import com.obsidianpay.mobile.ui.DeviceTrustScreen
 import com.obsidianpay.mobile.ui.HomeScreen
+import com.obsidianpay.mobile.ui.IntegrityScreen
 import com.obsidianpay.mobile.ui.LocalStateScreen
 import com.obsidianpay.mobile.ui.LoginScreen
 import com.obsidianpay.mobile.ui.QrInputScreen
@@ -51,7 +52,7 @@ import com.obsidianpay.mobile.ui.VaultScreen
 import com.obsidianpay.mobile.ui.WebViewSupportScreen
 
 /** Top-level destinations. A tiny enum-based nav keeps the app dependency-free. */
-enum class Screen { Login, Home, Receipts, Cards, Support, Transfer, Qr, WebSupport, LocalState, DeviceTrust, SecurityCheck, Vault, ApiHost }
+enum class Screen { Login, Home, Receipts, Cards, Support, Transfer, Qr, WebSupport, LocalState, DeviceTrust, SecurityCheck, Vault, ApiHost, Integrity }
 
 class MainActivity : ComponentActivity() {
 
@@ -205,6 +206,9 @@ fun ObsidianPayApp(
 
         // Phase 11 — API host configuration (emulator ↔ physical device).
         Screen.ApiHost -> ApiHostOverrideScreen(apiClient, store, cache) { screen = Screen.Home }
+
+        // Phase 12 — App integrity / NativeGate / TamperCheck.
+        Screen.Integrity -> IntegrityScreen(apiClient, store, cache) { screen = Screen.Home }
     }
 }
 

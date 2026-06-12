@@ -206,6 +206,18 @@ class LocalCacheManager(
         db.addDebugEvent("environment_report_cleared", null)
     }
 
+    // --- App integrity / NativeGate / TamperCheck (Phase 12) --------------------
+
+    fun saveAppIntegrityReport(rawJson: String) {
+        store.saveLastAppIntegrityReport(rawJson)
+        db.addDebugEvent("integrity_report_cached", rawJson)
+    }
+
+    fun saveAppIntegrityResponse(rawJson: String) {
+        store.saveLastAppIntegrityResponse(rawJson)
+        db.addDebugEvent("integrity_report_cached", rawJson)
+    }
+
     // --- File artifacts ---------------------------------------------------------
     fun writeTempSupportSnapshot(rawJson: String): String? =
         writeFile(File(context.cacheDir, "obsidian-support-last-sync.json"), rawJson)

@@ -141,6 +141,25 @@ fun LocalStateScreen(
             if (networkEvents.isEmpty()) Mono("(nenhum)")
             networkEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
 
+            Section("App Integrity / NativeGate / TamperCheck (Phase 12)")
+            Mono("lastNativeGateStatus = ${preview(debugValues[Constants.KEY_LAST_NATIVE_GATE_STATUS])}")
+            Mono("lastTamperScore = ${preview(debugValues[Constants.KEY_LAST_TAMPER_SCORE])}")
+            Mono("lastSignatureHashPreview = ${preview(debugValues[Constants.KEY_LAST_SIGNATURE_HASH_PREVIEW])}")
+            Mono("lastAppIntegrityReport = ${preview(debugValues[Constants.KEY_LAST_APP_INTEGRITY_REPORT])}")
+            Mono("lastAppIntegrityResponse = ${preview(debugValues[Constants.KEY_LAST_APP_INTEGRITY_RESPONSE])}")
+            val integrityEvents = events.filter {
+                it.eventType == "integrity_check_started" ||
+                    it.eventType == "tamper_check_completed" ||
+                    it.eventType == "native_gate_checked" ||
+                    it.eventType == "tamper_score_calculated" ||
+                    it.eventType == "native_gate_hint_viewed" ||
+                    it.eventType == "integrity_report_sent" ||
+                    it.eventType == "integrity_report_cached" ||
+                    it.eventType == "integrity_state_cleared"
+            }
+            if (integrityEvents.isEmpty()) Mono("(nenhum)")
+            integrityEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
+
             Section("Artefatos locais (arquivos)")
             if (artifacts.isEmpty()) Mono("(nenhum)")
             artifacts.forEach { Mono(it) }

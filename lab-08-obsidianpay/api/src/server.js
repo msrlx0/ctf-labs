@@ -29,6 +29,7 @@ const {
   environmentConfig,
   mobileVaultConfig,
   networkProfileConfig,
+  appIntegrityConfig,
   buildMobileConfig,
 } = require('./data');
 
@@ -477,6 +478,7 @@ app.get('/api/mobile/legacy/routes', requireAuth, (_req, res) => {
       '/api/mobile/internal/vault-mobile/status',
       '/api/mobile/internal/vault-mobile/unlock',
       '/api/mobile/internal/network-profile',
+      '/api/mobile/internal/app-integrity',
     ],
   });
 });
@@ -649,6 +651,43 @@ app.get('/api/mobile/internal/network-profile', requireAuth, (_req, res) => {
     ],
     nextStepHint: networkProfileConfig.note,
     // configure the app base URL to reach the lab API from emulator or phone
+  });
+});
+
+// --- App integrity attestation (Phase 12) ------------------------------------
+// Receives the client's NativeGate + TamperCheck integrity report.
+// Policy is "report-only": the server never blocks based on client-reported
+// values. The teaching point is that client-asserted integrity is always
+// patchable — hooking or patching the app can produce any desired report.
+// No flags, no credentials returned.
+app.post('/api/mobile/internal/app-integrity', requireAuth, (req, res) => {
+  if (!appIntegrityConfig.enableAppIntegrity) {
+    return sendError(res, 503, 'disabled', 'App integrity endpoint is not enabled.');
+  }
+
+  const {
+    tamperScore,
+    debuggable,
+    installerPackage,
+    packageNameStatus,
+    signatureHashPreview,
+    nativeLibraryLoaded,
+    nativeGateStatus,
+    bypassHintIds,
+  } = req.body || {};
+
+  const score = typeof tamperScore === 'number' ? tamperScore : 0;
+  // High tamper score triggers review-required; low score is accepted.
+  // Either way the server does not block — report-only policy.
+  const integrityDecision = score >= 50 ? 'review-required' : 'accepted';
+
+  res.json({
+    status: 'received',
+    integrityDecision,
+    integrityPolicy: appIntegrityConfig.integrityPolicy,       // "report-only"
+    nativeGatePolicy: appIntegrityConfig.nativeGatePolicy,     // "fallback-allowed"
+    serverTrust: 'client-asserted-integrity',
+    nextStepHint: 'client-side integrity checks are patchable in this lab',
   });
 });
 

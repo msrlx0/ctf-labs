@@ -263,6 +263,20 @@ const networkProfileConfig = Object.freeze({
   note: 'configure the app base URL to reach the lab API from emulator or phone',
 });
 
+// --- App integrity config (Phase 12) ----------------------------------------
+// Surfaced by POST /api/mobile/internal/app-integrity (auth required).
+// Policy is "report-only": the server records what the client reports (NativeGate
+// status, TamperCheck score) but does not block. Teaching point: client-side
+// integrity checks are always patchable; server trust must not be delegated to
+// client assertions.
+const appIntegrityConfig = Object.freeze({
+  enableAppIntegrity: true,
+  appIntegrityPath: '/api/mobile/internal/app-integrity',
+  integrityPolicy: 'report-only',
+  nativeGatePolicy: 'fallback-allowed',
+  note: 'client-side integrity checks are patchable in this lab',
+});
+
 // --- Mobile config -----------------------------------------------------------
 // Leaks internal resource NAMES (storage keys, deep link schemes, routes) that
 // help map the future APK, but never returns a flag directly.
@@ -291,6 +305,11 @@ function buildMobileConfig() {
     networkProfilePath: networkProfileConfig.networkProfilePath,
     pinningMode: networkProfileConfig.pinningMode,
     cleartextAllowed: networkProfileConfig.cleartextAllowed,
+    // App integrity / NativeGate / TamperCheck (Phase 12).
+    enableAppIntegrity: appIntegrityConfig.enableAppIntegrity,
+    appIntegrityPath: appIntegrityConfig.appIntegrityPath,
+    integrityPolicy: appIntegrityConfig.integrityPolicy,
+    nativeGatePolicy: appIntegrityConfig.nativeGatePolicy,
     mobileFeatureFlags: { ...featureFlags },
     clientStorageKeys: {
       sessionToken: 'obsidian.session.token',
@@ -314,5 +333,6 @@ module.exports = {
   environmentConfig,
   mobileVaultConfig,
   networkProfileConfig,
+  appIntegrityConfig,
   buildMobileConfig,
 };

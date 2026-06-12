@@ -14,10 +14,10 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 | **Fase 8** | **Trilha de reverse engineering** (`security/`): segredos hardcoded fragmentados (`HardcodedSecrets`), cripto fraca didática (`WeakCrypto`: Base64/XOR/SHA-1), assinatura local fraca (`LegacyRequestSigner`) e fluxo **Device Trust** → endpoint interno `/api/mobile/internal/device-trust` (assinatura SHA-1 fraca aceita pelo backend) + `reverse-hint`. | ✅ Concluída |
 | **Fase 9** | **Checagem de ambiente** (`environment/`): detecção de root (`RootDetector`) e emulador (`EmulatorDetector`) didáticos, `EnvironmentRiskEngine` calculando nível de risco local, tela `SecurityCheckScreen` + backend `POST /api/mobile/internal/environment-report` (monitor-only). Scaffold para futura exploração via Frida/patching. | ✅ Concluída |
 | **Fase 10** | **Secure Vault / local auth** (`auth/`): `LocalAuthState` + `BiometricGate` scaffold + `VaultScreen`, fallback PIN fraco hardcoded, estado local de auth inseguro (SharedPreferences), backend `vault-mobile/status` e `vault-mobile/unlock` (server trusts client-side localAuth). | ✅ Concluída |
-| **Fase 11** | **Network security / certificate pinning scaffold** (`network/`): `NetworkSecurityProfile`, `PinningPolicy`, `ApiHostOverrideScreen` (override de base URL emulador/celular físico), backend `GET /api/mobile/internal/network-profile`, cleartext local, modos didáticos de pinning. | ✅ Atual |
-| Fase 12 | Trilha anti-analysis avançada: Frida scripts reais, binary patching. | 🔜 Planejada |
-| Fase 12 | Trilha anti-analysis avançada: Frida scripts reais, binary patching. | 🔜 Planejada |
-| Fase 13 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
+| **Fase 11** | **Network security / certificate pinning scaffold** (`network/`): `NetworkSecurityProfile`, `PinningPolicy`, `ApiHostOverrideScreen` (override de base URL emulador/celular físico), backend `GET /api/mobile/internal/network-profile`, cleartext local, modos didáticos de pinning. | ✅ Concluída |
+| **Fase 12** | **App Integrity / NativeGate / TamperCheck scaffold** (`integrity/`): `NativeGate` (JNI opcional/fallback-safe), `TamperCheck` (debuggable/installer/signature/packageName), `IntegrityScreen`, backend `POST /api/mobile/internal/app-integrity` (report-only). | ✅ Atual |
+| Fase 13 | Trilha anti-analysis avançada: Frida scripts reais, binary patching com NDK real. | 🔜 Planejada |
+| Fase 14 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
 
 ## Escopo da Fase 1 (entregue)
 

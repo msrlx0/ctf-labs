@@ -2,14 +2,15 @@
 
 > **Documento interno do instrutor.** Não é material do aluno.
 >
-> **Estado: Fase 10.** Este walkthrough descreve a arquitetura, as cadeias
+> **Estado: Fase 12.** Este walkthrough descreve a arquitetura, as cadeias
 > futuras em alto nível, as **vulnerabilidades de backend da Fase 2**, o **app
 > Android base da Fase 3**, o **armazenamento local inseguro da Fase 4**, os
 > **deep links / QR / WebView da Fase 5**, a **WebView JavaScript bridge da Fase
 > 6**, os **componentes Android exportados da Fase 7**, a **trilha de reverse
-> engineering da Fase 8**, a **checagem de ambiente (root/emulador) da Fase 9**
-> e o **Secure Vault com fluxo local de autenticação da Fase 10** (visão de
-> instrutor, sem cadeia final completa).
+> engineering da Fase 8**, a **checagem de ambiente (root/emulador) da Fase 9**,
+> o **Secure Vault com fluxo local de autenticação da Fase 10**, o **Network
+> Security / API Host override da Fase 11** e o **App Integrity / NativeGate /
+> TamperCheck scaffold da Fase 12** (visão de instrutor, sem cadeia final completa).
 > Ele **não** contém:
 > - a cadeia/solução final do Lab 8,
 > - payloads avançados ou exploits prontos extensos.
@@ -680,7 +681,81 @@ Sem flags, sem credenciais. Apenas âncoras didáticas.
 
 ---
 
-## 6. Notas de manutenção
+## 7. Fase 12 — App Integrity / NativeGate / TamperCheck (instrutor)
+
+### O que foi implementado
+
+**NativeGate** (`integrity/NativeGate.kt`):
+- Tenta carregar a biblioteca nativa opcional `obsidian_native_gate` via `System.loadLibrary`.
+- Se ausente (sem NDK), cai em fallback Kotlin seguro — o app não quebra.
+- Método `getNativeGateStatus()` retorna um `NativeGateResult` com `statusLabel`,
+  `bypassHintId` e `patchTargetName`.
+- Bypass: hook o `init` block (ou o método JNI `nativeGateCheck`) para forçar
+  `nativeLibraryLoaded = true` e `statusCode = 1`. Com Frida:
+  ```js
+  Java.use("com.obsidianpay.mobile.integrity.NativeGate").getNativeGateStatus.implementation = function () {
+    // retornar NativeGateResult com statusLabel desejado
+  };
+  ```
+- Com apktool: modificar o smali que chama `System.loadLibrary` para não lançar
+  exceção (ou simplesmente remover o try/catch).
+- strings tool: `strings libobsidian_native_gate.so` (quando presente) expõe
+  o hint nativo — daí o bypass hint `strings-libobsidian-native`.
+
+**TamperCheck** (`integrity/TamperCheck.kt`):
+- Checa `FLAG_DEBUGGABLE` via `ApplicationInfo` — bypass hint `patch-debuggable-check`.
+- Checa installer package via `getInstallerPackageName` — bypass hint `hook-package-manager`.
+- Gera SHA-256 da assinatura do APK como preview — um APK recompilado/repackageado
+  produz hash diferente (bypass hint `repackage-signature-mismatch`).
+- Checa se `packageName == "com.obsidianpay.mobile"` — bypass hint `package-name-check`.
+- Calcula `tamperScore` (0..100) — bypass hint `tamper-score`.
+- Todos os checks são cliente-only: trivialmente bypassáveis via Frida.
+
+**IntegrityScreen** (`ui/IntegrityScreen.kt`):
+- Tela legítima de "App Integrity" — não chamada de vulnerabilidade.
+- Botões: "Run Integrity Check", "Show Native Gate", "Send Integrity Report",
+  "Clear Integrity State".
+- Registra eventos: `integrity_check_started`, `tamper_check_completed`,
+  `native_gate_checked`, `tamper_score_calculated`, `native_gate_hint_viewed`,
+  `integrity_report_sent`, `integrity_report_cached`, `integrity_state_cleared`.
+
+**Backend** (`/api/mobile/internal/app-integrity`):
+- Recebe o relatório JSON do cliente.
+- Retorna `integrityDecision` (accepted ou review-required) baseado em `tamperScore`.
+- `integrityPolicy: "report-only"` — o servidor nunca bloca o app.
+- `serverTrust: "client-asserted-integrity"` — ponto de ensino.
+- `nextStepHint: "client-side integrity checks are patchable in this lab"`.
+
+### Por que é patchável
+
+O fluxo inteiro é client-side:
+1. O `NativeGate` decide `nativeLibraryLoaded` dentro do processo do app.
+2. O `TamperCheck` lê flags do próprio processo — um hook Frida pode retornar
+   qualquer valor para `FLAG_DEBUGGABLE`, `getInstallerPackageName`, assinatura.
+3. O `tamperScore` é calculado cliente-side e enviado como JSON sem qualquer
+   assinatura HMAC ou nonce — a requisição pode ser forjada diretamente.
+4. O servidor não tem como verificar independentemente — `integrityPolicy: "report-only"`.
+
+### Fluxo futuro com JADX/apktool/Frida
+
+1. JADX: localizar `NativeGate.kt` → ver `System.loadLibrary("obsidian_native_gate")`.
+2. JADX: localizar `TamperCheck.kt` → ver `FLAG_DEBUGGABLE`, `getInstallerPackageName`.
+3. apktool: desmontar → modificar smali de `TamperCheck.run()` para retornar score 0.
+4. Frida: hook `TamperCheck.run()` → retornar `TamperResult` com `tamperScore=0`.
+5. Frida: hook `NativeGate.getNativeGateStatus()` → retornar status "native-gate-open".
+6. Enviar relatório modificado ao backend → receber `integrityDecision: "accepted"`.
+
+### O que NÃO está nesta fase (Fase 12)
+
+- Biblioteca C/C++ real obrigatória (sem NDK necessário para compilar)
+- Frida script pronto de bypass
+- Certificate pinning real
+- QR scanner por câmera real
+- Exploit real automatizado
+
+---
+
+## 8. Notas de manutenção
 
 - Flags reais **não** entram em `README.md` nem `STUDENT-GUIDE.md`.
 - Soluções e payloads só serão adicionados aqui (ou em SOLUTION.md) quando a

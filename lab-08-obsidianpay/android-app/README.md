@@ -1,4 +1,4 @@
-# ObsidianPay — App Android (Fase 11)
+# ObsidianPay — App Android (Fase 12)
 
 App Android nativo (Kotlin + Jetpack Compose) que consome a API mobile do
 **Lab 08 — ObsidianPay Mobile**. Mantém cache local/offline (Fase 4), suporta
@@ -8,9 +8,12 @@ internos** (pacote `platform/`, Fase 7), um fluxo **Device Trust** com trilha de
 reverse engineering (pacote `security/`, Fase 8), uma tela **Security Check** com
 checagem local de ambiente/dispositivo (root e emulador, pacote `environment/`,
 Fase 9), um **Secure Vault** com fluxo local de autenticação (biometria scaffold +
-fallback PIN, pacote `auth/`, Fase 10) e, a partir da Fase 11, um scaffold de
+fallback PIN, pacote `auth/`, Fase 10), a partir da Fase 11 um scaffold de
 **Network Security / Certificate Pinning** (pacote `network/`) com tela **API Host**
-para override de base URL (emulador ↔ celular físico).
+para override de base URL (emulador ↔ celular físico) e, a partir da Fase 12, um
+scaffold de **App Integrity** com `NativeGate` e `TamperCheck` (pacote `integrity/`)
+com tela **App Integrity**. JNI/NDK é opcional nesta fase — o app compila sem NDK
+e usa fallback Kotlin quando a biblioteca nativa está ausente.
 
 > **Ambiente somente local.** O app fala com o backend do lab em
 > `http://10.0.2.2:8102` (emulador) ou em um IP de LAN configurável via tela

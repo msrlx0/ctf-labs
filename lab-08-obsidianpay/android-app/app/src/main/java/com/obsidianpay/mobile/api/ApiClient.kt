@@ -283,6 +283,26 @@ class ApiClient(initialBaseUrl: String = Constants.DEFAULT_BASE_URL) {
     fun getNetworkProfile(token: String): ApiResult<String> =
         execute(builder(Constants.NETWORK_PROFILE_PATH, token).get().build())
 
+    // --- App integrity report (Phase 12) ------------------------------------
+
+    /**
+     * Posts the client-assembled integrity report (NativeGate + TamperCheck) to
+     * the server's attestation endpoint. Returns the raw JSON body.
+     *
+     * The server response includes `integrityDecision` (accepted / review-required)
+     * and `integrityPolicy` (report-only) — teaching that all client-side checks
+     * are patchable and the server cannot independently verify them.
+     */
+    fun sendAppIntegrityReport(token: String, reportJson: String): String {
+        val req = builder(Constants.APP_INTEGRITY_PATH, token)
+            .post(reportJson.toRequestBody(jsonMedia))
+            .build()
+        return when (val result = execute(req)) {
+            is ApiResult.Success -> result.rawBody
+            is ApiResult.Error -> """{"error":"${result.message}","httpCode":${result.httpCode ?: -1}}"""
+        }
+    }
+
     companion object {
         private const val TAG = "ObsidianApi"
     }
