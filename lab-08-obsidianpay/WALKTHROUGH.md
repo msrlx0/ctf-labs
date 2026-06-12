@@ -755,7 +755,72 @@ O fluxo inteiro é client-side:
 
 ---
 
-## 8. Notas de manutenção
+## 8. Fase 13 — Dynamic Instrumentation Scaffold (instrutor)
+
+> **Estado: Fase 13.** Esta fase adiciona o scaffold didático de instrumentação
+> dinâmica: scripts Frida específicos do lab, playbook ADB e documentação de
+> pentest mobile em `docs/mobile-pentest/`.
+
+### Arquivos adicionados
+
+```
+lab-08-obsidianpay/
+├── docs/mobile-pentest/
+│   ├── SETUP.md              # ambiente: emulador, celular físico, Burp, Frida, adb, JADX, apktool
+│   ├── PLAYBOOK.md           # sequência de tarefas de pentest manual
+│   └── INSTRUCTOR-NOTES.md  # mapa de hint IDs → classes do app (este nível de detalhe)
+├── tools/frida/
+│   ├── README.md                      # como usar os scripts, spawn/attach mode
+│   ├── 01-environment-bypass.js       # RootDetector / EmulatorDetector / EnvironmentRiskEngine
+│   ├── 02-biometric-vault-bypass.js   # LocalAuthState / BiometricGate
+│   ├── 03-network-pinning-observer.js # PinningPolicy / NetworkSecurityProfile / CertificatePinner
+│   ├── 04-integrity-native-bypass.js  # NativeGate / TamperCheck
+│   └── 05-webview-bridge-observer.js  # WebView addJavascriptInterface / ObsidianSupportBridge
+└── tools/adb/
+    ├── README.md                      # referência de comandos ADB do lab
+    └── lab08-adb-playbook.sh          # playbook comentado
+```
+
+### Propósito dos scripts Frida
+
+Cada script é um **scaffold didático** — não um exploit pronto. Demonstra os
+pontos de hook corretos com `try/catch` por classe/método e logs
+`[ObsidianPay Lab]`. O aluno deve completar ou ajustar o script para o objetivo
+pretendido.
+
+Os scripts são exclusivos do pacote `com.obsidianpay.mobile` e do ambiente
+local autorizado. Não devem ser usados contra apps reais.
+
+### Mapa hint ID → script
+
+| Hint ID | Script | Classe |
+|---|---|---|
+| `hooks-change-return-values` | `01-environment-bypass.js` | `RootDetector`, `EmulatorDetector` |
+| `patch-risk-engine-result` | `01-environment-bypass.js` | `EnvironmentRiskEngine` |
+| `env-check-local-only` | `01-environment-bypass.js` | `EnvironmentRiskEngine` |
+| `biometric-result-hook` | `02-biometric-vault-bypass.js` | `BiometricGate` |
+| `force-auth-decision-true` | `02-biometric-vault-bypass.js` | `LocalAuthState.validateFallbackPin` |
+| `patch-local-auth-state` | `02-biometric-vault-bypass.js` | `LocalAuthState.isVaultUnlocked` |
+| `okhttp-certificate-pinner-hook` | `03-network-pinning-observer.js` | `CertificatePinner.check` (OkHttp) |
+| `trust-user-ca` | `03-network-pinning-observer.js` | `NetworkSecurityProfile` |
+| `network-config-cleartext-override` | `03-network-pinning-observer.js` | `NetworkSecurityProfile` |
+| `jni-return-value-hook` | `04-integrity-native-bypass.js` | `NativeGate.getNativeGateStatus` |
+| `patch-native-gate-result` | `04-integrity-native-bypass.js` | `NativeGate` |
+| `hook-package-manager` | `04-integrity-native-bypass.js` | `TamperCheck.getInstallerPackage` |
+| `patch-debuggable-check` | `04-integrity-native-bypass.js` | `TamperCheck.isDebuggable` |
+| `repackage-signature-mismatch` | `04-integrity-native-bypass.js` | `TamperCheck.getPackageNameStatus` |
+
+### O que NÃO está nesta fase
+
+- Exploit end-to-end automatizado.
+- Frida server setup automatizado.
+- Biblioteca NDK C/C++ real.
+- Bypass completo entregue "um clique".
+- Flags nos scripts ou docs de instrumentação.
+
+---
+
+## 9. Notas de manutenção
 
 - Flags reais **não** entram em `README.md` nem `STUDENT-GUIDE.md`.
 - Soluções e payloads só serão adicionados aqui (ou em SOLUTION.md) quando a

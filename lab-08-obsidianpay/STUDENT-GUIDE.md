@@ -168,6 +168,23 @@ Para as fases com o app Android:
 
 Na Fase 1, basta Docker e `curl`.
 
+## 4.1 Ferramentas opcionais para fase mobile avançada (Fase 13)
+
+Para análise dinâmica avançada (instrumentação em runtime), as ferramentas acima
+continuam sendo as mesmas. Esta fase adiciona material de suporte específico:
+
+- **`docs/mobile-pentest/SETUP.md`** — guia de ambiente (Frida, objection, adb, JADX, apktool, Burp Suite).
+- **`docs/mobile-pentest/PLAYBOOK.md`** — sequência de tarefas de pentest manual.
+- **`tools/frida/`** — scripts didáticos específicos do lab (5 scripts, um por domínio).
+- **`tools/adb/`** — playbook de comandos ADB comentados.
+
+O uso dessas ferramentas é **opcional** — as análises estáticas e os fluxos de
+UI do app já entregam boa parte do exercício. Frida/objection são necessários
+para a camada de instrumentação em runtime (bypass de checks client-side).
+
+> Sem solução completa aqui. O uso das ferramentas e a interpretação dos
+> resultados fazem parte do exercício.
+
 ---
 
 ## 5. O que NÃO fazer

@@ -798,3 +798,51 @@ Esperado: `"status":"received"`, `"integrityDecision":"accepted"`, `"integrityPo
 - [ ] Sem `FLAG{` em docs públicos e nas novas classes `integrity/` e `IntegrityScreen`.
 - [ ] Sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README.
 - [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+---
+
+## Fase 13 — Dynamic Instrumentation Scaffold
+
+> Atalho: `bash scripts/validate-phase13.sh` (estrutura). Não exige Frida,
+> adb, Android SDK nem dispositivo conectado.
+
+### F13.1 — Estrutural (sem backend, sem dispositivo)
+
+```bash
+bash scripts/validate-phase13.sh
+```
+
+Esperado: todos os checks PASS.
+
+### F13.2 — Verificar scripts Frida
+
+```bash
+ls tools/frida/
+# esperado: README.md + 5 scripts .js
+```
+
+### F13.3 — Verificar playbook ADB
+
+```bash
+ls tools/adb/
+# esperado: README.md + lab08-adb-playbook.sh
+```
+
+### F13.4 — Verificar docs de pentest
+
+```bash
+ls docs/mobile-pentest/
+# esperado: SETUP.md + PLAYBOOK.md + INSTRUCTOR-NOTES.md
+```
+
+### Critérios de aceite (Fase 13)
+
+- [ ] `validate-phase1..12.sh` continuam passando.
+- [ ] `validate-phase13.sh` passa.
+- [ ] `docs/mobile-pentest/SETUP.md`, `PLAYBOOK.md` e `INSTRUCTOR-NOTES.md` criados.
+- [ ] `tools/frida/README.md` e 5 scripts `.js` criados.
+- [ ] `tools/adb/README.md` e `lab08-adb-playbook.sh` criados.
+- [ ] Scripts Frida contêm `Java.perform`, `[ObsidianPay Lab]` e hint IDs.
+- [ ] Sem `FLAG{` em docs públicos e em tools/.
+- [ ] Sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README.
+- [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
