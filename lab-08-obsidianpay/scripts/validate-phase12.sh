@@ -117,6 +117,7 @@ need_grep_file "Run Integrity Check"            "$INTEGRITY_SCREEN"       "botã
 need_grep_file "Show Native Gate"               "$INTEGRITY_SCREEN"       "botão Show Native Gate"
 need_grep_file "Send Integrity Report"          "$INTEGRITY_SCREEN"       "botão Send Integrity Report"
 need_grep_file "Clear Integrity State"          "$INTEGRITY_SCREEN"       "botão Clear Integrity State"
+need_grep_file 'cache.addEvent("integrity_check_started", "screen")' "$INTEGRITY_SCREEN" 'addEvent integrity_check_started com aspas corretas'
 
 info "Conferindo ApiClient, Constants e storage..."
 need_grep_file "APP_INTEGRITY_PATH"             "$CONSTANTS"              "APP_INTEGRITY_PATH em Constants"
@@ -137,12 +138,14 @@ need_grep_file "clearIntegrityState"            "$SESSION_STORE"          "clear
 
 need_grep_file "saveAppIntegrityReport"         "$CACHE_MANAGER"          "saveAppIntegrityReport em LocalCacheManager"
 need_grep_file "saveAppIntegrityResponse"       "$CACHE_MANAGER"          "saveAppIntegrityResponse em LocalCacheManager"
+need_grep_file 'fun getLastNativeGateStatus(): String?' "$SESSION_STORE"  "getLastNativeGateStatus correto em InsecureSessionStore"
 
 info "Conferindo LocalStateScreen..."
 need_grep_file "KEY_LAST_NATIVE_GATE_STATUS"    "$LOCAL_STATE_SCREEN"     "KEY_LAST_NATIVE_GATE_STATUS em LocalStateScreen"
 need_grep_file "KEY_LAST_TAMPER_SCORE"          "$LOCAL_STATE_SCREEN"     "KEY_LAST_TAMPER_SCORE em LocalStateScreen"
 need_grep_file "KEY_LAST_APP_INTEGRITY_REPORT"  "$LOCAL_STATE_SCREEN"     "KEY_LAST_APP_INTEGRITY_REPORT em LocalStateScreen"
 need_grep_file "integrity_check_started"        "$LOCAL_STATE_SCREEN"     "evento integrity na LocalStateScreen"
+need_grep_file 'App Integrity / NativeGate / TamperCheck' "$LOCAL_STATE_SCREEN" "seção App Integrity / NativeGate / TamperCheck em LocalStateScreen"
 
 # --- Backend -----------------------------------------------------------------
 info "Conferindo backend..."
@@ -200,6 +203,10 @@ reject_grep_tree 'bypassHintId =BiometricGate'        "$SRC"  "sem typo bypassHi
 reject_grep_tree 'ObsidianScaffold(title = API Host"' "$SRC"  "sem typo title sem aspas de abertura"
 reject_grep_tree 'apiClientsetBaseUrlForSession'       "$SRC"  "sem typo apiClientsetBaseUrlForSession"
 reject_grep_re_tree 'network-config-cleartext-overrid\b' "$SRC" "sem typo network-config-cleartext-overrid"
+# Fase 12 — typos específicos
+reject_grep_tree 'cache.addEvent(integrity_check_started"'  "$SRC"  "sem typo addEvent sem aspas de abertura"
+reject_grep_tree 'getLastNativeGatStatus'                   "$SRC"  "sem typo getLastNativeGatStatus (falta e em Gate)"
+reject_grep_re_tree 'App Integrit[^y]'                      "$SRC"  "sem typo App Integrit sem y"
 
 # --- Verificar que labs 1-7 não foram alterados ------------------------------
 info "Verificando que labs 1..7 não foram alterados nesta branch..."
