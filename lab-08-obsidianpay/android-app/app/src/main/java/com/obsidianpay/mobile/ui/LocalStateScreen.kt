@@ -102,6 +102,17 @@ fun LocalStateScreen(
             if (trustEvents.isEmpty()) Mono("(nenhum)")
             trustEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
 
+            Section("Environment / Risk Check (Phase 9)")
+            Mono("lastEnvironmentReport = ${preview(debugValues[Constants.KEY_LAST_ENVIRONMENT_REPORT])}")
+            Mono("lastEnvironmentResponse = ${preview(debugValues[Constants.KEY_LAST_ENVIRONMENT_RESPONSE])}")
+            val envEvents = events.filter {
+                it.eventType.startsWith("environment_") ||
+                    it.eventType.startsWith("root_detection") ||
+                    it.eventType.startsWith("emulator_detection")
+            }
+            if (envEvents.isEmpty()) Mono("(nenhum)")
+            envEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
+
             Section("Artefatos locais (arquivos)")
             if (artifacts.isEmpty()) Mono("(nenhum)")
             artifacts.forEach { Mono(it) }

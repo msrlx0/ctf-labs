@@ -169,6 +169,22 @@ class LocalCacheManager(
         store.saveLastEncodedOperatorHint(value)
     }
 
+    // --- Environment / risk-check (Phase 9) -------------------------------------
+    fun saveLastEnvironmentReportJson(rawJson: String) {
+        store.saveLastEnvironmentReportJson(rawJson)
+        db.addDebugEvent("environment_check_started", rawJson)
+    }
+
+    fun saveLastEnvironmentResponseJson(rawJson: String) {
+        store.saveLastEnvironmentResponseJson(rawJson)
+        db.addDebugEvent("environment_report_cached", rawJson)
+    }
+
+    fun clearEnvironmentReport() {
+        store.clearEnvironmentReport()
+        db.addDebugEvent("environment_report_cleared", null)
+    }
+
     // --- File artifacts ---------------------------------------------------------
     fun writeTempSupportSnapshot(rawJson: String): String? =
         writeFile(File(context.cacheDir, "obsidian-support-last-sync.json"), rawJson)

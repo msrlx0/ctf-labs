@@ -107,6 +107,27 @@ class InsecureSessionStore(context: Context) {
     fun saveLastEncodedOperatorHint(value: String) =
         putAndTouch(Constants.KEY_LAST_ENCODED_OPERATOR_HINT, value)
 
+    // --- Environment / risk-check (Phase 9) ------------------------------------
+
+    fun saveLastEnvironmentReportJson(rawJson: String) =
+        putAndTouch(Constants.KEY_LAST_ENVIRONMENT_REPORT, rawJson)
+
+    fun saveLastEnvironmentResponseJson(rawJson: String) =
+        putAndTouch(Constants.KEY_LAST_ENVIRONMENT_RESPONSE, rawJson)
+
+    fun getLastEnvironmentReportJson(): String? =
+        prefs.getString(Constants.KEY_LAST_ENVIRONMENT_REPORT, null)
+
+    fun getLastEnvironmentResponseJson(): String? =
+        prefs.getString(Constants.KEY_LAST_ENVIRONMENT_RESPONSE, null)
+
+    fun clearEnvironmentReport() {
+        prefs.edit()
+            .remove(Constants.KEY_LAST_ENVIRONMENT_REPORT)
+            .remove(Constants.KEY_LAST_ENVIRONMENT_RESPONSE)
+            .apply()
+    }
+
     private fun putAndTouch(key: String, value: String) {
         prefs.edit()
             .putString(key, value)
@@ -190,6 +211,8 @@ class InsecureSessionStore(context: Context) {
         Constants.KEY_LAST_DEVICE_TRUST to getLastDeviceTrustJson(),
         Constants.KEY_LAST_LEGACY_SIGNATURE to getLastLegacySignature(),
         Constants.KEY_LAST_ENCODED_OPERATOR_HINT to getLastEncodedOperatorHint(),
+        Constants.KEY_LAST_ENVIRONMENT_REPORT to getLastEnvironmentReportJson(),
+        Constants.KEY_LAST_ENVIRONMENT_RESPONSE to getLastEnvironmentResponseJson(),
         Constants.KEY_DEBUG_LAST_SYNC to getLastSyncTimestamp().takeIf { it > 0 }?.toString(),
     )
 

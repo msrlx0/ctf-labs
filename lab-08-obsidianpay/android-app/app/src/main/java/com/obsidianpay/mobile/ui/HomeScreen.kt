@@ -118,6 +118,9 @@ fun HomeScreen(
             // Routine device security/attestation check.
             OutlinedButton(onClick = { onNavigate(Screen.DeviceTrust) }, modifier = Modifier.fillMaxWidth()) { Text("Device Trust") }
 
+            // Environment / risk check (Phase 9).
+            OutlinedButton(onClick = { onNavigate(Screen.SecurityCheck) }, modifier = Modifier.fillMaxWidth()) { Text("Security Check") }
+
             // Internal support/dev tooling — local state inspector.
             OutlinedButton(onClick = { onNavigate(Screen.LocalState) }, modifier = Modifier.fillMaxWidth()) { Text("Local State") }
             OutlinedButton(

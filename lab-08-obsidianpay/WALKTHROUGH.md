@@ -2,11 +2,13 @@
 
 > **Documento interno do instrutor.** Não é material do aluno.
 >
-> **Estado: Fase 6.** Este walkthrough descreve a arquitetura, as cadeias
+> **Estado: Fase 9.** Este walkthrough descreve a arquitetura, as cadeias
 > futuras em alto nível, as **vulnerabilidades de backend da Fase 2**, o **app
 > Android base da Fase 3**, o **armazenamento local inseguro da Fase 4**, os
-> **deep links / QR / WebView da Fase 5** e, agora, a **WebView JavaScript bridge
-> da Fase 6** (visão de instrutor, sem cadeia final longa).
+> **deep links / QR / WebView da Fase 5**, a **WebView JavaScript bridge da Fase
+> 6**, os **componentes Android exportados da Fase 7**, a **trilha de reverse
+> engineering da Fase 8** e, agora, a **checagem de ambiente (root/emulador) da
+> Fase 9** (visão de instrutor, sem cadeia final completa).
 > Ele **não** contém:
 > - a cadeia/solução final do Lab 8,
 > - payloads avançados ou exploits prontos extensos.
@@ -423,12 +425,87 @@ Resumo de status (atualizado na Fase 2):
 | 17 | WebView | JavaScript bridge exposure | implemented-app |
 | 18 | WebView | Deep link → WebView chain | implemented-app |
 | 19 | WebView | Local file / token disclosure | scaffolded-app |
-| 20 | Anti-analysis/Auth | Root detection bypass | planned |
-| 21 | Anti-analysis/Auth | Emulator detection bypass | planned |
+| 20 | Anti-analysis/Auth | Root detection bypass | scaffolded-app |
+| 21 | Anti-analysis/Auth | Emulator detection bypass | scaffolded-app |
+| 21b | Anti-analysis/Auth | Client-side environment trust | implemented-app/backend |
+| 21c | Anti-analysis/Auth | Frida bypass (environment detectors) | planned |
+| 21d | Anti-analysis/Auth | Binary patching (risk engine) | planned |
 | 22 | Anti-analysis/Auth | Biometric vault backend gate | scaffolded |
-| 23 | Anti-analysis/Auth | Binary patching | planned |
+| 23 | Anti-analysis/Auth | Binary patching (geral) | planned |
 | 24 | Anti-analysis/Auth | API broken access control | implemented-backend |
 | 25 | Anti-analysis/Auth | Mass assignment | implemented-backend |
+
+---
+
+## 6. Fase 9 — visão do instrutor: checagem de ambiente
+
+### O que foi implementado
+
+O pacote `environment/` introduz três componentes didáticos:
+
+**`RootDetector.kt`** — verifica indicadores de root:
+- Paths de `su` (`/system/bin/su`, `/system/xbin/su`, `/sbin/su`, `/su/bin/su`,
+  `/system/app/Superuser.apk`, `/system/bin/.ext/.su`)
+- Pacotes de root managers via `PackageManager` (`com.topjohnwu.magisk`,
+  `eu.chainfire.supersu`, `com.koushikdutta.superuser`)
+- Build tag `test-keys`
+- Props `ro.debuggable=1` e `ro.secure=0` (reflexão sobre `SystemProperties`)
+
+**`EmulatorDetector.kt`** — verifica campos de `Build.*`:
+- `FINGERPRINT` contém `generic`/`unknown`
+- `MODEL` contém `google_sdk`/`emulator`/`android sdk built for x86`
+- `MANUFACTURER` contém `Genymotion`
+- `BRAND`/`DEVICE` contém `generic`
+- `PRODUCT` contém `sdk`/`google_sdk`/`emulator`/`vbox86p`
+- `HARDWARE` contém `goldfish`/`ranchu`/`vbox86`
+
+**`EnvironmentRiskEngine.kt`** — combina os dois detectores:
+- `riskLevel` = `low` / `medium` / `high`
+- `bypassHintId` aponta a estratégia de bypass (sem entregar o script Frida)
+- Resultado serializado em JSON para local storage e backend
+
+### Por que é bypassável por design
+
+1. **Todos os checks rodam no processo do app** (`env-check-local-only`) — não há
+   verificação server-side independente. Um atacante pode ignorar completamente
+   esses checks via proxy (não enviando o report), via injeção de bytecode antes
+   do check, ou usando Frida para interceptar na camada Dalvik.
+
+2. **Frida pode hookar qualquer método Kotlin** (`hooks-change-return-values`):
+   ```javascript
+   // Exemplo conceitual (NÃO um script pronto)
+   // Hookar RootDetector.check() para retornar isRooted=false
+   // Hookar EmulatorDetector.check() para retornar isEmulator=false
+   // Hookar EnvironmentRiskEngine.run() para retornar riskLevel="low"
+   ```
+
+3. **Binary patching** (`patch-risk-engine-result`): com apktool + smali, a
+   constante retornada em `EnvironmentRiskEngine.toJson()` pode ser hardcodada
+   como `"riskLevel":"low"` independente dos checks.
+
+4. **O backend é monitor-only**: mesmo que os sinais cheguem, o servidor não
+   bloqueia o app (`serverPolicy: "monitor-only"`). A decisão de confiar no
+   cliente é sempre a raiz do problema.
+
+### O que o aluno encontra no armazenamento local
+
+Após rodar o Security Check:
+- `SharedPreferences`: `obsidian.debug.last_environment_report` (JSON do report)
+  e `obsidian.debug.last_environment_response` (resposta do servidor)
+- `SQLite debug_events`: eventos `environment_check_started`,
+  `root_detection_completed`, `emulator_detection_completed`,
+  `environment_risk_calculated`, `environment_report_sent`,
+  `environment_report_cached`
+- `LocalStateScreen` mostra as previews desses valores
+
+### O que NÃO está nesta fase
+
+- Frida scripts reais (deixado para fase futura)
+- Certificate pinning real
+- Native lib / JNI
+- Biometria
+- Binary patching real
+- QR scanner por câmera real
 
 ---
 

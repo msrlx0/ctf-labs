@@ -227,6 +227,17 @@ const vaultStatusByRole = {
   },
 };
 
+// --- Environment / risk-check config (Phase 9) -------------------------------
+// Policy is monitor-only: the server records what the client reports but never
+// blocks based on root/emulator signals. This is the teaching point: a
+// client-side check that the server never enforces is trivially bypassable.
+const environmentConfig = Object.freeze({
+  enableEnvironmentChecks: true,
+  environmentReportPath: '/api/mobile/internal/environment-report',
+  serverPolicy: 'monitor-only',
+  note: 'Client-side environment checks are advisory. Bypass: hook detectors or patch riskLevel.',
+});
+
 // --- Mobile config -----------------------------------------------------------
 // Leaks internal resource NAMES (storage keys, deep link schemes, routes) that
 // help map the future APK, but never returns a flag directly.
@@ -266,5 +277,6 @@ module.exports = {
   featureFlags,
   vaultStatusByRole,
   legacyMobileTrust,
+  environmentConfig,
   buildMobileConfig,
 };

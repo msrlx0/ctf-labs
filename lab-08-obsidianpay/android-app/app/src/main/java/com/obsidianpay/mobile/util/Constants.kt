@@ -76,4 +76,9 @@ object Constants {
     const val KEY_LAST_DEVICE_TRUST: String = "obsidian.debug.last_device_trust"
     const val KEY_LAST_LEGACY_SIGNATURE: String = "obsidian.debug.last_legacy_signature"
     const val KEY_LAST_ENCODED_OPERATOR_HINT: String = "obsidian.debug.last_encoded_operator_hint"
+
+    // Environment / risk-check (Phase 9). Stored plaintext; didactic.
+    const val ENVIRONMENT_REPORT_PATH: String = "/api/mobile/internal/environment-report"
+    const val KEY_LAST_ENVIRONMENT_REPORT: String = "obsidian.debug.last_environment_report"
+    const val KEY_LAST_ENVIRONMENT_RESPONSE: String = "obsidian.debug.last_environment_response"
 }

@@ -26,6 +26,7 @@ const {
   featureFlags,
   vaultStatusByRole,
   legacyMobileTrust,
+  environmentConfig,
   buildMobileConfig,
 } = require('./data');
 
@@ -470,6 +471,7 @@ app.get('/api/mobile/legacy/routes', requireAuth, (_req, res) => {
       '/api/mobile/internal/vault-status',
       '/api/mobile/internal/device-trust',
       '/api/mobile/internal/reverse-hint',
+      '/api/mobile/internal/environment-report',
     ],
   });
 });
@@ -525,6 +527,37 @@ app.post('/api/mobile/internal/device-trust', requireAuth, (req, res) => {
     deviceId,
     trustLevel: 'support-diagnostics',
     nextStepHint: 'review local operator hint and mobile config',
+  });
+});
+
+// --- Internal environment report (Phase 9) -----------------------------------
+// Receives the on-device root/emulator risk report. Policy is monitor-only:
+// the app is never blocked even if root/emulator signals are present.
+// The check is advisory and entirely client-side — a didactic teaching seam.
+app.post('/api/mobile/internal/environment-report', requireAuth, (req, res) => {
+  if (!environmentConfig.enableEnvironmentChecks) {
+    return sendError(res, 503, 'disabled', 'Environment checks are not enabled.');
+  }
+
+  const {
+    root,
+    emulator,
+    rootScore,
+    emulatorScore,
+    riskLevel,
+    signals,
+    bypassHintId,
+  } = req.body || {};
+
+  const effectiveRisk = typeof riskLevel === 'string' ? riskLevel : 'unknown';
+  const environmentStatus = effectiveRisk === 'high' ? 'review-required' : 'accepted';
+
+  res.json({
+    status: 'received',
+    environmentStatus,
+    riskLevel: effectiveRisk,
+    serverPolicy: 'monitor-only',
+    nextStepHint: 'client-side checks are advisory in this lab',
   });
 });
 

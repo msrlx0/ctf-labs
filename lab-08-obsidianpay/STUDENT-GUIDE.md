@@ -99,6 +99,12 @@ Com o backend no ar (`127.0.0.1:8102`):
 > segredos, assinatura nem rotas internas completas — descobrir o "como" é a sua
 > parte do exercício. (Sem flags.)
 
+> **Security Check:** a Início também tem uma tela **Security Check**. Ela
+> executa uma checagem de segurança local do dispositivo e pode enviar um
+> relatório de ambiente para o servidor. Como de costume: rode, observe o
+> resultado e o que fica salvo localmente. (Este guia não explica como contornar
+> a checagem — a investigação é sua.)
+
 Detalhes e build via linha de comando em
 [android-app/README.md](./android-app/README.md).
 

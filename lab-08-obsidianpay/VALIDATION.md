@@ -598,3 +598,62 @@ Assinatura errada → 403. `GET /api/mobile/internal/reverse-hint` com o
 - [ ] Sem `FLAG{` em docs públicos e nas novas classes/endpoints.
 - [ ] Sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README e nas classes `security/`.
 - [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+---
+
+## Fase 9 — ambiente / environment check
+
+### F9.1 — Arquivos e pacote
+
+```bash
+SRC="android-app/app/src/main/java/com/obsidianpay/mobile"
+ls $SRC/environment/RootDetector.kt
+ls $SRC/environment/EmulatorDetector.kt
+ls $SRC/environment/EnvironmentRiskEngine.kt
+ls $SRC/ui/SecurityCheckScreen.kt
+```
+
+### F9.2 — Código (detectores, eventos, bypass hints)
+
+```bash
+grep -qF 'test-keys' $SRC/environment/RootDetector.kt && echo OK
+grep -qF 'com.topjohnwu.magisk' $SRC/environment/RootDetector.kt && echo OK
+grep -qF 'goldfish' $SRC/environment/EmulatorDetector.kt && echo OK
+grep -qF 'ranchu' $SRC/environment/EmulatorDetector.kt && echo OK
+grep -qF 'bypassHintId' $SRC/environment/EnvironmentRiskEngine.kt && echo OK
+grep -qF 'env-check-local-only' $SRC/environment/EnvironmentRiskEngine.kt && echo OK
+grep -qF 'hooks-change-return-values' $SRC/environment/EnvironmentRiskEngine.kt && echo OK
+grep -qF 'patch-risk-engine-result' $SRC/environment/EnvironmentRiskEngine.kt && echo OK
+grep -qF 'Security Check' $SRC/ui/SecurityCheckScreen.kt && echo OK
+grep -qF 'environment_check_started' $SRC/ui/SecurityCheckScreen.kt && echo OK
+grep -qF 'root_detection_completed' $SRC/ui/SecurityCheckScreen.kt && echo OK
+grep -qF 'emulator_detection_completed' $SRC/ui/SecurityCheckScreen.kt && echo OK
+grep -qF 'environment_risk_calculated' $SRC/ui/SecurityCheckScreen.kt && echo OK
+grep -qF 'environment_report_sent' $SRC/ui/SecurityCheckScreen.kt && echo OK
+grep -qF 'environment_report_cached' $SRC/storage/LocalCacheManager.kt && echo OK
+```
+
+### F9.3 — Backend (com backend no ar)
+
+```bash
+# deve receber o report e retornar monitor-only
+TOKEN="obsidian-mobile-token-guest-1001"
+curl -s -X POST http://127.0.0.1:8102/api/mobile/internal/environment-report \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"root":false,"emulator":true,"rootScore":0,"emulatorScore":2,"riskLevel":"medium","signals":["hardware:goldfish"],"bypassHintId":"env-check-local-only"}'
+```
+
+Esperado: `"status":"received"` e `"serverPolicy":"monitor-only"` e
+`"nextStepHint":"client-side checks are advisory in this lab"`.
+
+### Critérios de aceite (Fase 9)
+
+- [ ] `validate-phase1..8.sh` continuam passando.
+- [ ] `validate-phase9.sh` passa.
+- [ ] `environment/RootDetector.kt`, `EmulatorDetector.kt`, `EnvironmentRiskEngine.kt` criados.
+- [ ] `ui/SecurityCheckScreen.kt` criado e acessível pela Início.
+- [ ] Backend implementa `POST /internal/environment-report` (monitor-only).
+- [ ] `data.js` tem `enableEnvironmentChecks` e `environmentReportPath`.
+- [ ] Sem `FLAG{` em docs públicos e nas novas classes.
+- [ ] Sem `analyst123`/`operator123` em README/STUDENT-GUIDE/app README e nas classes `environment/`.
+- [ ] `git diff --stat` mostra apenas `lab-08-obsidianpay/`.

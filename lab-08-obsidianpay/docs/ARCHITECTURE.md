@@ -149,6 +149,38 @@ ApiClient.checkDeviceTrust ──▶ POST 10.0.2.2:8102/api/mobile/internal/devi
 > embutidos no cliente (e espelhados no backend) para serem recuperados em
 > reverse engineering. Não há segredos reais nem flags nessas classes/endpoints.
 
+### Fluxo de verificação de ambiente (Fase 9)
+
+```
+SecurityCheckScreen (ui/)
+   │  acionada a partir do HomeScreen ("Security Check")
+   ├─ EnvironmentRiskEngine.run(context)
+   │   ├─ RootDetector.check(context)  → su paths, pacotes suspeitos, test-keys, props
+   │   └─ EmulatorDetector.check()     → Build.FINGERPRINT/MODEL/HARDWARE/…
+   │   → EnvironmentReport { root, emulator, rootScore, emulatorScore, riskLevel,
+   │                          signals, generatedAt, bypassHintId }
+   ├─ LocalCacheManager.saveLastEnvironmentReportJson(json)
+   │   → InsecureSessionStore.KEY_LAST_ENVIRONMENT_REPORT (SharedPreferences)
+   │   → db.addDebugEvent("environment_check_started" / "root_detection_completed" /
+   │                       "emulator_detection_completed" / "environment_risk_calculated")
+   └─ ApiClient.sendEnvironmentReport(token, json)
+       → POST 10.0.2.2:8102/api/mobile/internal/environment-report
+             │  (monitor-only: não bloqueia por root/emulador)
+             ▼
+         { status:"received", environmentStatus, riskLevel, serverPolicy:"monitor-only",
+           nextStepHint:"client-side checks are advisory in this lab" }
+         → LocalCacheManager.saveLastEnvironmentResponseJson(raw)
+           → InsecureSessionStore.KEY_LAST_ENVIRONMENT_RESPONSE
+           → db.addDebugEvent("environment_report_sent" / "environment_report_cached")
+```
+
+> A trilha da Fase 9 é **falsa proteção por design**: todos os checks rodam
+> no processo do app (client-side), os resultados ficam em cleartext no
+> SharedPreferences e no SQLite, e o backend apenas registra o que o cliente
+> informa (policy `monitor-only`). Os `bypassHintId`s apontam o caminho:
+> `env-check-local-only`, `hooks-change-return-values`,
+> `patch-risk-engine-result`. O app **não bloqueia** mesmo com risco `high`.
+
 ### Fluxo de storage local
 
 ```

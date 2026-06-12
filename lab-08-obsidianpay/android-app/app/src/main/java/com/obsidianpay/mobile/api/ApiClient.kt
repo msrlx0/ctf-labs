@@ -167,6 +167,21 @@ class ApiClient(private val baseUrl: String = Constants.DEFAULT_BASE_URL) {
         return execute(b.build())
     }
 
+    // --- Environment report (Phase 9) ---------------------------------------
+    /**
+     * Posts the local environment risk report (root/emulator detection result)
+     * to the server's monitor-only endpoint. Returns the raw response body.
+     */
+    fun sendEnvironmentReport(token: String, reportJson: String): String {
+        val req = builder(Constants.ENVIRONMENT_REPORT_PATH, token)
+            .post(reportJson.toRequestBody(jsonMedia))
+            .build()
+        return when (val result = execute(req)) {
+            is ApiResult.Success -> result.rawBody
+            is ApiResult.Error -> """{"error":"${result.message}","httpCode":${result.httpCode ?: -1}}"""
+        }
+    }
+
     /**
      * Calls the internal reverse-hint endpoint, gated by the correct
      * `X-Obsidian-Client` header. Returns the raw JSON body.

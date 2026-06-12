@@ -1,11 +1,13 @@
-# ObsidianPay — App Android (Fase 8)
+# ObsidianPay — App Android (Fase 9)
 
 App Android nativo (Kotlin + Jetpack Compose) que consome a API mobile do
 **Lab 08 — ObsidianPay Mobile**. Mantém cache local/offline (Fase 4), suporta
 **deep links**, uma tela **QR Payment** e um **Web Support** em WebView (Fase 5),
 uma **support bridge** JavaScript na WebView (Fase 6), **componentes Android
-internos** (pacote `platform/`, Fase 7) e, a partir da Fase 8, um fluxo
-**Device Trust** com trilha de reverse engineering (pacote `security/`).
+internos** (pacote `platform/`, Fase 7), um fluxo **Device Trust** com trilha de
+reverse engineering (pacote `security/`, Fase 8) e, a partir da Fase 9, uma tela
+**Security Check** com checagem local de ambiente/dispositivo (root e emulador,
+pacote `environment/`).
 
 > **Ambiente somente local.** O app só fala com o backend do lab em
 > `http://10.0.2.2:8102` (alias do emulador para o `127.0.0.1` do host).

@@ -11,9 +11,10 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 | **Fase 5** | Deep links (`obsidianpay://transfer/support/receipt`), QR Payment (input textual), Web Support (WebView com JS), reflexão controlada no portal, cache de eventos deep link/QR/WebView. | ✅ Concluída |
 | **Fase 6** | WebView **JavaScript bridge** (`ObsidianBridge` via `@JavascriptInterface`): leitura controlada de sessão/caches/artefatos locais a partir do portal de suporte; cadeia deep link/QR → WebView → bridge → cache local. | ✅ Concluída |
 | **Fase 7** | **Componentes Android exportados** (`platform/`): Activity interna (`InternalOpsActivity`), BroadcastReceiver de debug (`DebugCommandReceiver`) e ContentProvider (`ObsidianNotesProvider`) — todos `exported=true` com actions/authority/extras previsíveis, integrados ao cache/SQLite/debug events de forma controlada. | ✅ Concluída |
-| **Fase 8** | **Trilha de reverse engineering** (`security/`): segredos hardcoded fragmentados (`HardcodedSecrets`), cripto fraca didática (`WeakCrypto`: Base64/XOR/SHA-1), assinatura local fraca (`LegacyRequestSigner`) e fluxo **Device Trust** → endpoint interno `/api/mobile/internal/device-trust` (assinatura SHA-1 fraca aceita pelo backend) + `reverse-hint`. | ✅ Atual |
-| Fase 9 | Trilha network/API: interceptação HTTPS, pinning, lib nativa. | 🔜 Planejada |
-| Fase 10 | Trilha anti-analysis/auth: root/emulador/biometria, binary patching, BAC/mass assignment. | 🔜 Planejada |
+| **Fase 8** | **Trilha de reverse engineering** (`security/`): segredos hardcoded fragmentados (`HardcodedSecrets`), cripto fraca didática (`WeakCrypto`: Base64/XOR/SHA-1), assinatura local fraca (`LegacyRequestSigner`) e fluxo **Device Trust** → endpoint interno `/api/mobile/internal/device-trust` (assinatura SHA-1 fraca aceita pelo backend) + `reverse-hint`. | ✅ Concluída |
+| **Fase 9** | **Checagem de ambiente** (`environment/`): detecção de root (`RootDetector`) e emulador (`EmulatorDetector`) didáticos, `EnvironmentRiskEngine` calculando nível de risco local, tela `SecurityCheckScreen` + backend `POST /api/mobile/internal/environment-report` (monitor-only). Scaffold para futura exploração via Frida/patching. | ✅ Atual |
+| Fase 10 | Trilha network/API: interceptação HTTPS, pinning, lib nativa. | 🔜 Planejada |
+| Fase 11 | Trilha anti-analysis avançada: biometria, binary patching. | 🔜 Planejada |
 | Fase 11 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
 
 ## Escopo da Fase 1 (entregue)
@@ -123,6 +124,33 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
   fraca com salt hardcoded didático) e `GET /api/mobile/internal/reverse-hint`
   (gated pelo client id correto). `config`/`legacy/routes` referenciam os paths.
   Sem flags nas novas classes/endpoints. Script `scripts/validate-phase8.sh`.
+
+## Escopo da Fase 9 (entregue)
+
+- Pacote `environment/` com a trilha de detecção de ambiente:
+  - `RootDetector.kt` — verifica paths `/system/bin/su`/`/system/xbin/su`/…,
+    pacotes suspeitos (`com.topjohnwu.magisk`, `eu.chainfire.supersu`…),
+    build tag `test-keys`, props `ro.debuggable`/`ro.secure`.
+  - `EmulatorDetector.kt` — verifica `Build.FINGERPRINT`/`MODEL`/`MANUFACTURER`/
+    `BRAND`/`DEVICE`/`PRODUCT`/`HARDWARE` para sinais de AVD, Genymotion, vbox86.
+  - `EnvironmentRiskEngine.kt` — orquestra os dois detectores, calcula
+    `riskLevel` (`low`/`medium`/`high`) e gera JSON com `bypassHintId`
+    (`env-check-local-only`, `hooks-change-return-values`, `patch-risk-engine-result`).
+- `ui/SecurityCheckScreen.kt` — tela "Security Check": exibe resultado e sinais,
+  botões "Run Security Check" / "Send Environment Report" / "Show Local Signals" /
+  "Clear Local Report"; registra eventos
+  `environment_check_started`, `root_detection_completed`,
+  `emulator_detection_completed`, `environment_risk_calculated`,
+  `environment_report_sent`, `environment_report_cached`.
+- `ApiClient` ganha `sendEnvironmentReport`; `HomeScreen` tem botão "Security Check";
+  `LocalStateScreen` mostra o estado dos novos campos.
+- `Constants` ganha `ENVIRONMENT_REPORT_PATH`, `KEY_LAST_ENVIRONMENT_REPORT`,
+  `KEY_LAST_ENVIRONMENT_RESPONSE`; `InsecureSessionStore` e `LocalCacheManager`
+  ganham os métodos de cache correspondentes.
+- Backend: `POST /api/mobile/internal/environment-report` (monitor-only, não bloqueia
+  por root/emulador); `data.js` ganha `environmentConfig` com
+  `enableEnvironmentChecks` e `environmentReportPath`.
+- Script `scripts/validate-phase9.sh`.
 
 ## Princípios entre fases
 
