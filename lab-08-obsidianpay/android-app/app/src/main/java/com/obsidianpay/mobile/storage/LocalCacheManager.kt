@@ -169,6 +169,27 @@ class LocalCacheManager(
         store.saveLastEncodedOperatorHint(value)
     }
 
+    // --- Vault / local auth (Phase 10) ------------------------------------------
+    fun saveVaultUnlocked(value: Boolean, reason: String) {
+        store.saveVaultUnlocked(value, reason)
+        db.addDebugEvent(if (value) "vault_unlocked_local" else "vault_locked_local", "reason=$reason")
+    }
+
+    fun saveLastVaultStatusJson(rawJson: String) {
+        store.saveLastVaultStatusJson(rawJson)
+        db.addDebugEvent("vault_status_cached", rawJson)
+    }
+
+    fun saveLastVaultUnlockJson(rawJson: String) {
+        store.saveLastVaultUnlockJson(rawJson)
+        db.addDebugEvent("vault_unlock_response_cached", rawJson)
+    }
+
+    fun clearVaultState() {
+        store.clearVaultState()
+        db.addDebugEvent("vault_state_cleared", null)
+    }
+
     // --- Environment / risk-check (Phase 9) -------------------------------------
     fun saveLastEnvironmentReportJson(rawJson: String) {
         store.saveLastEnvironmentReportJson(rawJson)

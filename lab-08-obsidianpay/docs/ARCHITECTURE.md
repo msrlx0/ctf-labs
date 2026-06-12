@@ -181,6 +181,42 @@ SecurityCheckScreen (ui/)
 > `env-check-local-only`, `hooks-change-return-values`,
 > `patch-risk-engine-result`. O app **não bloqueia** mesmo com risco `high`.
 
+### Fluxo de Secure Vault / local auth (Fase 10)
+
+```
+VaultScreen (ui/)
+   │  acionada a partir do HomeScreen ("Secure Vault")
+   ├─ BiometricGate.canUseBiometric(context)  → scaffold, sempre true
+   ├─ BiometricGate.buildBypassHintId()       → "biometric-result-hook"
+   ├─ LocalAuthState.validateFallbackPin(input) → compara com "0420" (hardcoded)
+   ├─ LocalAuthState.markVaultUnlocked(store, reason)
+   │   → InsecureSessionStore: obsidian.vault.unlocked = true (SharedPreferences)
+   │   → LocalCacheManager.saveVaultUnlocked → db.addDebugEvent("vault_unlocked_local")
+   │   (eventos: biometric_capability_checked / biometric_prompt_started /
+   │    biometric_auth_result / local_auth_success / local_auth_failed /
+   │    vault_unlocked_local / vault_locked_local / weak_pin_fallback_used)
+   ├─ ApiClient.getMobileVaultStatus(token)
+   │   → GET 10.0.2.2:8102/api/mobile/internal/vault-mobile/status
+   │     { status:"locked", policy:"local-auth-required",
+   │       allowedMethods:["biometric","fallback-pin"], serverTrust:"client-asserted" }
+   │   → LocalCacheManager.saveLastVaultStatusJson → db.addDebugEvent("vault_status_cached")
+   └─ ApiClient.requestMobileVaultUnlock(token, localAuth, method, bypassHintId)
+       → POST 10.0.2.2:8102/api/mobile/internal/vault-mobile/unlock
+         body: { localAuth: true, method: "biometric", bypassHintId: "..." }
+         if localAuth===true → { status:"vault-access-granted",
+                                  serverTrust:"client-asserted",
+                                  nextStepHint:"server trusts local auth assertion in this lab" }
+         if localAuth!==true → 403
+       → LocalCacheManager.saveLastVaultUnlockJson → db.addDebugEvent("vault_unlock_response_cached")
+```
+
+> A trilha da Fase 10 é **falsa proteção por design**: o PIN fraco é hardcoded
+> no APK (recuperável por análise estática), o estado de auth (`vault.unlocked`)
+> fica em SharedPreferences em texto puro (manipulável por root), e o backend
+> confia no campo `localAuth` sem qualquer verificação independente. Os
+> `bypassHintId`s apontam o caminho: `biometric-result-hook`,
+> `force-auth-decision-true`, `patch-local-auth-state`.
+
 ### Fluxo de storage local
 
 ```

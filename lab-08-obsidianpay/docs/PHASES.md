@@ -12,10 +12,11 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 | **Fase 6** | WebView **JavaScript bridge** (`ObsidianBridge` via `@JavascriptInterface`): leitura controlada de sessão/caches/artefatos locais a partir do portal de suporte; cadeia deep link/QR → WebView → bridge → cache local. | ✅ Concluída |
 | **Fase 7** | **Componentes Android exportados** (`platform/`): Activity interna (`InternalOpsActivity`), BroadcastReceiver de debug (`DebugCommandReceiver`) e ContentProvider (`ObsidianNotesProvider`) — todos `exported=true` com actions/authority/extras previsíveis, integrados ao cache/SQLite/debug events de forma controlada. | ✅ Concluída |
 | **Fase 8** | **Trilha de reverse engineering** (`security/`): segredos hardcoded fragmentados (`HardcodedSecrets`), cripto fraca didática (`WeakCrypto`: Base64/XOR/SHA-1), assinatura local fraca (`LegacyRequestSigner`) e fluxo **Device Trust** → endpoint interno `/api/mobile/internal/device-trust` (assinatura SHA-1 fraca aceita pelo backend) + `reverse-hint`. | ✅ Concluída |
-| **Fase 9** | **Checagem de ambiente** (`environment/`): detecção de root (`RootDetector`) e emulador (`EmulatorDetector`) didáticos, `EnvironmentRiskEngine` calculando nível de risco local, tela `SecurityCheckScreen` + backend `POST /api/mobile/internal/environment-report` (monitor-only). Scaffold para futura exploração via Frida/patching. | ✅ Atual |
-| Fase 10 | Trilha network/API: interceptação HTTPS, pinning, lib nativa. | 🔜 Planejada |
-| Fase 11 | Trilha anti-analysis avançada: biometria, binary patching. | 🔜 Planejada |
-| Fase 11 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
+| **Fase 9** | **Checagem de ambiente** (`environment/`): detecção de root (`RootDetector`) e emulador (`EmulatorDetector`) didáticos, `EnvironmentRiskEngine` calculando nível de risco local, tela `SecurityCheckScreen` + backend `POST /api/mobile/internal/environment-report` (monitor-only). Scaffold para futura exploração via Frida/patching. | ✅ Concluída |
+| **Fase 10** | **Secure Vault / local auth** (`auth/`): `LocalAuthState` + `BiometricGate` scaffold + `VaultScreen`, fallback PIN fraco hardcoded, estado local de auth inseguro (SharedPreferences), backend `vault-mobile/status` e `vault-mobile/unlock` (server trusts client-side localAuth). | ✅ Atual |
+| Fase 11 | Trilha network/API: interceptação HTTPS, pinning, lib nativa. | 🔜 Planejada |
+| Fase 12 | Trilha anti-analysis avançada: Frida scripts reais, binary patching. | 🔜 Planejada |
+| Fase 13 | Consolidação: cadeias completas, SOLUTION.md, evidências e validação ponta a ponta. | 🔜 Planejada |
 
 ## Escopo da Fase 1 (entregue)
 
@@ -151,6 +152,30 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
   por root/emulador); `data.js` ganha `environmentConfig` com
   `enableEnvironmentChecks` e `environmentReportPath`.
 - Script `scripts/validate-phase9.sh`.
+
+## Escopo da Fase 10 (entregue)
+
+- Pacote `auth/` com dois componentes:
+  - `LocalAuthState.kt` — gerencia estado local de auth do vault: `isVaultUnlocked`,
+    `markVaultUnlocked/Locked`, `getWeakFallbackPin` (hardcoded "0420"),
+    `validateFallbackPin` e `buildAuthDecision`.
+  - `BiometricGate.kt` — scaffold de biometria: `canUseBiometric` (scaffold, sempre true),
+    `buildPromptTitle`/`Subtitle`/`Description`, `shouldAllowFallback`, `buildBypassHintId`
+    e constantes `BYPASS_HINT_*` (`biometric-result-hook`, `force-auth-decision-true`,
+    `patch-local-auth-state`).
+- `ui/VaultScreen.kt` — tela "Secure Vault": status card, botões Check Biometric /
+  Unlock with Biometric (scaffold) / Unlock with PIN / Lock Vault / Fetch Vault Status /
+  Request Vault Unlock; registra eventos biometric/auth/vault.
+- `InsecureSessionStore` + `LocalCacheManager` com suporte a vault unlocked,
+  unlock reason, last vault status/unlock JSON, `clearVaultState()`.
+- `ApiClient` com `getMobileVaultStatus` e `requestMobileVaultUnlock`.
+- `Constants` com `VAULT_MOBILE_STATUS_PATH`, `VAULT_MOBILE_UNLOCK_PATH` e keys de storage.
+- `HomeScreen` com botão "Secure Vault"; `MainActivity` com `Screen.Vault`;
+  `LocalStateScreen` com seção de vault/auth.
+- Backend: `GET /api/mobile/internal/vault-mobile/status` (retorna policy),
+  `POST /api/mobile/internal/vault-mobile/unlock` (trusts `localAuth === true`);
+  `data.js` com `mobileVaultConfig` e `enableBiometricVault: true` em `featureFlags`.
+- Script `scripts/validate-phase10.sh`.
 
 ## Princípios entre fases
 

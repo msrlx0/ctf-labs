@@ -188,7 +188,7 @@ const featureFlags = {
   enableQrTransferPreview: true,
   enableWebViewSupportPortal: true,
   enableLegacyDeviceTrust: true,
-  enableBiometricVault: false,
+  enableBiometricVault: true,
   enableNativePinningExperiment: false,
 };
 
@@ -238,6 +238,18 @@ const environmentConfig = Object.freeze({
   note: 'Client-side environment checks are advisory. Bypass: hook detectors or patch riskLevel.',
 });
 
+// --- Mobile vault config (Phase 10) -----------------------------------------
+// The server trusts the client-side localAuth assertion without any independent
+// verification — the teaching point is that server trust must not be delegated to
+// a client-side boolean that can be manipulated via hook or binary patch.
+const mobileVaultConfig = Object.freeze({
+  enableMobileVault: true,
+  mobileVaultStatusPath: '/api/mobile/internal/vault-mobile/status',
+  mobileVaultUnlockPath: '/api/mobile/internal/vault-mobile/unlock',
+  serverTrustPolicy: 'client-asserted',
+  note: 'Server trusts local auth assertion in this lab. Bypass: hook localAuth to true before the unlock request.',
+});
+
 // --- Mobile config -----------------------------------------------------------
 // Leaks internal resource NAMES (storage keys, deep link schemes, routes) that
 // help map the future APK, but never returns a flag directly.
@@ -257,6 +269,10 @@ function buildMobileConfig() {
     enableLegacyDeviceTrust: featureFlags.enableLegacyDeviceTrust,
     internalDeviceTrustPath: legacyMobileTrust.deviceTrustPath,
     internalReverseHintPath: legacyMobileTrust.reverseHintPath,
+    // Mobile vault / local auth config (Phase 10).
+    enableMobileVault: mobileVaultConfig.enableMobileVault,
+    mobileVaultStatusPath: mobileVaultConfig.mobileVaultStatusPath,
+    mobileVaultUnlockPath: mobileVaultConfig.mobileVaultUnlockPath,
     mobileFeatureFlags: { ...featureFlags },
     clientStorageKeys: {
       sessionToken: 'obsidian.session.token',
@@ -278,5 +294,6 @@ module.exports = {
   vaultStatusByRole,
   legacyMobileTrust,
   environmentConfig,
+  mobileVaultConfig,
   buildMobileConfig,
 };

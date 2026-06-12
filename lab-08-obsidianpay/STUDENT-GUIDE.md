@@ -105,6 +105,13 @@ Com o backend no ar (`127.0.0.1:8102`):
 > resultado e o que fica salvo localmente. (Este guia não explica como contornar
 > a checagem — a investigação é sua.)
 
+> **Secure Vault:** a Início tem uma tela **Secure Vault**. Ela representa um
+> cofre de segurança interno do app — protegido por autenticação local. Você pode
+> verificar a disponibilidade de biometria, desbloquear o vault e interagir com o
+> backend. Como de costume: use o fluxo normalmente, observe o que fica salvo
+> localmente e questione o que o servidor efetivamente valida. (Este guia não
+> explica o mecanismo de bypass — a investigação é sua.)
+
 Detalhes e build via linha de comando em
 [android-app/README.md](./android-app/README.md).
 
@@ -172,6 +179,7 @@ Mantenha tudo **local** e **autorizado**.
 - ✅ API mobile rica disponível (porta 8102) — **Fase 2**
 - ✅ Conta de teste `guest` / `guest123`
 - ✅ Contratos mobile: perfil, recibos, cartões, suporte, transfer preview, WebView
+- ✅ **Secure Vault** com fluxo de autenticação local (biometria + fallback) — **Fase 10**
 - 🔜 APK Android (próximas fases)
 - 🔜 Integração app ↔ API e cadeias completas
 

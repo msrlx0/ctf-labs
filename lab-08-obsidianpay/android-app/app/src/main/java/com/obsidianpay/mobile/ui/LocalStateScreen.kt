@@ -113,6 +113,20 @@ fun LocalStateScreen(
             if (envEvents.isEmpty()) Mono("(nenhum)")
             envEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
 
+            Section("Secure Vault / Local Auth (Phase 10)")
+            Mono("vaultUnlocked = ${preview(debugValues[Constants.KEY_VAULT_UNLOCKED])}")
+            Mono("vaultUnlockReason = ${preview(debugValues[Constants.KEY_VAULT_UNLOCK_REASON])}")
+            Mono("lastVaultStatusJson = ${preview(debugValues[Constants.KEY_LAST_VAULT_STATUS_JSON])}")
+            Mono("lastVaultUnlockJson = ${preview(debugValues[Constants.KEY_LAST_VAULT_UNLOCK_JSON])}")
+            val vaultEvents = events.filter {
+                it.eventType.startsWith("vault_") ||
+                    it.eventType.startsWith("biometric_") ||
+                    it.eventType.startsWith("local_auth_") ||
+                    it.eventType == "weak_pin_fallback_used"
+            }
+            if (vaultEvents.isEmpty()) Mono("(nenhum)")
+            vaultEvents.forEach { Mono("#${it.id} ${it.eventType} · ${preview(it.details)}") }
+
             Section("Artefatos locais (arquivos)")
             if (artifacts.isEmpty()) Mono("(nenhum)")
             artifacts.forEach { Mono(it) }

@@ -27,6 +27,7 @@ const {
   vaultStatusByRole,
   legacyMobileTrust,
   environmentConfig,
+  mobileVaultConfig,
   buildMobileConfig,
 } = require('./data');
 
@@ -472,6 +473,8 @@ app.get('/api/mobile/legacy/routes', requireAuth, (_req, res) => {
       '/api/mobile/internal/device-trust',
       '/api/mobile/internal/reverse-hint',
       '/api/mobile/internal/environment-report',
+      '/api/mobile/internal/vault-mobile/status',
+      '/api/mobile/internal/vault-mobile/unlock',
     ],
   });
 });
@@ -570,6 +573,52 @@ app.get('/api/mobile/internal/reverse-hint', requireAuth, (req, res) => {
   res.json({
     hint: 'Legacy mobile clients assemble trust headers locally.',
     mode: 'legacy-attestation',
+  });
+});
+
+// --- Mobile vault status (Phase 10) ------------------------------------------
+// Returns the current vault policy to the mobile client. The server never
+// independently verifies biometric state — it only describes what auth methods
+// are allowed. Actual lock/unlock decisions are fully client-side (teaching seam).
+app.get('/api/mobile/internal/vault-mobile/status', requireAuth, (_req, res) => {
+  if (!mobileVaultConfig.enableMobileVault) {
+    return sendError(res, 503, 'disabled', 'Mobile vault is not enabled.');
+  }
+  res.json({
+    status: 'locked',
+    policy: 'local-auth-required',
+    allowedMethods: ['biometric', 'fallback-pin'],
+    serverTrust: 'client-asserted',
+  });
+});
+
+// --- Mobile vault unlock (Phase 10) ------------------------------------------
+// Intentionally weak gate: if the client asserts localAuth===true the server
+// grants vault access without any independent check. The teaching point is that
+// server trust must not be delegated to a client-side boolean. Bypassing this
+// endpoint requires only setting localAuth=true in the request body — trivially
+// achievable by hooking the app or crafting a raw request.
+app.post('/api/mobile/internal/vault-mobile/unlock', requireAuth, (req, res) => {
+  if (!mobileVaultConfig.enableMobileVault) {
+    return sendError(res, 503, 'disabled', 'Mobile vault is not enabled.');
+  }
+
+  const { localAuth, method, bypassHintId } = req.body || {};
+
+  if (localAuth !== true) {
+    return sendError(
+      res,
+      403,
+      'forbidden',
+      'Vault unlock requires a successful local authentication assertion.',
+    );
+  }
+
+  res.json({
+    status: 'vault-access-granted',
+    method: typeof method === 'string' ? method : 'unknown',
+    serverTrust: 'client-asserted',
+    nextStepHint: 'server trusts local auth assertion in this lab',
   });
 });
 

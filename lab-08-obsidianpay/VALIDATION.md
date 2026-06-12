@@ -17,6 +17,30 @@ cd lab-08-obsidianpay
 
 A seção abaixo (1–12) cobre a **Fase 1**. A seção **Fase 2** vem em seguida.
 
+## Fase 10
+
+Para validar a Fase 10 (Secure Vault / local auth), rode:
+
+```bash
+bash scripts/validate-phase10.sh
+```
+
+O script verifica:
+- Existência de `auth/LocalAuthState.kt`, `auth/BiometricGate.kt` e `ui/VaultScreen.kt`.
+- Strings-chave: `LocalAuthState`, `BiometricGate`, `Secure Vault`, `ObsidianPay Vault`,
+  `Confirm your identity`, `getWeakFallbackPin`, `validateFallbackPin`,
+  `weak_pin_fallback_used`, `biometric_capability_checked`, `biometric_prompt_started`,
+  `biometric_auth_result`, `local_auth_success`, `local_auth_failed`,
+  `vault_unlocked_local`, `vault_locked_local`, `biometric-result-hook`,
+  `force-auth-decision-true`, `patch-local-auth-state`.
+- Backend: rotas `vault-mobile/status` e `vault-mobile/unlock`, `enableMobileVault`,
+  `mobileVaultStatusPath`, `mobileVaultUnlockPath`, `client-asserted`,
+  `vault-access-granted`, `server trusts local auth assertion`.
+- HomeScreen/MainActivity com `VaultScreen` e `Secure Vault`.
+- Sem `FLAG{` em docs públicos e sem `analyst123`/`operator123` em README/STUDENT/app README.
+- Sem typos de fases anteriores.
+- Labs 1..7 intocados.
+
 ## Fase 1
 
 ---

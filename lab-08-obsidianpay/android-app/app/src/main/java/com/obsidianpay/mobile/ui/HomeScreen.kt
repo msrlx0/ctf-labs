@@ -121,6 +121,9 @@ fun HomeScreen(
             // Environment / risk check (Phase 9).
             OutlinedButton(onClick = { onNavigate(Screen.SecurityCheck) }, modifier = Modifier.fillMaxWidth()) { Text("Security Check") }
 
+            // Secure Vault (Phase 10): local auth / biometric gate.
+            OutlinedButton(onClick = { onNavigate(Screen.Vault) }, modifier = Modifier.fillMaxWidth()) { Text("Secure Vault") }
+
             // Internal support/dev tooling — local state inspector.
             OutlinedButton(onClick = { onNavigate(Screen.LocalState) }, modifier = Modifier.fillMaxWidth()) { Text("Local State") }
             OutlinedButton(

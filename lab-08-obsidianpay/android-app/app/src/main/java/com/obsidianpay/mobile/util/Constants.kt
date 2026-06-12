@@ -81,4 +81,12 @@ object Constants {
     const val ENVIRONMENT_REPORT_PATH: String = "/api/mobile/internal/environment-report"
     const val KEY_LAST_ENVIRONMENT_REPORT: String = "obsidian.debug.last_environment_report"
     const val KEY_LAST_ENVIRONMENT_RESPONSE: String = "obsidian.debug.last_environment_response"
+
+    // Vault / local auth (Phase 10). Client-side state stored plaintext; didactic.
+    const val VAULT_MOBILE_STATUS_PATH: String = "/api/mobile/internal/vault-mobile/status"
+    const val VAULT_MOBILE_UNLOCK_PATH: String = "/api/mobile/internal/vault-mobile/unlock"
+    const val KEY_VAULT_UNLOCKED: String = "obsidian.vault.unlocked"
+    const val KEY_VAULT_UNLOCK_REASON: String = "obsidian.vault.unlock_reason"
+    const val KEY_LAST_VAULT_STATUS_JSON: String = "obsidian.debug.last_vault_status"
+    const val KEY_LAST_VAULT_UNLOCK_JSON: String = "obsidian.debug.last_vault_unlock"
 }

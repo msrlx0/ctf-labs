@@ -2,13 +2,14 @@
 
 > **Documento interno do instrutor.** Não é material do aluno.
 >
-> **Estado: Fase 9.** Este walkthrough descreve a arquitetura, as cadeias
+> **Estado: Fase 10.** Este walkthrough descreve a arquitetura, as cadeias
 > futuras em alto nível, as **vulnerabilidades de backend da Fase 2**, o **app
 > Android base da Fase 3**, o **armazenamento local inseguro da Fase 4**, os
 > **deep links / QR / WebView da Fase 5**, a **WebView JavaScript bridge da Fase
 > 6**, os **componentes Android exportados da Fase 7**, a **trilha de reverse
-> engineering da Fase 8** e, agora, a **checagem de ambiente (root/emulador) da
-> Fase 9** (visão de instrutor, sem cadeia final completa).
+> engineering da Fase 8**, a **checagem de ambiente (root/emulador) da Fase 9**
+> e o **Secure Vault com fluxo local de autenticação da Fase 10** (visão de
+> instrutor, sem cadeia final completa).
 > Ele **não** contém:
 > - a cadeia/solução final do Lab 8,
 > - payloads avançados ou exploits prontos extensos.
@@ -498,12 +499,90 @@ Após rodar o Security Check:
   `environment_report_cached`
 - `LocalStateScreen` mostra as previews desses valores
 
-### O que NÃO está nesta fase
+### O que NÃO está nesta fase (Fase 9)
 
 - Frida scripts reais (deixado para fase futura)
 - Certificate pinning real
 - Native lib / JNI
-- Biometria
+- Biometria (adicionada na Fase 10)
+- Binary patching real
+- QR scanner por câmera real
+
+---
+
+## 4.10 Fase 10 — Secure Vault / Local Auth (instrutor)
+
+### Arquitetura do fluxo
+
+```
+VaultScreen
+  │
+  ├─ BiometricGate.canUseBiometric(context)   → scaffold: sempre true
+  ├─ BiometricGate.buildBypassHintId()        → "biometric-result-hook"
+  │
+  ├─ LocalAuthState.validateFallbackPin(input) → compara com PIN hardcoded "0420"
+  ├─ LocalAuthState.markVaultUnlocked(store, reason)
+  │       └─▶ SharedPreferences: obsidian.vault.unlocked = true
+  │                               obsidian.vault.unlock_reason = "biometric"|"fallback-pin"
+  │
+  ├─ ApiClient.getMobileVaultStatus(token)
+  │       └─▶ GET /api/mobile/internal/vault-mobile/status
+  │           response: { status: "locked", policy: "local-auth-required",
+  │                        serverTrust: "client-asserted" }
+  │
+  └─ ApiClient.requestMobileVaultUnlock(token, localAuth, method, bypassHintId)
+          └─▶ POST /api/mobile/internal/vault-mobile/unlock
+              body: { localAuth: true/false, method: "biometric", bypassHintId: "..." }
+              if localAuth === true → { status: "vault-access-granted",
+                                        nextStepHint: "server trusts local auth assertion in this lab" }
+              if localAuth !== true → 403
+```
+
+### Vulnerabilidades didáticas plantadas
+
+1. **Fallback PIN fraco hardcoded** (`LocalAuthState.WEAK_FALLBACK_PIN = "0420"`):
+   O PIN é uma constante no APK — recuperável por análise estática (JADX/`strings`).
+
+2. **Estado de auth local não protegido** (`InsecureSessionStore`):
+   `obsidian.vault.unlocked` e `obsidian.vault.unlock_reason` estão em
+   SharedPreferences em texto puro. Um atacante com acesso ao dispositivo (root)
+   pode editá-los diretamente e "convencer" o app de que o vault já está aberto.
+
+3. **Biometric scaffold trivialmente substituível** (`BiometricGate`):
+   `canUseBiometric()` retorna `true` e o resultado do scaffold é hardcoded. Um
+   hook Frida em `BiometricGate.canUseBiometric` ou na variável `scaffoldResult`
+   da VaultScreen é suficiente para forçar qualquer resultado.
+
+4. **Server trusts client-side localAuth assertion** (backend):
+   O `POST /api/mobile/internal/vault-mobile/unlock` só verifica se `localAuth === true`
+   no body. Qualquer cliente pode enviar `{"localAuth": true}` sem ter passado
+   por autenticação real — o servidor não tem como saber. Bypass trivial via curl:
+   ```bash
+   curl -s -X POST http://127.0.0.1:8102/api/mobile/internal/vault-mobile/unlock \
+     -H "Authorization: Bearer obsidian-mobile-token-guest-1001" \
+     -H "Content-Type: application/json" \
+     -d '{"localAuth":true,"method":"bypass","bypassHintId":"force-auth-decision-true"}'
+   ```
+
+### Bypass hints para futura exploração
+
+| Hint | Técnica |
+|---|---|
+| `biometric-result-hook` | Frida: hookar `BiometricGate.canUseBiometric` ou `scaffoldResult` |
+| `force-auth-decision-true` | Frida: hookar `LocalAuthState.validateFallbackPin` para retornar `true` |
+| `patch-local-auth-state` | Smali/apktool: patchear `LocalAuthState.isVaultUnlocked` |
+
+### Eventos registrados
+
+`biometric_capability_checked`, `biometric_prompt_started`, `biometric_auth_result`,
+`local_auth_success`, `local_auth_failed`, `vault_unlocked_local`, `vault_locked_local`,
+`weak_pin_fallback_used`, `vault_status_cached`, `vault_unlock_response_cached`
+
+### O que NÃO está nesta fase (Fase 10)
+
+- Frida scripts reais
+- Certificate pinning real
+- Native lib / JNI
 - Binary patching real
 - QR scanner por câmera real
 

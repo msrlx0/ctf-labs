@@ -182,6 +182,47 @@ class ApiClient(private val baseUrl: String = Constants.DEFAULT_BASE_URL) {
         }
     }
 
+    // --- Vault mobile (Phase 10) --------------------------------------------
+
+    /**
+     * Fetches the mobile vault status from the backend.
+     * Returns raw JSON — the response indicates lock policy and allowed methods.
+     */
+    fun getMobileVaultStatus(token: String): String {
+        val req = builder(Constants.VAULT_MOBILE_STATUS_PATH, token).get().build()
+        return when (val result = execute(req)) {
+            is ApiResult.Success -> result.rawBody
+            is ApiResult.Error -> """{"error":"${result.message}","httpCode":${result.httpCode ?: -1}}"""
+        }
+    }
+
+    /**
+     * Requests vault unlock from the backend.
+     *
+     * The server trusts [localAuth] as-is — a weak gate by design (teaching seam).
+     * [bypassHintId] names the Frida/patch entry point a student would use.
+     * Returns raw JSON.
+     */
+    fun requestMobileVaultUnlock(
+        token: String,
+        localAuth: Boolean,
+        method: String,
+        bypassHintId: String,
+    ): String {
+        val payload = JSONObject().apply {
+            put("localAuth", localAuth)
+            put("method", method)
+            put("bypassHintId", bypassHintId)
+        }.toString()
+        val req = builder(Constants.VAULT_MOBILE_UNLOCK_PATH, token)
+            .post(payload.toRequestBody(jsonMedia))
+            .build()
+        return when (val result = execute(req)) {
+            is ApiResult.Success -> result.rawBody
+            is ApiResult.Error -> """{"error":"${result.message}","httpCode":${result.httpCode ?: -1}}"""
+        }
+    }
+
     /**
      * Calls the internal reverse-hint endpoint, gated by the correct
      * `X-Obsidian-Client` header. Returns the raw JSON body.

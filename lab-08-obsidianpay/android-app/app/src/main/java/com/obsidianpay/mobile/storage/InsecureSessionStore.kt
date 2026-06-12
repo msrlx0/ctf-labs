@@ -128,6 +128,42 @@ class InsecureSessionStore(context: Context) {
             .apply()
     }
 
+    // --- Vault / local auth (Phase 10) ------------------------------------------
+
+    fun saveVaultUnlocked(value: Boolean, reason: String) {
+        prefs.edit()
+            .putBoolean(Constants.KEY_VAULT_UNLOCKED, value)
+            .putString(Constants.KEY_VAULT_UNLOCK_REASON, reason)
+            .putLong(Constants.KEY_DEBUG_LAST_SYNC, System.currentTimeMillis())
+            .apply()
+    }
+
+    fun getVaultUnlocked(): Boolean = prefs.getBoolean(Constants.KEY_VAULT_UNLOCKED, false)
+
+    fun getLastVaultUnlockReason(): String? =
+        prefs.getString(Constants.KEY_VAULT_UNLOCK_REASON, null)
+
+    fun saveLastVaultStatusJson(rawJson: String) =
+        putAndTouch(Constants.KEY_LAST_VAULT_STATUS_JSON, rawJson)
+
+    fun saveLastVaultUnlockJson(rawJson: String) =
+        putAndTouch(Constants.KEY_LAST_VAULT_UNLOCK_JSON, rawJson)
+
+    fun getLastVaultStatusJson(): String? =
+        prefs.getString(Constants.KEY_LAST_VAULT_STATUS_JSON, null)
+
+    fun getLastVaultUnlockJson(): String? =
+        prefs.getString(Constants.KEY_LAST_VAULT_UNLOCK_JSON, null)
+
+    fun clearVaultState() {
+        prefs.edit()
+            .remove(Constants.KEY_VAULT_UNLOCKED)
+            .remove(Constants.KEY_VAULT_UNLOCK_REASON)
+            .remove(Constants.KEY_LAST_VAULT_STATUS_JSON)
+            .remove(Constants.KEY_LAST_VAULT_UNLOCK_JSON)
+            .apply()
+    }
+
     private fun putAndTouch(key: String, value: String) {
         prefs.edit()
             .putString(key, value)
@@ -213,6 +249,10 @@ class InsecureSessionStore(context: Context) {
         Constants.KEY_LAST_ENCODED_OPERATOR_HINT to getLastEncodedOperatorHint(),
         Constants.KEY_LAST_ENVIRONMENT_REPORT to getLastEnvironmentReportJson(),
         Constants.KEY_LAST_ENVIRONMENT_RESPONSE to getLastEnvironmentResponseJson(),
+        Constants.KEY_VAULT_UNLOCKED to getVaultUnlocked().toString(),
+        Constants.KEY_VAULT_UNLOCK_REASON to getLastVaultUnlockReason(),
+        Constants.KEY_LAST_VAULT_STATUS_JSON to getLastVaultStatusJson(),
+        Constants.KEY_LAST_VAULT_UNLOCK_JSON to getLastVaultUnlockJson(),
         Constants.KEY_DEBUG_LAST_SYNC to getLastSyncTimestamp().takeIf { it > 0 }?.toString(),
     )
 

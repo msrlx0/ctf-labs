@@ -1,13 +1,14 @@
-# ObsidianPay — App Android (Fase 9)
+# ObsidianPay — App Android (Fase 10)
 
 App Android nativo (Kotlin + Jetpack Compose) que consome a API mobile do
 **Lab 08 — ObsidianPay Mobile**. Mantém cache local/offline (Fase 4), suporta
 **deep links**, uma tela **QR Payment** e um **Web Support** em WebView (Fase 5),
 uma **support bridge** JavaScript na WebView (Fase 6), **componentes Android
 internos** (pacote `platform/`, Fase 7), um fluxo **Device Trust** com trilha de
-reverse engineering (pacote `security/`, Fase 8) e, a partir da Fase 9, uma tela
-**Security Check** com checagem local de ambiente/dispositivo (root e emulador,
-pacote `environment/`).
+reverse engineering (pacote `security/`, Fase 8), uma tela **Security Check** com
+checagem local de ambiente/dispositivo (root e emulador, pacote `environment/`,
+Fase 9) e, a partir da Fase 10, um **Secure Vault** com fluxo local de
+autenticação (biometria scaffold + fallback PIN, pacote `auth/`).
 
 > **Ambiente somente local.** O app só fala com o backend do lab em
 > `http://10.0.2.2:8102` (alias do emulador para o `127.0.0.1` do host).
@@ -85,11 +86,13 @@ android-app/
         ├── java/com/obsidianpay/mobile/
         │   ├── MainActivity.kt          # shell Compose + navegação simples
         │   ├── api/                      # ApiClient (OkHttp), modelos, ApiResult
+        │   ├── auth/                     # LocalAuthState, BiometricGate (Fase 10)
         │   ├── deeplink/                 # DeepLinkRouter + modelos (Fase 5)
+        │   ├── environment/              # RootDetector, EmulatorDetector, EnvironmentRiskEngine (Fase 9)
         │   ├── platform/                 # componentes Android exportados (Fase 7)
         │   ├── security/                 # HardcodedSecrets, WeakCrypto, LegacyRequestSigner (Fase 8)
         │   ├── storage/                  # InsecureSessionStore, ObsidianLocalDb (SQLite), LocalCacheManager
-        │   ├── ui/                       # telas Login/Home/Receipts/Cards/Support/Transfer/WebSupport
+        │   ├── ui/                       # telas Login/Home/Receipts/Cards/Support/Transfer/WebSupport/VaultScreen
         │   ├── webview/                  # ObsidianSupportBridge (Fase 6)
         │   └── util/Constants.kt         # base URL, chaves de storage, header de debug
         └── res/ (values/, xml/network_security_config.xml)
