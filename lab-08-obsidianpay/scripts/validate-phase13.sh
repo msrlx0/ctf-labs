@@ -290,6 +290,25 @@ reject_grep_tree 'cache.addEvent(integrity_check_started"'  "$SRC"  "sem typo ad
 reject_grep_tree 'getLastNativeGatStatus'                   "$SRC"  "sem typo getLastNativeGatStatus"
 reject_grep_re_tree 'App Integrit[^y]'                      "$SRC"  "sem typo App Integrit sem y"
 
+# --- Guards de typos da Fase 13 (tools/ e docs/mobile-pentest/) --------------
+info "Verificando ausência de typos específicos da Fase 13..."
+# network-config-cleartext-overrie (falta 'd' — overrie vs override)
+reject_grep_tree "network-config-cleartext-overrie"  "$FRIDA_DIR"  "sem typo cleartext-overrie em tools/frida"
+reject_grep_tree "network-config-cleartext-overrie"  "$ADB_DIR"    "sem typo cleartext-overrie em tools/adb"
+reject_grep_tree "network-config-cleartext-overrie"  "$DOCS_DIR"   "sem typo cleartext-overrie em docs/mobile-pentest"
+# com.obsidianpay.mobil (falta 'e' — mobil vs mobile)
+reject_grep_re_tree 'com\.obsidianpay\.mobil[^e]'   "$FRIDA_DIR"  "sem typo obsidianpay.mobil em tools/frida"
+reject_grep_re_tree 'com\.obsidianpay\.mobil[^e]'   "$ADB_DIR"    "sem typo obsidianpay.mobil em tools/adb"
+reject_grep_re_tree 'com\.obsidianpay\.mobil[^e]'   "$DOCS_DIR"   "sem typo obsidianpay.mobil em docs/mobile-pentest"
+# PinningPolic (falta 'y' — PinningPolic vs PinningPolicy)
+reject_grep_re_tree 'PinningPolic[^y]'              "$FRIDA_DIR"  "sem typo PinningPolic em tools/frida"
+reject_grep_re_tree 'PinningPolic[^y]'              "$ADB_DIR"    "sem typo PinningPolic em tools/adb"
+reject_grep_re_tree 'PinningPolic[^y]'              "$DOCS_DIR"   "sem typo PinningPolic em docs/mobile-pentest"
+# TamperChec (falta 'k' — TamperChec vs TamperCheck)
+reject_grep_re_tree 'TamperChec[^k]'               "$FRIDA_DIR"  "sem typo TamperChec em tools/frida"
+reject_grep_re_tree 'TamperChec[^k]'               "$ADB_DIR"    "sem typo TamperChec em tools/adb"
+reject_grep_re_tree 'TamperChec[^k]'               "$DOCS_DIR"   "sem typo TamperChec em docs/mobile-pentest"
+
 # --- Verificar que labs 1-7 não foram alterados ------------------------------
 info "Verificando que labs 1..7 não foram alterados nesta branch..."
 REPO_ROOT="$(git -C "$LAB_DIR" rev-parse --show-toplevel 2>/dev/null || echo "$LAB_DIR/..")"
