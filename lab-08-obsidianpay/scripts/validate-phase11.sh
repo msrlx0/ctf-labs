@@ -86,6 +86,8 @@ need_grep_tree "NetworkSecurityProfile"         "$SRC"          "NetworkSecurity
 need_grep_tree "PinningPolicy"                  "$SRC"          "PinningPolicy referenciado"
 need_grep_tree "ApiHostOverrideScreen"          "$SRC"          "ApiHostOverrideScreen referenciado"
 need_grep_file "API Host"                       "$API_HOST_SCREEN" "título 'API Host' em ApiHostOverrideScreen"
+need_grep_file 'ObsidianScaffold(title = "API Host"' "$API_HOST_SCREEN" 'ObsidianScaffold title com aspas corretas'
+need_grep_file 'apiClient.setBaseUrlForSession(normalized)' "$API_HOST_SCREEN" 'apiClient.setBaseUrlForSession(normalized)'
 
 need_grep_file "DEFAULT_EMULATOR_BASE_URL"      "$NET_PKG/NetworkSecurityProfile.kt" "DEFAULT_EMULATOR_BASE_URL"
 need_grep_file "DEFAULT_LOCALHOST_BASE_URL"     "$NET_PKG/NetworkSecurityProfile.kt" "DEFAULT_LOCALHOST_BASE_URL"
@@ -146,6 +148,7 @@ need_grep_file "network_security_config"        "$MANIFEST"      "network_securi
 need_grep_file "10.0.2.2"                       "$NET_SEC_CONFIG" "10.0.2.2 em network_security_config"
 need_grep_file "127.0.0.1"                      "$NET_SEC_CONFIG" "127.0.0.1 em network_security_config"
 need_grep_file "localhost"                      "$NET_SEC_CONFIG" "localhost em network_security_config"
+need_grep_file '<domain includeSubdomains="false">10.0.2.2</domain>' "$NET_SEC_CONFIG" 'domain tag 10.0.2.2 correto'
 
 # --- MainActivity e HomeScreen -----------------------------------------------
 info "Conferindo MainActivity e HomeScreen..."
@@ -178,6 +181,15 @@ reject_grep_re_tree 'webVieClient'                    "$SRC"  "sem typo webVieCl
 reject_grep_re_tree 'object LegacyRequestSigne \{'    "$SRC"  "sem typo LegacyRequestSigne {"
 reject_grep_re_tree 'WeakCryptosha1Hex'               "$SRC"  "sem typo WeakCryptosha1Hex"
 reject_grep_re_tree 'WeakCryptomd5Hex'                "$SRC"  "sem typo WeakCryptomd5Hex"
+
+# --- Guards de typos da Fase 11 -----------------------------------------------
+info "Verificando ausência de typos da Fase 11..."
+reject_grep_tree 'ObsidianScaffold(title = API Host"'       "$API_HOST_SCREEN"  'sem typo title sem aspas de abertura'
+reject_grep_tree 'apiClientsetBaseUrlForSession'             "$SRC"              'sem typo apiClientsetBaseUrlForSession'
+reject_grep_re_tree 'network-config-cleartext-overrid\b'    "$SRC"              'sem typo network-config-cleartext-overrid'
+reject_grep_tree '>10.0.2.</domain>'                         "$NET_SEC_CONFIG"   'sem IP truncado 10.0.2. em network_security_config'
+reject_grep_re_tree '->[[:space:]]+patch-risk-engine-result' "$SRC"             'sem typo patch-risk-engine-result sem aspas de abertura'
+reject_grep_tree 'bypassHintId =BiometricGate'              "$SRC"              'sem typo bypassHintId =BiometricGate'
 
 # --- Verificar que labs 1-7 não foram alterados ------------------------------
 info "Verificando que labs 1..7 não foram alterados nesta branch..."
