@@ -1047,3 +1047,93 @@ O script confere que:
 - [ ] Docs públicos sem `FLAG{`; sem `analyst123`/`operator123` em material público.
 - [ ] Sem typos/placeholders perigosos nos docs finais.
 - [ ] Nenhum lab 1..7 alterado; `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+---
+
+## Fase 17 — Android build readiness
+
+> A Fase 17 não altera o backend, o app, as flags nem os endpoints da Fase 14: é
+> a **preparação para o build real do APK** no Android Studio. Entrega o script
+> `scripts/validate-phase17.sh`, que faz a inspeção estrutural forte do projeto
+> Android e tenta o build real best-effort, e atualiza os docs de build.
+>
+> Atalho: `bash scripts/validate-phase17.sh`. **Não exige Android SDK.**
+
+### F17.1 — Rodar a validação
+
+```bash
+cd lab-08-obsidianpay
+bash scripts/validate-phase17.sh
+```
+
+Esperado: todos os checks PASS. Sem Android SDK, o build é **WARN** (não falha);
+as Fases 14, 15 e 16 são executadas embutidas.
+
+### F17.2 — O que o script valida
+
+- **Scripts anteriores:** `validate-phase1.sh`..`validate-phase16.sh` existem.
+- **Arquivos Android obrigatórios:** `settings.gradle`, `build.gradle` (raiz),
+  `gradle.properties`, `app/build.gradle`, `AndroidManifest.xml`,
+  `network_security_config.xml`, `strings.xml`, `colors.xml`, `themes.xml`;
+  classes-núcleo (`MainActivity`, `ApiClient`, `ApiModels`, `ApiResult`,
+  `InsecureSessionStore`); todas as 14 telas (`LoginScreen`..`IntegrityScreen`);
+  e os pacotes `auth/`, `deeplink/`, `environment/`, `integrity/`, `network/`,
+  `platform/`, `security/`, `storage/`, `webview/`.
+- **Gradle/Manifest:** namespace/applicationId `com.obsidianpay.mobile`,
+  `minSdk`/`targetSdk`/`compileSdk`, permissão `INTERNET`, `usesCleartextTraffic`,
+  `networkSecurityConfig`, os três componentes exportados (`InternalOpsActivity`,
+  `DebugCommandReceiver`, `ObsidianNotesProvider`), a authority
+  `com.obsidianpay.mobile.provider.notes`, o scheme `obsidianpay` e os hosts
+  `transfer`/`support`/`receipt`.
+- **Conteúdo Kotlin:** `MainActivity` navega para todas as telas; `HomeScreen`
+  tem botões; `ApiClient` usa `Constants`/`DEFAULT_BASE_URL` e OkHttp;
+  `WebViewSupportScreen` usa `addJavascriptInterface`; `ObsidianSupportBridge`
+  tem `@JavascriptInterface`; `LegacyRequestSigner`, `RootDetector`,
+  `EmulatorDetector`, `EnvironmentRiskEngine`, `LocalAuthState`, `BiometricGate`,
+  `NativeGate`, `TamperCheck`, `PinningPolicy`, `NetworkSecurityProfile` existem.
+- **Typos críticos:** falha em `network-config-cleartext-overrie`, `PinningPolicyy`,
+  `TamperCheckk`, `getSessionSummay`, `getSessionSummar(`, `@JavascriptInterfac`,
+  `webVieClient`, `LegacyRequestSigne`, `WeakCryptosha1Hex`, `WeakCryptomd5Hex`,
+  `apiClientsetBaseUrlForSession`, `getLastNativeGatStatus`, `App Integrit` (sem `y`).
+- **Anti-leak:** sem `FLAG{` em docs públicos/tools; sem `analyst123`/`operator123`
+  em material público.
+- **Labs 1..7 intocados** (commits da branch + working tree, ignorando ruído de
+  modo de arquivo do mount Windows/WSL).
+- **Validações anteriores:** roda `validate-phase14.sh`, `validate-phase15.sh` e
+  `validate-phase16.sh`.
+
+### F17.3 — Se o Android SDK não existir
+
+A ausência de Android SDK é **esperada** no shell e **não falha** a Fase 17. O
+script imprime:
+
+```
+[WARN] Android SDK não detectado — build real deve ser feito no Android Studio
+       conforme docs/ANDROID-BUILD-CHECKLIST.md
+```
+
+O SDK é detectado via `ANDROID_HOME`, `ANDROID_SDK_ROOT` ou
+`android-app/local.properties` (`sdk.dir=...`). Com SDK presente, o script roda
+`./gradlew --no-daemon :app:assembleDebug` e **falha** se o build falhar.
+
+### F17.4 — Build real (Android Studio / linha de comando)
+
+```bash
+# Android Studio: File > Open > selecione android-app/ e rode (Run ▶).
+# Linha de comando (requer Android SDK + JDK 17+):
+cd android-app
+./gradlew --no-daemon :app:assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+Detalhes e erros comuns em `docs/ANDROID-BUILD-CHECKLIST.md` (seção 11).
+
+### Critérios de aceite (Fase 17)
+
+- [ ] `validate-phase1..16.sh` continuam passando.
+- [ ] `validate-phase17.sh` passa (inclui as Fases 14, 15 e 16 embutidas).
+- [ ] Estrutura Android validada (Gradle/Manifest/recursos/telas/pacotes/Kotlin).
+- [ ] Sem Android SDK, o build é **WARN** (não FAIL); com SDK, `assembleDebug` passa.
+- [ ] `docs/ANDROID-BUILD-CHECKLIST.md`/`docs/FINAL-QA.md` atualizados com a Fase 17.
+- [ ] Docs públicos sem `FLAG{`; sem `analyst123`/`operator123` em material público.
+- [ ] Nenhum lab 1..7 alterado; `git diff --stat` mostra apenas `lab-08-obsidianpay/`.

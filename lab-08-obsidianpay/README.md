@@ -195,6 +195,12 @@ A partir da Fase 3 existe um **app Android base** (Kotlin + Jetpack Compose) em
 - Abra a pasta `android-app/` no Android Studio e rode em um emulador (API 24+).
 - Login de teste: `guest` / `guest123`.
 
+> **Build Android real (Fase 17):** o build/instalação do APK deve seguir
+> [docs/ANDROID-BUILD-CHECKLIST.md](./docs/ANDROID-BUILD-CHECKLIST.md) no Android
+> Studio. A validação de shell (`scripts/validate-phase17.sh`) faz a inspeção
+> estrutural do projeto e um build best-effort — **não substitui** o Android
+> Studio nem exige Android SDK.
+
 Detalhes de build e execução em [android-app/README.md](./android-app/README.md).
 
 ## Estado atual

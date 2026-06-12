@@ -19,7 +19,8 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 | **Fase 13** | **Dynamic Instrumentation scaffold**: scripts Frida didáticos (`tools/frida/`, 5 scripts por domínio), playbook ADB (`tools/adb/`), documentação de pentest mobile (`docs/mobile-pentest/`). | ✅ Concluída |
 | **Fase 14** | **Final Challenge Chain**: cadeia oficial de 9 estágios (`api/src/challenge-chain.js`), flags internas (`api/src/flags.js`), scoring local e endpoints `challenge/progress`, `challenge/submit`, `challenge/scoreboard`, `internal/finalize-operator`; scoring público em `docs/CHALLENGE-SCORING.md`. | ✅ Concluída |
 | **Fase 15** | **Documentação final**: `WALKTHROUGH.md` manual completo de instrutor (Stages 01–09 + final operator chain, passo a passo, com flags); `STUDENT-GUIDE.md` polido (objetivo final, trilha de raciocínio, progress/submit, checklist) sem spoilers; `README.md`/`PLAYBOOK.md` alinhados à cadeia; `CHALLENGE-SCORING.md` mais útil; guards anti-spoiler/anti-leak reforçados em `scripts/validate-phase15.sh`. | ✅ Concluída |
-| **Fase 16** | **QA final / release readiness**: validação consolidada (`scripts/validate-phase16.sh`), revisão de docs (anti-spoiler/anti-leak), detecção de typos/placeholders perigosos, `docs/FINAL-QA.md` (matriz de validação + checklist de release) e `docs/ANDROID-BUILD-CHECKLIST.md` (preparação do build Android real no Android Studio). Não adiciona vulnerabilidades nem altera flags; build do APK continua best-effort no shell. | ✅ Atual |
+| **Fase 16** | **QA final / release readiness**: validação consolidada (`scripts/validate-phase16.sh`), revisão de docs (anti-spoiler/anti-leak), detecção de typos/placeholders perigosos, `docs/FINAL-QA.md` (matriz de validação + checklist de release) e `docs/ANDROID-BUILD-CHECKLIST.md` (preparação do build Android real no Android Studio). Não adiciona vulnerabilidades nem altera flags; build do APK continua best-effort no shell. | ✅ Concluída |
+| **Fase 17** | **Android build readiness**: QA estrutural de Kotlin/Gradle/Manifest/recursos (`scripts/validate-phase17.sh`), build `assembleDebug` **best-effort** (WARN sem Android SDK, FAIL se o build falhar com SDK presente), seção "Erros comuns de build" no `docs/ANDROID-BUILD-CHECKLIST.md` e status de build no `docs/FINAL-QA.md`/`VALIDATION.md`. Não altera backend, app, flags nem os endpoints da Fase 14. | ✅ Atual |
 
 ## Escopo da Fase 1 (entregue)
 
@@ -239,6 +240,32 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
   (`TODO`/`FIXME`/`TBD`/`changeme`/`placeholder`/`lorem ipsum`) nos docs finais,
   e roda `validate-phase14.sh` + `validate-phase15.sh` internamente. Não exige
   Android SDK; não adiciona vulnerabilidades; não altera flags.
+
+## Escopo da Fase 17 (entregue)
+
+- **Android build readiness**: revisão estrutural do projeto Android
+  (`android-app/`) preparando o build real do APK no Android Studio — sem alterar
+  backend, app, flags ou os endpoints da Fase 14.
+- **QA estrutural de Kotlin/Gradle/Manifest**: `scripts/validate-phase17.sh`
+  confere os arquivos Gradle (namespace `com.obsidianpay.mobile`, `minSdk`/
+  `targetSdk`/`compileSdk`), o `AndroidManifest` (`INTERNET`,
+  `usesCleartextTraffic`, `networkSecurityConfig`, componentes exportados,
+  authority `provider.notes`, scheme `obsidianpay`, hosts
+  `transfer`/`support`/`receipt`), os recursos (`strings`/`colors`/`themes`/
+  `network_security_config`), as 14 telas, os pacotes do app e o conteúdo
+  Kotlin-chave (navegação, bridge, detectores, auth/integrity/network), além de
+  reforçar os guards de typos e anti-leak.
+- **`assembleDebug` best-effort**: sem Android SDK detectado
+  (`ANDROID_HOME`/`ANDROID_SDK_ROOT`/`local.properties` `sdk.dir`), o build é
+  **WARN** e não falha; com SDK detectado, o script roda
+  `./gradlew --no-daemon :app:assembleDebug` e **falha** se o build falhar.
+- **Docs atualizados**: seção "Erros comuns de build e como corrigir" no
+  `docs/ANDROID-BUILD-CHECKLIST.md`; status da Fase 17 no `docs/FINAL-QA.md`;
+  seção Fase 17 no `VALIDATION.md`; nota de build real no `README.md`; este
+  roadmap e `docs/VULNERABILITY-ROADMAP.md`. Sem flags em docs públicos.
+- O script roda `validate-phase14.sh`, `validate-phase15.sh` e
+  `validate-phase16.sh` embutidos. Não exige Android SDK; não adiciona
+  vulnerabilidades; não altera flags.
 
 ## Princípios entre fases
 

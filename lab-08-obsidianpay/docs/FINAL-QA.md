@@ -33,7 +33,8 @@ release interno.
 | 12–13 | App Integrity / NativeGate + Dynamic Instrumentation scaffold | ✅ |
 | 14 | Final Challenge Chain (flags, scoring, submit) | ✅ |
 | 15 | Documentação final (walkthrough, student guide) | ✅ |
-| **16** | **QA final + preparação para build Android real** | ✅ Atual |
+| 16 | QA final + preparação para build Android real | ✅ |
+| **17** | **Android build readiness (Kotlin/Gradle/Manifest QA + assembleDebug best-effort)** | ✅ Atual |
 
 ---
 
@@ -163,7 +164,41 @@ Execute na ordem; cada item deve passar antes de gerar o APK real.
 
 ---
 
-## 7. Notas finais
+## 7. Status da Fase 17 — Android build readiness
+
+A Fase 17 prepara o projeto Android para o **build real no Android Studio** sem
+alterar backend, app, flags ou os endpoints da Fase 14. Entrega o script
+`scripts/validate-phase17.sh`, que faz a inspeção estrutural forte do projeto
+(Gradle/Manifest/recursos/Kotlin) e tenta o build real em modo best-effort.
+
+- **Fase 17 preparada:** revisão estrutural do projeto Android (namespace
+  `com.obsidianpay.mobile`, `minSdk`/`targetSdk`/`compileSdk`, `INTERNET`,
+  `usesCleartextTraffic`, `networkSecurityConfig`, componentes exportados,
+  scheme/hosts de deep link, todas as telas e pacotes, conteúdo Kotlin-chave e
+  guards de typos).
+- **Build shell best-effort:** `validate-phase17.sh` **não exige Android SDK**.
+  Sem SDK detectado (via `ANDROID_HOME`/`ANDROID_SDK_ROOT`/`local.properties`
+  `sdk.dir`), o build é apenas **WARN** — não falha. Com SDK detectado, o script
+  roda `./gradlew --no-daemon :app:assembleDebug` e **falha** se o build falhar.
+- **Build real obrigatório no Android Studio antes do release final:** a
+  validação de shell não substitui o Android Studio. O APK debug real deve ser
+  gerado e instalado conforme `docs/ANDROID-BUILD-CHECKLIST.md`.
+
+### Critérios para considerar o APK validado
+
+- [ ] **Gradle sync** conclui em `android-app/` sem erros no Android Studio.
+- [ ] **`./gradlew assembleDebug`** gera `app/build/outputs/apk/debug/app-debug.apk`.
+- [ ] **Instalação** do APK debug num emulador (API 24+) ou device.
+- [ ] **Login `guest` / `guest123`** funciona no app.
+- [ ] **API Host correto:** emulador em `http://10.0.2.2:8102`; celular físico em
+      `http://<IP_DO_PC>:8102` (backend acessível fora de `127.0.0.1`).
+- [ ] **Telas principais abrem** (Home, Receipts, Support, Web Support, API Host,
+      Device Trust, Vault, App Integrity).
+- [ ] **`bash scripts/validate-phase17.sh`** passa (estrutural + 14/15/16 embutidos).
+
+---
+
+## 8. Notas finais
 
 - Ambiente **local apenas** (`127.0.0.1:8102`); nada deste lab deve ser usado
   contra apps ou sistemas reais.
