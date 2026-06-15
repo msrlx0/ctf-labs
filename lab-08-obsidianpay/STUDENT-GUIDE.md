@@ -302,6 +302,123 @@ flag dentro do texto de evidência — ela já vai no campo `flag`.
 
 ---
 
+## Passo a passo manual sugerido
+
+Esta é uma trilha **prática e manual**, no estilo "trabalho de formiga": cada
+passo é uma estação de investigação. Ela **não entrega flags nem soluções** — diz
+o que fazer e o que observar, e deixa o "como" da exploração com você. Faça os
+passos na ordem que fizer sentido e **registre evidências** ao longo do caminho.
+
+> Tudo aqui é **local e autorizado** (`127.0.0.1:8102` / emulador
+> `10.0.2.2:8102`). Nada deste lab deve ser usado contra apps ou sistemas reais.
+
+### 1. Preparar o backend
+
+- Entre na pasta `lab-08-obsidianpay`.
+- Suba o ambiente: `docker compose up --build` (use `-d` para rodar ao fundo).
+- Confirme a saúde do serviço: `curl -s http://127.0.0.1:8102/health`.
+- Confirme que a API responde na **porta 8102** (campo `expectedPort`).
+
+### 2. Preparar o app
+
+- Abra o **Android Studio**.
+- Abra a pasta `android-app` e espere o **Gradle sync** terminar.
+- Rode o app em um **emulador** (Pixel, API 24+).
+- Lembre que, no emulador, o app fala com `http://10.0.2.2:8102` (alias para o
+  `127.0.0.1` do host).
+- Em **celular físico**, use a tela **API Host** apontando para `http://<IP_DO_PC>:8102`.
+
+### 3. Login inicial
+
+- Faça login com `guest` / `guest123` (já vem preenchido).
+- Confirme que a tela **Home** carrega e lista os fluxos do app.
+
+### 4. Recon mobile
+
+- Olhe a **config** do app/API e observe endpoints e caminhos citados.
+- Mapeie as telas e o que cada fluxo envia/recebe.
+- **Registre evidências** das pistas encontradas (sem usar scanner).
+
+### 5. Armazenamento local
+
+- Use o app normalmente para **gerar estado** (abra recibos, cartões, suporte).
+- Procure dados em **SharedPreferences**, **SQLite**, **cache** e **filesDir**.
+- Registre **onde** achou tokens, perfis, cache e artefatos.
+
+### 6. API e objetos previsíveis
+
+- Compare as **listas** com os **detalhes** por ID.
+- Teste IDs previsíveis de forma **controlada** (no seu ambiente local).
+- Registre a diferença entre acessar **seu próprio objeto** e o de **outro perfil**.
+
+### 7. WebView e bridge
+
+- Abra o **Web Support** (portal de suporte em WebView).
+- Observe a **bridge** disponível à página e **identifique os métodos expostos**.
+- Registre o **impacto** do que a bridge consegue mostrar dentro do app.
+
+### 8. Deep links e QR
+
+- Teste deep links `obsidianpay://` (transfer/support/receipt).
+- Processe **payloads** pela tela QR Payment.
+- Registre os **eventos** que o app gera ao interpretar essa entrada.
+
+### 9. Componentes exportados
+
+- Use o **ADB local** para interagir com os componentes do app.
+- Teste a **Activity**, o **Receiver** e o **Provider** exportados.
+- Registre as evidências de cada interação.
+
+### 10. Reverse engineering
+
+- Abra o APK no **JADX**/**apktool**.
+- Procure **secrets**, **signing**, **routes** e **hints** no código.
+- Registre os achados de análise estática.
+
+### 11. Device Trust
+
+- Entenda os **headers** que o fluxo Device Trust monta no cliente.
+- Compare a **assinatura esperada** com o que o backend aceita.
+- Registre **por que** confiar no que o cliente afirma é frágil.
+
+### 12. Root / Emulator / Biometric / Integrity
+
+- Observe as telas **Security Check**, **Secure Vault** e **App Integrity**.
+- Use os **scripts Frida do lab** quando aplicável (instrumentação controlada).
+- Registre **quais** checagens são apenas locais (client-side).
+
+### 13. Network / Pinning / API Host
+
+- Entenda a diferença entre **emulador** e **celular físico**.
+- **Burp** é opcional (proxy/intercept) para observar o tráfego local.
+- Registre o **network profile** observado (cleartext, pinning report-only).
+
+### 14. Submissão de progresso
+
+- Consulte `GET /api/mobile/challenge/progress` para ver os 9 estágios e dicas.
+- Submeta cada flag em `POST /api/mobile/challenge/submit` — no corpo, use o campo
+  `flag` com `<flag_redacted>` neste guia (a flag real você obtém **resolvendo** a
+  trilha, nunca procurando no código).
+- Acompanhe `GET /api/mobile/challenge/scoreboard`.
+- **Não revele flags** em anotações públicas.
+
+### 15. Evidências finais
+
+Para cada estágio resolvido, junte evidência objetiva e reprodutível:
+
+- print ou texto da **requisição/resposta**;
+- **tela** do app;
+- **arquivo local** (prefs/SQLite/cache);
+- **comando ADB** usado;
+- trecho de **JADX**;
+- **resposta do scoreboard**.
+
+> Este passo a passo é deliberadamente investigativo: ele aponta as estações, mas
+> a descoberta é sua. Comandos prontos (curl/adb/frida) e a solução completa só
+> existem em `WALKTHROUGH.md`, que é **material de instrutor**.
+
+---
+
 ## 5. O que NÃO fazer
 
 - ❌ **Não** use estas técnicas contra apps, sistemas ou pessoas reais.

@@ -20,7 +20,8 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 | **Fase 14** | **Final Challenge Chain**: cadeia oficial de 9 estágios (`api/src/challenge-chain.js`), flags internas (`api/src/flags.js`), scoring local e endpoints `challenge/progress`, `challenge/submit`, `challenge/scoreboard`, `internal/finalize-operator`; scoring público em `docs/CHALLENGE-SCORING.md`. | ✅ Concluída |
 | **Fase 15** | **Documentação final**: `WALKTHROUGH.md` manual completo de instrutor (Stages 01–09 + final operator chain, passo a passo, com flags); `STUDENT-GUIDE.md` polido (objetivo final, trilha de raciocínio, progress/submit, checklist) sem spoilers; `README.md`/`PLAYBOOK.md` alinhados à cadeia; `CHALLENGE-SCORING.md` mais útil; guards anti-spoiler/anti-leak reforçados em `scripts/validate-phase15.sh`. | ✅ Concluída |
 | **Fase 16** | **QA final / release readiness**: validação consolidada (`scripts/validate-phase16.sh`), revisão de docs (anti-spoiler/anti-leak), detecção de typos/placeholders perigosos, `docs/FINAL-QA.md` (matriz de validação + checklist de release) e `docs/ANDROID-BUILD-CHECKLIST.md` (preparação do build Android real no Android Studio). Não adiciona vulnerabilidades nem altera flags; build do APK continua best-effort no shell. | ✅ Concluída |
-| **Fase 17** | **Android build readiness**: QA estrutural de Kotlin/Gradle/Manifest/recursos (`scripts/validate-phase17.sh`), build `assembleDebug` **best-effort** (WARN sem Android SDK, FAIL se o build falhar com SDK presente), seção "Erros comuns de build" no `docs/ANDROID-BUILD-CHECKLIST.md` e status de build no `docs/FINAL-QA.md`/`VALIDATION.md`. Não altera backend, app, flags nem os endpoints da Fase 14. | ✅ Atual |
+| **Fase 17** | **Android build readiness**: QA estrutural de Kotlin/Gradle/Manifest/recursos (`scripts/validate-phase17.sh`), build `assembleDebug` **best-effort** (WARN sem Android SDK, FAIL se o build falhar com SDK presente), seção "Erros comuns de build" no `docs/ANDROID-BUILD-CHECKLIST.md` e status de build no `docs/FINAL-QA.md`/`VALIDATION.md`. Não altera backend, app, flags nem os endpoints da Fase 14. | ✅ Concluída |
+| **Fase 18** | **Public docs polish**: tabela final de vulnerabilidades no `README.md` (`Vulnerabilidades presentes`), trilha manual do aluno sem spoiler no `STUDENT-GUIDE.md` (`Passo a passo manual sugerido`), `WALKTHROUGH.md` mantido como material de instrutor (com flags), consistência final da documentação e `scripts/validate-phase18.sh`. Não altera backend, app, flags nem os endpoints da Fase 14. | ✅ Atual |
 
 ## Escopo da Fase 1 (entregue)
 
@@ -266,6 +267,25 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 - O script roda `validate-phase14.sh`, `validate-phase15.sh` e
   `validate-phase16.sh` embutidos. Não exige Android SDK; não adiciona
   vulnerabilidades; não altera flags.
+
+## Escopo da Fase 18 (entregue)
+
+- **Public docs polish**: acabamento final da documentação pública no mesmo padrão
+  dos outros labs — sem alterar backend, app, flags ou os endpoints da Fase 14.
+- **Vulnerability table**: seção "Vulnerabilidades presentes" no `README.md`, com
+  as colunas Categoria / Vulnerabilidade / Onde aparece no lab / O que o aluno
+  aprende, cobrindo as 22 trilhas (de Insecure Mobile Storage à Challenge Chain),
+  em linguagem simples e **sem** flags/headers finais/payloads.
+- **Manual student path**: seção "Passo a passo manual sugerido" no
+  `STUDENT-GUIDE.md` — 15 estações práticas e investigativas (backend, app, login,
+  recon, storage, API/IDOR, WebView/bridge, deep links/QR, componentes exportados,
+  reverse engineering, Device Trust, root/emulator/biometric/integrity,
+  network/pinning, submissão de progresso e evidências finais), sem flags.
+- **Final documentation consistency**: `WALKTHROUGH.md` permanece instrutor-facing
+  (solução completa + flags); `VALIDATION.md`, `docs/PHASES.md` e
+  `docs/VULNERABILITY-ROADMAP.md` atualizados; `scripts/validate-phase18.sh` valida
+  README/STUDENT-GUIDE/WALKTHROUGH, anti-leak, typos e labs 1..7 intocados, e roda
+  `validate-phase16.sh`/`validate-phase17.sh` embutidos. Não exige Android SDK.
 
 ## Princípios entre fases
 

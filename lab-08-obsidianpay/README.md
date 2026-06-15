@@ -183,6 +183,46 @@ Para o detalhamento por trilhas (com status), veja
 
 ---
 
+## Vulnerabilidades presentes
+
+A tabela abaixo resume, em linguagem simples, as fraquezas que o ObsidianPay
+expõe **de propósito** para estudo. Ela serve de mapa: diz **onde** olhar e **o
+que** cada item ensina, mas **não** entrega flags, headers finais nem payloads
+completos — descobrir o "como" é o exercício. Tudo roda em ambiente **local e
+autorizado** (`127.0.0.1:8102` / emulador `10.0.2.2:8102`); nada aqui deve ser
+usado contra apps ou sistemas de terceiros.
+
+| Categoria | Vulnerabilidade | Onde aparece no lab | O que o aluno aprende |
+|---|---|---|---|
+| Armazenamento mobile | **Insecure Mobile Storage** | SharedPreferences (`InsecureSessionStore`), SQLite (`obsidianpay_local.db`), `filesDir`/`cacheDir` e export app-specific externo; tela "Local State". | Procurar tokens, perfis, cache e artefatos deixados em claro no dispositivo. |
+| API / Autorização | **API Broken Access Control / IDOR** | Recibos e cartões acessíveis por ID previsível (`/api/mobile/receipts`, `/api/mobile/cards` e detalhe por ID). | Testar acesso indevido a objetos de outros perfis em APIs mobile. |
+| API / Autorização | **Mass Assignment** | `PATCH /api/mobile/profile` aceitando campos sensíveis além dos esperados. | Testar parâmetros extras no corpo de uma requisição. |
+| Recon | **Information Disclosure** | `config`, diagnostics, rotas legadas, hints e respostas com metadados. | Mapear pistas e superfície do produto **sem** usar scanner. |
+| WebView | **WebView Misconfiguration** | `WebViewSupportScreen` com JavaScript/DOM Storage e conteúdo controlado pelo portal de suporte. | Entender os riscos de uma WebView mal configurada em apps mobile. |
+| WebView | **JavaScript Bridge Exposure** | `ObsidianBridge` (`@JavascriptInterface`) expõe métodos ao conteúdo da WebView. | Avaliar o impacto de uma bridge JS exposta ao conteúdo web. |
+| Entrada não confiável | **Deep Link / QR Input Abuse** | Scheme `obsidianpay://` (transfer/support/receipt) e a tela QR Payment com payloads previsíveis. | Testar entrada via deep link e QR como vetor não confiável. |
+| Componentes Android | **Exported Activity** | `InternalOpsActivity` exportada no `AndroidManifest`. | Reconhecer o risco de uma Activity exportada para outros apps. |
+| Componentes Android | **Exported BroadcastReceiver** | `DebugCommandReceiver` exportado, com comandos previsíveis. | Entender o abuso de broadcasts previsíveis. |
+| Componentes Android | **Exported ContentProvider** | `ObsidianNotesProvider` exportado (authority `provider.notes`). | Enumerar dados locais via `content://`. |
+| Reverse engineering | **Hardcoded Secrets** | `HardcodedSecrets` (segredos/rotas/valores internos fragmentados no binário). | Engenharia reversa básica de um APK com JADX/apktool. |
+| Reverse engineering | **Weak Crypto / Legacy Signature** | `WeakCrypto` (Base64/XOR/SHA-1/MD5) e `LegacyRequestSigner`. | Por que assinatura/cripto client-side fraca é quebrável. |
+| Confiança no cliente | **Device Trust** bypass | Fluxo Device Trust e endpoint interno baseado em headers montados no cliente. | Que confiar no que o cliente afirma é frágil. |
+| Anti-análise | **Root Detection** bypass | `RootDetector` (monitor-only) na tela Security Check. | Que checks locais de root podem ser hookados/observados. |
+| Anti-análise | **Emulator Detection** bypass | `EmulatorDetector` (monitor-only). | Observar/contornar a detecção de ambiente. |
+| Autenticação local | **Biometric / Local Auth** bypass | `LocalAuthState` / `BiometricGate` e a tela Secure Vault. | O risco de usar autorização local como "prova" para o servidor. |
+| Rede | **Network Security / Cleartext / API Host** | `network_security_config`, cleartext local e a tela API Host. | A diferença entre emulador, celular físico e backend local. |
+| Rede | **Certificate Pinning** scaffold | `PinningPolicy` / `CertificatePinner` (report-only). | Observar e entender o bypass conceitual de pinning em lab. |
+| Integridade do app | **Native/JNI Integrity** scaffold | `NativeGate` (gate nativo opcional/fallback). | Que um gate nativo também precisa de validação no servidor. |
+| Integridade do app | **Anti-Tamper / Binary Patching** checks | `TamperCheck` (debuggable/installer/signature/package). | Os limites de checks de integridade locais. |
+| Instrumentação | **Dynamic Instrumentation** | Scripts Frida e playbook ADB do laboratório (`tools/`). | Observação/hooking controlado de um pacote local. |
+| CTF / Scoring | **Challenge Chain / Scoring Logic** | `challenge/progress`, `challenge/submit`, `challenge/scoreboard`, `finalize-operator`. | Como validar evidência e progresso numa cadeia de CTF. |
+
+> A tabela é **informativa**, não um walkthrough: ela cita telas, arquivos e
+> conceitos, mas a investigação (encontrar as flags e os caminhos exatos) é sua.
+> A solução completa fica apenas em `WALKTHROUGH.md` (material de instrutor).
+
+---
+
 ## App Android
 
 A partir da Fase 3 existe um **app Android base** (Kotlin + Jetpack Compose) em

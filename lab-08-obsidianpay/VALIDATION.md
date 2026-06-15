@@ -1137,3 +1137,94 @@ Detalhes e erros comuns em `docs/ANDROID-BUILD-CHECKLIST.md` (seção 11).
 - [ ] `docs/ANDROID-BUILD-CHECKLIST.md`/`docs/FINAL-QA.md` atualizados com a Fase 17.
 - [ ] Docs públicos sem `FLAG{`; sem `analyst123`/`operator123` em material público.
 - [ ] Nenhum lab 1..7 alterado; `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+---
+
+## Fase 18 — Documentação pública final
+
+> A Fase 18 é **acabamento de documentação pública**: não altera backend, app,
+> flags nem os endpoints da Fase 14. Entrega a **tabela de vulnerabilidades** no
+> `README.md`, a **trilha manual sem spoiler** no `STUDENT-GUIDE.md`, mantém o
+> `WALKTHROUGH.md` como material de instrutor (com flags) e adiciona o script
+> `scripts/validate-phase18.sh`. **Não exige Android SDK.**
+
+### F18.1 — Rodar a validação
+
+```bash
+cd lab-08-obsidianpay
+bash scripts/validate-phase18.sh
+```
+
+Esperado: todos os checks PASS. As Fases 16 e 17 rodam embutidas (a 17 já
+encadeia 14/15/16), então a cadeia inteira é coberta.
+
+### F18.2 — Tabela de vulnerabilidades (README.md)
+
+O `README.md` ganha a seção **"Vulnerabilidades presentes"** com as colunas
+**Categoria**, **Vulnerabilidade**, **Onde aparece no lab** e **O que o aluno
+aprende**, cobrindo as 22 trilhas do lab (de Insecure Mobile Storage à Challenge
+Chain). A tabela é informativa: cita telas/arquivos/endpoints e conceitos, mas
+**não** entrega flags, headers finais nem payloads completos.
+
+```bash
+# a seção e as colunas existem:
+grep -n "Vulnerabilidades presentes" README.md
+grep -nE "Categoria.*Vulnerabilidade.*Onde aparece no lab.*O que o aluno aprende" README.md
+# termos-chave presentes (amostra):
+grep -nE "Insecure Mobile Storage|IDOR|Mass Assignment|WebView|Challenge Chain" README.md
+```
+
+### F18.3 — Trilha manual sem spoiler (STUDENT-GUIDE.md)
+
+O `STUDENT-GUIDE.md` ganha a seção **"Passo a passo manual sugerido"** — 15
+estações práticas (preparar backend/app, login, recon, storage, WebView,
+componentes exportados, reverse engineering, Device Trust, network, submissão de
+progresso e evidências finais). Sem `FLAG{`; referências a flag usam
+`<flag_redacted>`.
+
+```bash
+grep -n "Passo a passo manual sugerido" STUDENT-GUIDE.md
+grep -c "FLAG{" STUDENT-GUIDE.md   # esperado: 0
+grep -n "<flag_redacted>" STUDENT-GUIDE.md
+```
+
+### F18.4 — Walkthrough continua instrutor-facing (WALKTHROUGH.md)
+
+O `WALKTHROUGH.md` **permanece** o material de instrutor: solução completa,
+cadeia final, instruções manuais e as flags reais (incl.
+`FLAG{obsidianpay_final_operator_chain_09}` em `Stage 09 — Final Operator Chain`).
+
+```bash
+grep -n "Stage 01" WALKTHROUGH.md
+grep -n "Stage 09" WALKTHROUGH.md
+grep -n "Final Operator Chain" WALKTHROUGH.md
+grep -n "FLAG{obsidianpay_final_operator_chain_09}" WALKTHROUGH.md
+```
+
+### F18.5 — O que o script valida
+
+- **Scripts anteriores:** `validate-phase1.sh`..`validate-phase17.sh` existem.
+- **README:** seção "Vulnerabilidades presentes", as 4 colunas e os 22 termos-chave.
+- **STUDENT-GUIDE:** seção "Passo a passo manual sugerido" e suas estações; `<flag_redacted>`.
+- **WALKTHROUGH:** `Stage 01`, `Stage 09`, `Final Operator Chain` e a flag final.
+- **Anti-leak:** sem `FLAG{` em docs públicos/tools (`README`, `STUDENT-GUIDE`,
+  `docs/ARCHITECTURE.md`, `docs/PHASES.md`, `docs/VULNERABILITY-ROADMAP.md`,
+  `docs/CHALLENGE-SCORING.md`, `docs/FINAL-QA.md`, `docs/ANDROID-BUILD-CHECKLIST.md`,
+  `docs/mobile-pentest/SETUP.md`, `docs/mobile-pentest/PLAYBOOK.md`,
+  `android-app/README.md`, `tools/`).
+- **Credenciais internas:** sem `analyst123`/`operator123` em material público.
+- **Typos conhecidos:** falha nos typos da Fase 17 (sem casar com formas corretas
+  como `LegacyRequestSigner`).
+- **Labs 1..7 intocados** (commits da branch + working tree, ignorando ruído de modo).
+- **Validações anteriores:** roda `validate-phase16.sh` e `validate-phase17.sh`.
+- **Android SDK:** não exigido (build real continua no Android Studio).
+
+### Critérios de aceite (Fase 18)
+
+- [ ] `validate-phase17.sh` continua passando.
+- [ ] `validate-phase18.sh` passa (Fases 16 e 17 embutidas).
+- [ ] `README.md` tem a tabela de vulnerabilidades (4 colunas + 22 termos).
+- [ ] `STUDENT-GUIDE.md` tem o passo a passo manual **sem** flags.
+- [ ] `WALKTHROUGH.md` continua instrutor-facing (com flags).
+- [ ] Docs públicos sem `FLAG{`; sem `analyst123`/`operator123` em material público.
+- [ ] Nenhum lab 1..7 alterado; `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
