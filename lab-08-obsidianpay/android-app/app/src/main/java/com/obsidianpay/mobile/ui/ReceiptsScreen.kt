@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +27,7 @@ import com.obsidianpay.mobile.api.ApiClient
 import com.obsidianpay.mobile.api.ApiResult
 import com.obsidianpay.mobile.api.Receipt
 import com.obsidianpay.mobile.storage.InsecureSessionStore
+import com.obsidianpay.mobile.storage.LocalCacheManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,11 +36,14 @@ import kotlinx.coroutines.withContext
 fun ReceiptsScreen(
     apiClient: ApiClient,
     store: InsecureSessionStore,
+    cache: LocalCacheManager,
+    initialReceiptId: String? = null,
+    prefillSource: String? = null,
     onBack: () -> Unit,
 ) {
     var receipts by remember { mutableStateOf<List<Receipt>>(emptyList()) }
     var status by remember { mutableStateOf("Carregando recibos...") }
-    var lookupId by remember { mutableStateOf("") }
+    var lookupId by remember { mutableStateOf(initialReceiptId ?: "") }
     var detail by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val token = store.token
@@ -52,10 +57,30 @@ fun ReceiptsScreen(
         when (res) {
             is ApiResult.Success -> {
                 receipts = res.data
-                store.saveReceiptsOffline(res.data.toString())
+                cache.cacheReceiptList(res.rawBody)
                 status = "${res.data.size} recibo(s)."
             }
             is ApiResult.Error -> status = "Erro: ${res.message}"
+        }
+    }
+
+    // Opened via deep link / QR with a specific id: auto-open it.
+    LaunchedEffect(initialReceiptId) {
+        val id = initialReceiptId?.trim().orEmpty()
+        if (id.isEmpty()) return@LaunchedEffect
+        if (prefillSource != null) cache.addEvent("receipt_from_$prefillSource", "id=$id")
+        if (token == null) {
+            detail = "Sessão ausente."
+            return@LaunchedEffect
+        }
+        detail = "Abrindo recibo $id..."
+        val res = withContext(Dispatchers.IO) { apiClient.getReceipt(token, id) }
+        detail = when (res) {
+            is ApiResult.Success -> {
+                cache.cacheReceipt(id, res.rawBody)
+                res.rawBody
+            }
+            is ApiResult.Error -> "Erro (${res.httpCode ?: "?"}): ${res.message}"
         }
     }
 
@@ -95,13 +120,30 @@ fun ReceiptsScreen(
                     detail = "Abrindo recibo $id..."
                     scope.launch {
                         val res = withContext(Dispatchers.IO) { apiClient.getReceipt(token, id) }
-                        detail = when (res) {
-                            is ApiResult.Success -> res.data.toString()
-                            is ApiResult.Error -> "Erro (${res.httpCode ?: "?"}): ${res.message}"
+                        when (res) {
+                            is ApiResult.Success -> {
+                                cache.cacheReceipt(id, res.rawBody)
+                                detail = res.rawBody
+                            }
+                            is ApiResult.Error -> detail = "Erro (${res.httpCode ?: "?"}): ${res.message}"
                         }
                     }
                 }) { Text("Abrir") }
             }
+
+            OutlinedButton(
+                onClick = {
+                    val cached = cache.cachedReceipts()
+                    detail = if (cached.isEmpty()) {
+                        "Nenhum recibo em cache local."
+                    } else {
+                        cached.joinToString("\n") {
+                            "${it.id} · ${it.ownerRole ?: "-"} · ${it.reference ?: "-"} · ${it.amount ?: "-"}"
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Cached Receipts") }
 
             ResponseBox(detail)
         }

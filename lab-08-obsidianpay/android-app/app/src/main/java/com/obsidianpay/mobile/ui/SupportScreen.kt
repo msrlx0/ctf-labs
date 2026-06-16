@@ -21,6 +21,7 @@ import com.obsidianpay.mobile.ResponseBox
 import com.obsidianpay.mobile.api.ApiClient
 import com.obsidianpay.mobile.api.ApiResult
 import com.obsidianpay.mobile.storage.InsecureSessionStore
+import com.obsidianpay.mobile.storage.LocalCacheManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,6 +30,8 @@ import kotlinx.coroutines.withContext
 fun SupportScreen(
     apiClient: ApiClient,
     store: InsecureSessionStore,
+    cache: LocalCacheManager,
+    onOpenWebSupport: (topic: String?, message: String?) -> Unit,
     onBack: () -> Unit,
 ) {
     var response by remember { mutableStateOf("") }
@@ -36,7 +39,8 @@ fun SupportScreen(
     val scope = rememberCoroutineScope()
     val token = store.token
 
-    fun run(label: String, block: suspend () -> ApiResult<String>) {
+    // Runs a call, shows the response and persists the raw body via [onCache].
+    fun run(label: String, block: suspend () -> ApiResult<String>, onCache: (String) -> Unit) {
         status = "$label..."
         scope.launch {
             val res = withContext(Dispatchers.IO) { block() }
@@ -44,6 +48,7 @@ fun SupportScreen(
                 is ApiResult.Success -> {
                     status = "$label: ${res.httpCode}"
                     response = res.data
+                    onCache(res.rawBody)
                 }
                 is ApiResult.Error -> {
                     status = "$label: erro ${res.httpCode ?: "?"}"
@@ -59,14 +64,20 @@ fun SupportScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             OutlinedButton(
-                onClick = { run("Sync de suporte") { apiClient.supportSync(token, "ping do app") } },
+                onClick = {
+                    run("Sync de suporte", { apiClient.supportSync(token, "ping do app") }) {
+                        cache.cacheSupportSync(it)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Enviar sync de suporte") }
 
             OutlinedButton(
                 onClick = {
                     if (token == null) { status = "Sessão ausente."; return@OutlinedButton }
-                    run("Diagnostics (sem header)") { apiClient.getSupportDiagnostics(token, includeDebugHeader = false) }
+                    run("Diagnostics (sem header)", { apiClient.getSupportDiagnostics(token, includeDebugHeader = false) }) {
+                        cache.cacheDiagnostics(it)
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Diagnostics (sem header)") }
@@ -74,7 +85,9 @@ fun SupportScreen(
             OutlinedButton(
                 onClick = {
                     if (token == null) { status = "Sessão ausente."; return@OutlinedButton }
-                    run("Diagnostics (com header)") { apiClient.getSupportDiagnostics(token, includeDebugHeader = true) }
+                    run("Diagnostics (com header)", { apiClient.getSupportDiagnostics(token, includeDebugHeader = true) }) {
+                        cache.cacheDiagnostics(it)
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Diagnostics (com debug header)") }
@@ -82,10 +95,35 @@ fun SupportScreen(
             OutlinedButton(
                 onClick = {
                     if (token == null) { status = "Sessão ausente."; return@OutlinedButton }
-                    run("Rotas legadas") { apiClient.getLegacyRoutes(token) }
+                    run("Rotas legadas", { apiClient.getLegacyRoutes(token) }) {
+                        cache.cacheLegacyRoutes(it)
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Rotas legadas") }
+
+            OutlinedButton(
+                onClick = { onOpenWebSupport("mobile", null) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Open Web Support") }
+
+            OutlinedButton(
+                onClick = { onOpenWebSupport("mobile", "hello from support") },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Open Web Support with Message") }
+
+            OutlinedButton(
+                onClick = {
+                    val artifacts = cache.listLocalArtifacts()
+                    response = if (artifacts.isEmpty()) {
+                        "Nenhum artefato local ainda."
+                    } else {
+                        artifacts.joinToString("\n")
+                    }
+                    status = "Artefatos locais: ${artifacts.size}"
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Local Artifacts") }
 
             if (status.isNotBlank()) Text(status)
             ResponseBox(response)

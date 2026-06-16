@@ -187,9 +187,24 @@ const featureFlags = {
   enableReceiptOfflineCache: true,
   enableQrTransferPreview: true,
   enableWebViewSupportPortal: true,
-  enableBiometricVault: false,
+  enableLegacyDeviceTrust: true,
+  enableBiometricVault: true,
   enableNativePinningExperiment: false,
 };
+
+// --- Legacy mobile "device trust" (Phase 8) ----------------------------------
+// Didactic values mirrored by the mobile client's fragmented constants
+// (android-app .../security/HardcodedSecrets.kt). They let the backend verify the
+// app's WEAK local request signing: sha1(username:deviceId:timestamp:signingSalt).
+// NONE of this is a real secret and there is intentionally NO flag here — the
+// teaching point is that a salt embedded in a client can be recovered and the
+// signature forged offline.
+const legacyMobileTrust = Object.freeze({
+  signingSalt: 'obsidian-legacy-attestation-2026',
+  internalClientId: 'obsidian-mobile-legacy-client',
+  deviceTrustPath: '/api/mobile/internal/device-trust',
+  reverseHintPath: '/api/mobile/internal/reverse-hint',
+});
 
 // --- Vault status by role ----------------------------------------------------
 // Used by GET /api/mobile/internal/vault-status. customer is denied (403) at the
@@ -212,6 +227,72 @@ const vaultStatusByRole = {
   },
 };
 
+// --- Environment / risk-check config (Phase 9) -------------------------------
+// Policy is monitor-only: the server records what the client reports but never
+// blocks based on root/emulator signals. This is the teaching point: a
+// client-side check that the server never enforces is trivially bypassable.
+const environmentConfig = Object.freeze({
+  enableEnvironmentChecks: true,
+  environmentReportPath: '/api/mobile/internal/environment-report',
+  serverPolicy: 'monitor-only',
+  note: 'Client-side environment checks are advisory. Bypass: hook detectors or patch riskLevel.',
+});
+
+// --- Mobile vault config (Phase 10) -----------------------------------------
+// The server trusts the client-side localAuth assertion without any independent
+// verification — the teaching point is that server trust must not be delegated to
+// a client-side boolean that can be manipulated via hook or binary patch.
+const mobileVaultConfig = Object.freeze({
+  enableMobileVault: true,
+  mobileVaultStatusPath: '/api/mobile/internal/vault-mobile/status',
+  mobileVaultUnlockPath: '/api/mobile/internal/vault-mobile/unlock',
+  serverTrustPolicy: 'client-asserted',
+  note: 'Server trusts local auth assertion in this lab. Bypass: hook localAuth to true before the unlock request.',
+});
+
+// --- Network security profile config (Phase 11) ------------------------------
+// Surfaced by GET /api/mobile/internal/network-profile (auth required).
+// Teaching anchors only — no flags, no credentials.
+const networkProfileConfig = Object.freeze({
+  enableNetworkProfile: true,
+  networkProfilePath: '/api/mobile/internal/network-profile',
+  pinningMode: 'report-only',
+  cleartextAllowed: true,
+  defaultEmulatorBaseUrl: 'http://10.0.2.2:8102',
+  phoneLanExample: 'http://192.168.0.50:8102',
+  note: 'configure the app base URL to reach the lab API from emulator or phone',
+});
+
+// --- App integrity config (Phase 12) ----------------------------------------
+// Surfaced by POST /api/mobile/internal/app-integrity (auth required).
+// Policy is "report-only": the server records what the client reports (NativeGate
+// status, TamperCheck score) but does not block. Teaching point: client-side
+// integrity checks are always patchable; server trust must not be delegated to
+// client assertions.
+const appIntegrityConfig = Object.freeze({
+  enableAppIntegrity: true,
+  appIntegrityPath: '/api/mobile/internal/app-integrity',
+  integrityPolicy: 'report-only',
+  nativeGatePolicy: 'fallback-allowed',
+  note: 'client-side integrity checks are patchable in this lab',
+});
+
+// --- Final challenge chain config (Phase 14) ---------------------------------
+// Public-safe descriptor for the final CTF chain. Surfaced inside the mobile
+// config so the app/student can discover the scoring/submit/progress paths.
+// Contains NO flags and NO credentials — only the chain id, counts and the
+// public hint. Flag values live exclusively in flags.js.
+const challengeConfig = Object.freeze({
+  chainId: 'obsidianpay-mobile-final-chain',
+  totalStages: 9,
+  scoringPath: '/api/mobile/challenge/scoreboard',
+  submitPath: '/api/mobile/challenge/submit',
+  progressPath: '/api/mobile/challenge/progress',
+  finalizePath: '/api/mobile/internal/finalize-operator',
+  publicHint:
+    'Resolva as 9 trilhas mobile na ordem oficial e submeta cada flag em /api/mobile/challenge/submit. Veja docs/CHALLENGE-SCORING.md.',
+});
+
 // --- Mobile config -----------------------------------------------------------
 // Leaks internal resource NAMES (storage keys, deep link schemes, routes) that
 // help map the future APK, but never returns a flag directly.
@@ -226,6 +307,34 @@ function buildMobileConfig() {
     qrTransferScheme: 'obsidianpay://transfer',
     supportDeepLinkScheme: 'obsidianpay://support',
     webViewSupportPath: '/api/mobile/webview/support',
+    // Discreet references to the internal legacy device-trust trail (Phase 8).
+    // The path names are disclosed; the client id / signing salt are NOT.
+    enableLegacyDeviceTrust: featureFlags.enableLegacyDeviceTrust,
+    internalDeviceTrustPath: legacyMobileTrust.deviceTrustPath,
+    internalReverseHintPath: legacyMobileTrust.reverseHintPath,
+    // Mobile vault / local auth config (Phase 10).
+    enableMobileVault: mobileVaultConfig.enableMobileVault,
+    mobileVaultStatusPath: mobileVaultConfig.mobileVaultStatusPath,
+    mobileVaultUnlockPath: mobileVaultConfig.mobileVaultUnlockPath,
+    // Network security profile (Phase 11).
+    enableNetworkProfile: networkProfileConfig.enableNetworkProfile,
+    networkProfilePath: networkProfileConfig.networkProfilePath,
+    pinningMode: networkProfileConfig.pinningMode,
+    cleartextAllowed: networkProfileConfig.cleartextAllowed,
+    // App integrity / NativeGate / TamperCheck (Phase 12).
+    enableAppIntegrity: appIntegrityConfig.enableAppIntegrity,
+    appIntegrityPath: appIntegrityConfig.appIntegrityPath,
+    integrityPolicy: appIntegrityConfig.integrityPolicy,
+    nativeGatePolicy: appIntegrityConfig.nativeGatePolicy,
+    // Final challenge chain descriptor (Phase 14). No flags here.
+    challenge: {
+      chainId: challengeConfig.chainId,
+      totalStages: challengeConfig.totalStages,
+      scoringPath: challengeConfig.scoringPath,
+      submitPath: challengeConfig.submitPath,
+      progressPath: challengeConfig.progressPath,
+      publicHint: challengeConfig.publicHint,
+    },
     mobileFeatureFlags: { ...featureFlags },
     clientStorageKeys: {
       sessionToken: 'obsidian.session.token',
@@ -245,5 +354,11 @@ module.exports = {
   cards,
   featureFlags,
   vaultStatusByRole,
+  legacyMobileTrust,
+  environmentConfig,
+  mobileVaultConfig,
+  networkProfileConfig,
+  appIntegrityConfig,
+  challengeConfig,
   buildMobileConfig,
 };

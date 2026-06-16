@@ -2,7 +2,7 @@
 
 **Tema:** Segurança de aplicações mobile (Android) — backend + app
 **Porta oficial:** http://127.0.0.1:8102
-**Status:** Fase 3 (API mobile + **app Android base**). O APK final ainda não foi publicado.
+**Status:** Fase 14 (app com **deep links, QR Payment, Web Support, WebView bridge, componentes Android internos, fluxo Device Trust legado, checagem local de ambiente/dispositivo, Secure Vault com fluxo local de autenticação, Network Security / API Host override, App Integrity / NativeGate / TamperCheck scaffold**, **Dynamic Instrumentation scaffold** com scripts Frida e playbook ADB, e a **Final Challenge Chain** — 9 estágios, scoring local e endpoint de submissão). O APK final ainda não foi publicado.
 **Dificuldade alvo:** Hard / realista (acima de labs introdutórios como AndroGoat).
 
 ---
@@ -115,8 +115,47 @@ A API mobile expõe, entre outros:
 |---|---|---|
 | `guest` | `guest123` | customer |
 
+Use **guest / guest123** no app e em `POST /api/mobile/login`.
+
 > Estas são credenciais didáticas controladas, não segredos. Não há flags reais
 > neste repositório público.
+
+---
+
+## Documentação
+
+- **Guia do aluno (sem spoilers):** [STUDENT-GUIDE.md](./STUDENT-GUIDE.md) — por
+  onde começar, como pensar a investigação e como participar da **Challenge
+  Chain** (9 estágios) registrando progresso e evidências.
+- **Pontuação da cadeia (público):** [docs/CHALLENGE-SCORING.md](./docs/CHALLENGE-SCORING.md).
+- **Setup de pentest mobile:** [docs/mobile-pentest/SETUP.md](./docs/mobile-pentest/SETUP.md).
+- **Checklist de build Android:** [docs/ANDROID-BUILD-CHECKLIST.md](./docs/ANDROID-BUILD-CHECKLIST.md).
+- **QA final (release readiness):** [docs/FINAL-QA.md](./docs/FINAL-QA.md).
+- **Validação técnica:** [VALIDATION.md](./VALIDATION.md).
+- **Playbook de pentest mobile:** [docs/mobile-pentest/PLAYBOOK.md](./docs/mobile-pentest/PLAYBOOK.md).
+
+> **`WALKTHROUGH.md` é material de instrutor** (contém a solução completa e as
+> flags). Não é destinado ao aluno — comece sempre por
+> [STUDENT-GUIDE.md](./STUDENT-GUIDE.md).
+
+---
+
+## Status final e QA (Fase 16)
+
+- **Status do lab:** completo (Fases 1–15 entregues). O backend mobile na porta
+  `8102`, o app Android (código-fonte) e a Challenge Chain de 9 estágios estão
+  prontos. **Pendência conhecida:** o build/publicação do **APK real**.
+- **Fase atual:** **QA final** — validação consolidada, revisão de docs
+  (anti-spoiler/anti-leak) e preparação para o build Android real.
+- **Antes do build real**, consulte:
+  - [STUDENT-GUIDE.md](./STUDENT-GUIDE.md) — guia do aluno (sem spoilers).
+  - [docs/CHALLENGE-SCORING.md](./docs/CHALLENGE-SCORING.md) — pontuação da cadeia.
+  - [docs/mobile-pentest/SETUP.md](./docs/mobile-pentest/SETUP.md) — ambiente de pentest mobile.
+  - [docs/ANDROID-BUILD-CHECKLIST.md](./docs/ANDROID-BUILD-CHECKLIST.md) — passo a passo do build no Android Studio.
+  - [docs/FINAL-QA.md](./docs/FINAL-QA.md) — matriz de validação e checklist de release.
+
+> **`WALKTHROUGH.md` é instrutor-facing** (solução completa + flags). O aluno
+> nunca precisa dele.
 
 ---
 
@@ -144,6 +183,46 @@ Para o detalhamento por trilhas (com status), veja
 
 ---
 
+## Vulnerabilidades presentes
+
+A tabela abaixo resume, em linguagem simples, as fraquezas que o ObsidianPay
+expõe **de propósito** para estudo. Ela serve de mapa: diz **onde** olhar e **o
+que** cada item ensina, mas **não** entrega flags, headers finais nem payloads
+completos — descobrir o "como" é o exercício. Tudo roda em ambiente **local e
+autorizado** (`127.0.0.1:8102` / emulador `10.0.2.2:8102`); nada aqui deve ser
+usado contra apps ou sistemas de terceiros.
+
+| Categoria | Vulnerabilidade | Onde aparece no lab | O que o aluno aprende |
+|---|---|---|---|
+| Armazenamento mobile | **Insecure Mobile Storage** | SharedPreferences (`InsecureSessionStore`), SQLite (`obsidianpay_local.db`), `filesDir`/`cacheDir` e export app-specific externo; tela "Local State". | Procurar tokens, perfis, cache e artefatos deixados em claro no dispositivo. |
+| API / Autorização | **API Broken Access Control / IDOR** | Recibos e cartões acessíveis por ID previsível (`/api/mobile/receipts`, `/api/mobile/cards` e detalhe por ID). | Testar acesso indevido a objetos de outros perfis em APIs mobile. |
+| API / Autorização | **Mass Assignment** | `PATCH /api/mobile/profile` aceitando campos sensíveis além dos esperados. | Testar parâmetros extras no corpo de uma requisição. |
+| Recon | **Information Disclosure** | `config`, diagnostics, rotas legadas, hints e respostas com metadados. | Mapear pistas e superfície do produto **sem** usar scanner. |
+| WebView | **WebView Misconfiguration** | `WebViewSupportScreen` com JavaScript/DOM Storage e conteúdo controlado pelo portal de suporte. | Entender os riscos de uma WebView mal configurada em apps mobile. |
+| WebView | **JavaScript Bridge Exposure** | `ObsidianBridge` (`@JavascriptInterface`) expõe métodos ao conteúdo da WebView. | Avaliar o impacto de uma bridge JS exposta ao conteúdo web. |
+| Entrada não confiável | **Deep Link / QR Input Abuse** | Scheme `obsidianpay://` (transfer/support/receipt) e a tela QR Payment com payloads previsíveis. | Testar entrada via deep link e QR como vetor não confiável. |
+| Componentes Android | **Exported Activity** | `InternalOpsActivity` exportada no `AndroidManifest`. | Reconhecer o risco de uma Activity exportada para outros apps. |
+| Componentes Android | **Exported BroadcastReceiver** | `DebugCommandReceiver` exportado, com comandos previsíveis. | Entender o abuso de broadcasts previsíveis. |
+| Componentes Android | **Exported ContentProvider** | `ObsidianNotesProvider` exportado (authority `provider.notes`). | Enumerar dados locais via `content://`. |
+| Reverse engineering | **Hardcoded Secrets** | `HardcodedSecrets` (segredos/rotas/valores internos fragmentados no binário). | Engenharia reversa básica de um APK com JADX/apktool. |
+| Reverse engineering | **Weak Crypto / Legacy Signature** | `WeakCrypto` (Base64/XOR/SHA-1/MD5) e `LegacyRequestSigner`. | Por que assinatura/cripto client-side fraca é quebrável. |
+| Confiança no cliente | **Device Trust** bypass | Fluxo Device Trust e endpoint interno baseado em headers montados no cliente. | Que confiar no que o cliente afirma é frágil. |
+| Anti-análise | **Root Detection** bypass | `RootDetector` (monitor-only) na tela Security Check. | Que checks locais de root podem ser hookados/observados. |
+| Anti-análise | **Emulator Detection** bypass | `EmulatorDetector` (monitor-only). | Observar/contornar a detecção de ambiente. |
+| Autenticação local | **Biometric / Local Auth** bypass | `LocalAuthState` / `BiometricGate` e a tela Secure Vault. | O risco de usar autorização local como "prova" para o servidor. |
+| Rede | **Network Security / Cleartext / API Host** | `network_security_config`, cleartext local e a tela API Host. | A diferença entre emulador, celular físico e backend local. |
+| Rede | **Certificate Pinning** scaffold | `PinningPolicy` / `CertificatePinner` (report-only). | Observar e entender o bypass conceitual de pinning em lab. |
+| Integridade do app | **Native/JNI Integrity** scaffold | `NativeGate` (gate nativo opcional/fallback). | Que um gate nativo também precisa de validação no servidor. |
+| Integridade do app | **Anti-Tamper / Binary Patching** checks | `TamperCheck` (debuggable/installer/signature/package). | Os limites de checks de integridade locais. |
+| Instrumentação | **Dynamic Instrumentation** | Scripts Frida e playbook ADB do laboratório (`tools/`). | Observação/hooking controlado de um pacote local. |
+| CTF / Scoring | **Challenge Chain / Scoring Logic** | `challenge/progress`, `challenge/submit`, `challenge/scoreboard`, `finalize-operator`. | Como validar evidência e progresso numa cadeia de CTF. |
+
+> A tabela é **informativa**, não um walkthrough: ela cita telas, arquivos e
+> conceitos, mas a investigação (encontrar as flags e os caminhos exatos) é sua.
+> A solução completa fica apenas em `WALKTHROUGH.md` (material de instrutor).
+
+---
+
 ## App Android
 
 A partir da Fase 3 existe um **app Android base** (Kotlin + Jetpack Compose) em
@@ -151,18 +230,74 @@ A partir da Fase 3 existe um **app Android base** (Kotlin + Jetpack Compose) em
 
 - No **Android Emulator**, o app usa `http://10.0.2.2:8102` (alias do emulador
   para o `127.0.0.1` do host).
+- Em um **celular físico**, use a tela **API Host** (Fase 11) para apontar o app
+  ao IP do PC na rede, por exemplo `http://192.168.0.50:8102`.
 - Abra a pasta `android-app/` no Android Studio e rode em um emulador (API 24+).
 - Login de teste: `guest` / `guest123`.
+
+> **Build Android real (Fase 17):** o build/instalação do APK deve seguir
+> [docs/ANDROID-BUILD-CHECKLIST.md](./docs/ANDROID-BUILD-CHECKLIST.md) no Android
+> Studio. A validação de shell (`scripts/validate-phase17.sh`) faz a inspeção
+> estrutural do projeto e um build best-effort — **não substitui** o Android
+> Studio nem exige Android SDK.
 
 Detalhes de build e execução em [android-app/README.md](./android-app/README.md).
 
 ## Estado atual
 
 - ✅ Backend mobile (API rica) na porta 8102 — Fase 2
-- ✅ App Android base (telas + cliente HTTP) — **Fase 3**
+- ✅ App Android base (telas + cliente HTTP) — Fase 3
+- ✅ Cache local/offline do app (perfil, config, recibos, cartões) — Fase 4
+- ✅ Deep links, QR Payment e Web Support no app — Fase 5
+- ✅ WebView **support bridge** para suporte mobile assistido — Fase 6
+- ✅ **Componentes Android internos** (integrações de operações/diagnóstico) — Fase 7
+- ✅ **Device Trust** legado + configurações internas para análise mobile — **Fase 8**
+- ✅ **Security Check** (root/emulator detection) — **Fase 9**
+- ✅ **Secure Vault** com fluxo local de autenticação (biometria scaffold + fallback PIN fraco) — **Fase 10**
+- ✅ **Network Security / API Host override** (emulador ↔ celular físico, pinning scaffold, backend network-profile) — **Fase 11**
+- ✅ **App Integrity / NativeGate / TamperCheck scaffold** — **Fase 12**
+- ✅ **Dynamic Instrumentation scaffold** (scripts Frida, playbook ADB, docs de pentest mobile) — **Fase 13**
+- ✅ **Final Challenge Chain** (9 estágios, flags internas, scoring local, endpoint de submissão — ver `docs/CHALLENGE-SCORING.md`) — **Fase 14**
 - ✅ Documentação base e arquitetura
 - 🔜 APK final publicado
 - 🔜 Cadeias completas app ↔ API
+
+> A Fase 5 adiciona **deep links** (`obsidianpay://transfer|support|receipt`),
+> uma tela **QR Payment** que interpreta payloads colados/digitados, e um
+> **Web Support** em WebView que carrega o portal de suporte do backend local.
+
+> A Fase 6 adiciona uma **support bridge** ao Web Support: a WebView passa a
+> expor uma interface JavaScript (`ObsidianBridge`) usada pelo portal de suporte
+> para mostrar contexto local do app (resumo de sessão, status, diagnóstico).
+> Como em apps reais, observe **o que** essa ponte de suporte disponibiliza para
+> a página — a investigação faz parte do exercício.
+
+> A Fase 7 adiciona **componentes Android internos** que simulam integrações de
+> um app real (uma tela interna de operações/diagnóstico, um gancho de automação
+> de debug e um provedor de notas de suporte). Como em qualquer app Android, vale
+> observar **quais** componentes o app expõe ao sistema e **o que** cada um
+> disponibiliza — a investigação faz parte do exercício. (Sem flags.)
+
+> A Fase 8 adiciona um fluxo **Device Trust** (checagem de segurança/atestação do
+> dispositivo) e **configurações internas** embutidas no cliente. Como em apps
+> reais que montam credenciais localmente, a análise estática (JADX/apktool/
+> `strings`) do app revela como esse fluxo é construído. Vale observar **como** o
+> app prepara essa confiança e **o que** isso implica — a investigação faz parte
+> do exercício. (Sem flags; sem segredos reais.)
+
+> A Fase 10 adiciona um **Secure Vault** com fluxo didático de autenticação
+> local: um scaffold de biometria e um mecanismo de fallback. Como em apps
+> financeiros reais, o app decide localmente se o vault está desbloqueado e informa
+> o servidor — observe o que o servidor efetivamente verifica e **o que** isso
+> implica para a segurança do fluxo. A investigação faz parte do exercício.
+
+> A Fase 11 adiciona suporte a **API Host override** para facilitar testes em
+> emulador (`10.0.2.2`) e celular físico (IP do PC na LAN). A tela "API Host"
+> permite trocar a base URL sem rebuildar o app — o override é salvo localmente.
+> A fase também introduz um scaffold de **certificate pinning** para estudo
+> futuro: `NetworkSecurityProfile`, `PinningPolicy` e um comentário no `ApiClient`
+> mostrando onde o `CertificatePinner` seria anexado. O backend expõe
+> `/api/mobile/internal/network-profile` com o perfil de rede atual.
 
 > **O APK final ainda não foi publicado.** A Fase 3 entrega o código-fonte do
 > app base. Trate o app e a API como alvos reais: explore, observe e questione.
