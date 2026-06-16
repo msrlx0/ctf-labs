@@ -367,7 +367,11 @@ passos na ordem que fizer sentido e **registre evidências** ao longo do caminho
 
 - Use o **ADB local** para interagir com os componentes do app.
 - Teste a **Activity**, o **Receiver** e o **Provider** exportados.
-- Registre as evidências de cada interação.
+- Cada componente, quando acionado, deixa uma **prova** no estado local; o
+  **ContentProvider** consolida as provas. Junte as três provas e envie-as ao
+  **checkpoint** do backend (com um token válido) para destravar a flag deste
+  estágio — você **não** precisa abrir nenhum arquivo de código do backend.
+- Registre as evidências de cada interação (saídas do ADB + resposta do checkpoint).
 
 ### 10. Reverse engineering
 

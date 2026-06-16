@@ -45,7 +45,7 @@ fun TransferPreviewScreen(
     var status by remember { mutableStateOf("") }
     var response by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    val token = store.token
+    val token = store.getToken()
 
     // When opened from a deep link / QR, record where the prefill came from.
     LaunchedEffect(prefillSource) {

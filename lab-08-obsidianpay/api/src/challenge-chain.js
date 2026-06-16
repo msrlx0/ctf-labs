@@ -62,15 +62,15 @@ const stages = Object.freeze([
     difficulty: 'medium',
     flagKey: 'stage-03-exported-components',
     hintLevel1:
-      'Componentes Android exportados (Activity/Receiver/ContentProvider) são acessíveis por outros apps e por adb.',
+      'Componentes Android exportados (Activity/Receiver/ContentProvider) são acessíveis por outros apps e por adb. Cada um deixa uma "prova" no estado local.',
     hintLevel2:
-      'Consulte o ContentProvider exportado (authority com.obsidianpay.mobile.provider.notes) via adb shell content query e correlacione com a cadeia documentada.',
+      'Acione a Activity exportada em operatorMode=checkpoint (am start), dispare o Receiver com command=emit_checkpoint_proof (am broadcast), leia as três provas consolidadas no ContentProvider (content query --uri content://com.obsidianpay.mobile.provider.notes/checkpoint) e envie-as em POST /api/mobile/challenge/checkpoint/exported-components para receber a flag.',
     evidenceExpected:
-      'Saída de adb (content query / am broadcast / am start) demonstrando o componente exportado e o marcador associado.',
+      'Saída de adb (am start / am broadcast / content query) com as três provas e a resposta exported-components-verified do checkpoint contendo a flag do stage-03.',
     publicSummary:
-      'Componentes exportados: enumerar Activity/Receiver/ContentProvider e abusar de actions/authority/extras previsíveis.',
+      'Componentes exportados: enumerar Activity/Receiver/ContentProvider e abusar de actions/authority/extras previsíveis para coletar provas e destravar o checkpoint.',
     instructorNote:
-      'Estágio orientado ao Android (Fase 7). A flag é validada no submit; a evidência vem do device/adb. Sem alteração de backend obrigatória.',
+      'Estágio Android (Fase 7) com checkpoint real (Fase 20): POST /api/mobile/challenge/checkpoint/exported-components valida as três provas (activity/receiver/provider) emitidas pelos componentes exportados e só então retorna a flag. A flag continua exclusiva de flags.js; nada de abrir flags.js no walkthrough.',
   },
   {
     id: 'stage-04-webview-bridge',

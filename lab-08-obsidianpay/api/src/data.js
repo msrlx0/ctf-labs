@@ -17,10 +17,13 @@
 
 const LAB = Object.freeze({
   name: 'ObsidianPay Mobile',
+  app: 'obsidianpay-mobile-api',
   lab: 'lab-08-obsidianpay',
-  version: '0.2.0-phase2',
+  // Phase 20 (runtime stabilization): the lab now ships all 9 challenge stages
+  // and a real Android build. The old "0.2.0-phase2" label predated that work.
+  version: '1.0.0',
   port: 8102,
-  phase: 2,
+  phase: '20-runtime-stabilization',
 });
 
 // --- Accounts ----------------------------------------------------------------
@@ -293,6 +296,23 @@ const challengeConfig = Object.freeze({
     'Resolva as 9 trilhas mobile na ordem oficial e submeta cada flag em /api/mobile/challenge/submit. Veja docs/CHALLENGE-SCORING.md.',
 });
 
+// --- Exported-components Stage 03 checkpoint (Phase 20) ----------------------
+// Backend-side validator for the stage-03 ("Exported Android Components") flow.
+// The three proof tokens are EMITTED by the app's exported Android components
+// (InternalOpsActivity, DebugCommandReceiver, ObsidianNotesProvider) and
+// CONSOLIDATED by the provider. They are evidence that the exported components
+// were actually exercised — NOT flags and NOT credentials. These literals MUST
+// mirror android-app .../util/Constants.kt exactly. The stage-03 FLAG itself is
+// never stored here or in the app — only in flags.js, returned by the checkpoint
+// endpoint when all three proofs validate.
+const exportedComponentsCheckpoint = Object.freeze({
+  stageId: 'stage-03-exported-components',
+  checkpointPath: '/api/mobile/challenge/checkpoint/exported-components',
+  activityProof: 'act:internal-ops:af83c1',
+  receiverProof: 'rcv:debug-command:7b21de',
+  providerProof: 'prv:notes-consolidated:5c90af',
+});
+
 // --- Mobile config -----------------------------------------------------------
 // Leaks internal resource NAMES (storage keys, deep link schemes, routes) that
 // help map the future APK, but never returns a flag directly.
@@ -360,5 +380,6 @@ module.exports = {
   networkProfileConfig,
   appIntegrityConfig,
   challengeConfig,
+  exportedComponentsCheckpoint,
   buildMobileConfig,
 };

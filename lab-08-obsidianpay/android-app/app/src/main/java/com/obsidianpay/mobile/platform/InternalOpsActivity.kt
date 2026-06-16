@@ -63,6 +63,23 @@ class InternalOpsActivity : ComponentActivity() {
             store.saveLastOpenedReceipt(receiptId)
         }
 
+        // Stage 03 checkpoint proof (Phase 20): when launched in "checkpoint"
+        // operator mode (e.g. `adb shell am start -a com.obsidianpay.mobile.INTERNAL_OPS
+        // --es obsidian.intent.extra.OPERATOR_MODE checkpoint`), the exported
+        // Activity emits its proof — both on screen and into local state, where the
+        // exported provider can later consolidate it. No flag is involved here.
+        val activityProof =
+            if (operatorMode == Constants.OPERATOR_MODE_CHECKPOINT) {
+                store.saveCheckpointActivityProof(Constants.CHECKPOINT_ACTIVITY_PROOF)
+                cache.recordExportedEvent(
+                    "exported_activity_checkpoint_proof",
+                    Constants.CHECKPOINT_ACTIVITY_PROOF,
+                )
+                Constants.CHECKPOINT_ACTIVITY_PROOF
+            } else {
+                null
+            }
+
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -71,6 +88,7 @@ class InternalOpsActivity : ComponentActivity() {
                         sessionHint = sessionHint,
                         operatorMode = operatorMode,
                         receiptId = receiptId,
+                        activityProof = activityProof,
                     )
                 }
             }
@@ -84,6 +102,7 @@ private fun InternalOpsScreen(
     sessionHint: String?,
     operatorMode: String?,
     receiptId: String?,
+    activityProof: String?,
 ) {
     Column(
         modifier = Modifier
@@ -103,6 +122,12 @@ private fun InternalOpsScreen(
         Mono("sessionHint  = ${sessionHint ?: "(none)"}")
         Mono("operatorMode = ${operatorMode ?: "(none)"}")
         Mono("receiptId    = ${receiptId ?: "(none)"}")
+
+        if (activityProof != null) {
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            Text("Checkpoint proof (exported Activity):", fontSize = 13.sp)
+            Mono("activityProof = $activityProof")
+        }
 
         Divider(modifier = Modifier.padding(vertical = 8.dp))
         Text(

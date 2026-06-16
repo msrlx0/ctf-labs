@@ -31,6 +31,7 @@ const {
   networkProfileConfig,
   appIntegrityConfig,
   challengeConfig,
+  exportedComponentsCheckpoint,
   buildMobileConfig,
 } = require('./data');
 const flagsRegistry = require('./flags');
@@ -171,10 +172,12 @@ app.get('/', (_req, res) => {
 app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
+    app: LAB.app,
     name: LAB.name,
     lab: LAB.lab,
     version: LAB.version,
     phase: LAB.phase,
+    challengeStages: challengeChain.totalFlags,
     expectedPort: LAB.port,
     uptimeSeconds: Math.round(process.uptime()),
   });
@@ -541,6 +544,7 @@ app.get('/api/mobile/legacy/routes', requireAuth, (_req, res) => {
       '/api/mobile/internal/vault-mobile/unlock',
       '/api/mobile/internal/network-profile',
       '/api/mobile/internal/app-integrity',
+      '/api/mobile/challenge/checkpoint/exported-components',
       '/api/mobile/challenge/progress',
       '/api/mobile/challenge/submit',
       '/api/mobile/challenge/scoreboard',
@@ -833,6 +837,65 @@ app.get('/api/mobile/challenge/progress', requireAuth, (req, res) => {
     totalScore: computeScore(progress),
     finalUnlocked: isFinalUnlocked(progress),
     stages: challengeChain.stages.map((s) => stageProgressView(s, progress)),
+  });
+});
+
+// POST checkpoint (Stage 3) — exported Android components.
+// Requires auth AND the three proofs emitted by the app's exported components
+// (Activity / BroadcastReceiver / ContentProvider, consolidated by the provider).
+// Only when all three proofs are present AND correct is the stage-03 flag
+// returned. Missing/incomplete/incorrect proofs are rejected WITHOUT leaking the
+// flag — and never reveal which proof was wrong. The flag lives only in flags.js;
+// it is never stored in the APK. Students obtain the proofs entirely on-device
+// via adb (am start / am broadcast / content query) and POST them here.
+app.post('/api/mobile/challenge/checkpoint/exported-components', requireAuth, (req, res) => {
+  const cfg = exportedComponentsCheckpoint;
+  const body = req.body || {};
+  const { activityProof, receiverProof, providerProof } = body;
+
+  // All three proofs must be present non-empty strings (incomplete → rejected).
+  const present =
+    typeof activityProof === 'string' && activityProof.trim().length > 0 &&
+    typeof receiverProof === 'string' && receiverProof.trim().length > 0 &&
+    typeof providerProof === 'string' && providerProof.trim().length > 0;
+  if (!present) {
+    return sendError(
+      res,
+      400,
+      'bad_request',
+      'activityProof, receiverProof and providerProof are all required. ' +
+        'Drive the exported Activity (am start), BroadcastReceiver (am broadcast) and ' +
+        'read the consolidated proofs from the exported ContentProvider (content query) first.',
+    );
+  }
+
+  // ...and each must match the evidence emitted by the exported components.
+  const valid =
+    activityProof.trim() === cfg.activityProof &&
+    receiverProof.trim() === cfg.receiverProof &&
+    providerProof.trim() === cfg.providerProof;
+  if (!valid) {
+    // Generic failure — no flag, no hint about which proof was wrong.
+    return sendError(
+      res,
+      403,
+      'forbidden',
+      'One or more exported-component proofs are invalid. Re-run the Activity/Receiver/Provider ' +
+        'chain via adb and read the consolidated proofs from the provider.',
+    );
+  }
+
+  res.json({
+    status: 'exported-components-verified',
+    stageId: cfg.stageId,
+    user: req.authUser.username,
+    exportedComponentsCheckpoint: {
+      stageId: cfg.stageId,
+      note: 'Exported Activity + BroadcastReceiver + ContentProvider proofs verified.',
+      flag: flagsRegistry.getFlagByStageId(cfg.stageId),
+    },
+    nextStepHint:
+      'Submeta esta flag em /api/mobile/challenge/submit com stageId stage-03-exported-components.',
   });
 });
 

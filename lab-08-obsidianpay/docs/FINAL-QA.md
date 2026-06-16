@@ -207,3 +207,31 @@ alterar backend, app, flags ou os endpoints da Fase 14. Entrega o script
 - As flags reais não saem de `api/src/flags.js` / `WALKTHROUGH.md`.
 - A pendência conhecida de release é o **build real do APK** (e a publicação do
   artefato), que depende do Android Studio.
+
+## 9. Status da Fase 20 — Runtime stabilization + build real + Stage 03
+
+A Fase 20 corrige seis problemas que só aparecem em build/execução real (Android
+Studio + emulador/celular físico) e torna o Stage 03 solucionável sem ler
+`api/src/flags.js`. Validada por `scripts/validate-phase20.sh`.
+
+- **Clash JVM** em `InsecureSessionStore.kt` corrigido (API única por métodos);
+  o **build real** `assembleDebug` é a validação principal.
+- **Crash da tela "Configuração"** (scroll vertical aninhado) corrigido em
+  `ResponseBox` (um único dono de scroll por tela).
+- **WebView** usa a base URL efetiva (emulador **e** celular físico via IP de LAN);
+  trata erros de carregamento de forma visível.
+- **RootDetector** detecta root básico real (`/system_ext/bin/su`,
+  `/data/adb/magisk`, etc.) e **continua contornável** (Frida/patch/ocultação).
+- **/health** atualizado: `version 1.0.0`, `phase 20-runtime-stabilization`,
+  `app obsidianpay-mobile-api`, `challengeStages 9` (sem `0.2.0-phase2`).
+- **Stage 03** ganha checkpoint real
+  `POST /api/mobile/challenge/checkpoint/exported-components`: três provas emitidas
+  pelos componentes exportados liberam a flag (que permanece só no backend).
+
+### Critérios para considerar a Fase 20 concluída
+
+- [ ] `BUILD SUCCESSFUL` em ambiente com Android SDK + APK gerado/instalável.
+- [ ] Login, "Configuração" sem crash, persistência do API Host, WebView no
+  emulador e em celular físico, root signals visíveis no Security Check.
+- [ ] Stage 03: provas → flag via checkpoint → submit → 200 pontos.
+- [ ] `validate-phase18.sh`, `validate-phase19.sh` e `validate-phase20.sh` passam.

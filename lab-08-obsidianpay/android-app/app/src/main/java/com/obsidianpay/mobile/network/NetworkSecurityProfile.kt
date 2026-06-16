@@ -38,6 +38,28 @@ object NetworkSecurityProfile {
         return if (trimmed.isEmpty()) DEFAULT_EMULATOR_BASE_URL else trimmed
     }
 
+    /**
+     * Resolves the single effective base URL for the whole app from a persisted
+     * override (plaintext SharedPreferences). When no override is stored the
+     * Android-Emulator default (10.0.2.2) is used. This is the ONE place the
+     * "override ?: default" rule lives — ApiClient, the WebView and every screen
+     * must derive their host from this (or from ApiClient.getBaseUrl(), which is
+     * seeded from it), never from a hardcoded constant.
+     */
+    fun effectiveBaseUrl(override: String?): String =
+        normalizeBaseUrl(override ?: DEFAULT_EMULATOR_BASE_URL)
+
+    /**
+     * Joins a base URL with a path, normalizing the trailing slash so exactly one
+     * `/` separates host and path. Use this instead of string concatenation so the
+     * WebView and API client build identical origins from the same base.
+     */
+    fun joinUrl(baseUrl: String, path: String): String {
+        val base = normalizeBaseUrl(baseUrl)
+        val suffix = if (path.startsWith("/")) path else "/$path"
+        return base + suffix
+    }
+
     /** Returns true when the URL uses the http:// scheme (cleartext). */
     fun isCleartext(url: String): Boolean = url.startsWith("http://")
 

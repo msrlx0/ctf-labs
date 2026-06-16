@@ -6,6 +6,7 @@ import android.content.Intent
 import com.obsidianpay.mobile.storage.InsecureSessionStore
 import com.obsidianpay.mobile.storage.LocalCacheManager
 import com.obsidianpay.mobile.storage.ObsidianLocalDb
+import com.obsidianpay.mobile.util.Constants
 import org.json.JSONObject
 
 /**
@@ -68,6 +69,19 @@ class DebugCommandReceiver : BroadcastReceiver() {
             "enable_operator_hint" -> {
                 cache.saveOperatorHint("true")
                 cache.addEvent("enable_operator_hint", "support/operator_hint=true")
+            }
+
+            // Stage 03 checkpoint proof (Phase 20): broadcasting
+            // `adb shell am broadcast -a com.obsidianpay.mobile.DEBUG_COMMAND
+            //  --es command emit_checkpoint_proof` makes the exported receiver
+            // persist its proof locally, where the exported provider consolidates
+            // it. No flag, no network — just local state, as with every command.
+            Constants.DEBUG_COMMAND_EMIT_CHECKPOINT_PROOF -> {
+                store.saveCheckpointReceiverProof(Constants.CHECKPOINT_RECEIVER_PROOF)
+                cache.recordExportedEvent(
+                    "exported_receiver_checkpoint_proof",
+                    Constants.CHECKPOINT_RECEIVER_PROOF,
+                )
             }
 
             else ->

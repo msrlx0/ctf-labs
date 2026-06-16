@@ -151,7 +151,7 @@ todos os stages.
    ```
    - **O que faz:** constrói a imagem Node.js e inicia o servidor.
    - **Resultado esperado:** linhas como
-     `ObsidianPay Mobile API (0.2.0-phase2) listening on http://0.0.0.0:8102`.
+     `ObsidianPay Mobile API (1.0.0) listening on http://0.0.0.0:8102`.
    - **Deixe este terminal aberto** — ele mostra os logs de cada requisição. Não
      feche enquanto estiver usando o lab. (Se preferir rodar em segundo plano, use
      `docker compose up --build -d`.)
@@ -1006,35 +1006,54 @@ componentes com `android:exported="true"`.
      `com.obsidianpay.mobile.provider.notes`).
 2. Deixe o emulador ligado. Confirme com `adb devices` (linha terminando em
    `device`).
-3. **Consulte o ContentProvider exportado** (paths `/notes`, `/debug`, `/cache`):
+3. **Explore** os paths já existentes do provider (`/notes`, `/debug`, `/cache`)
+   para mapear a superfície:
    ```bash
    adb shell content query --uri content://com.obsidianpay.mobile.provider.notes/notes
    adb shell content query --uri content://com.obsidianpay.mobile.provider.notes/debug
    adb shell content query --uri content://com.obsidianpay.mobile.provider.notes/cache
    ```
-   - Observe as colunas retornadas (`id,title,body` em `/notes`; `key,value` em
-     `/debug`; `item,value` em `/cache`).
-4. **Envie um broadcast** ao receiver de debug (efeito local, sem rede):
-   ```bash
-   adb shell am broadcast -a com.obsidianpay.mobile.DEBUG_COMMAND \
-     --es command write_debug_export --es route support/ops
-   ```
-5. **Inicie a Activity exportada** (o `-n` usa o applicationId do build debug):
+   - No `/debug` o token aparece **apenas mascarado** (`token_preview`) — o provider
+     nunca devolve o token inteiro nem a flag (limite intencional).
+4. **Inicie a Activity exportada em modo checkpoint.** Isso faz a Activity emitir
+   a `activityProof` (exibida na tela e gravada no estado local):
    ```bash
    adb shell am start -n com.obsidianpay.mobile.debug/com.obsidianpay.mobile.platform.InternalOpsActivity \
      -a com.obsidianpay.mobile.INTERNAL_OPS \
-     --es obsidian.intent.extra.RECEIPT_ID 1002
+     --es obsidian.intent.extra.OPERATOR_MODE checkpoint
    ```
-6. No app, abra a tela interna **Local State** e observe os eventos
-   `exported_*` / `external_debug_*` gerados pelos comandos acima.
-7. Salve as saídas do ADB e os prints da tela Local State como evidência.
+   - Leia `activityProof = ...` na tela **Internal Operations** que abre no emulador.
+5. **Dispare o BroadcastReceiver** com o comando de checkpoint. Isso grava a
+   `receiverProof` no estado local (sem rede, só estado local):
+   ```bash
+   adb shell am broadcast -a com.obsidianpay.mobile.DEBUG_COMMAND \
+     --es command emit_checkpoint_proof
+   ```
+6. **Leia as três provas consolidadas** no novo path `/checkpoint` do provider.
+   A `providerProof` só aparece depois que a Activity **e** o Receiver já rodaram:
+   ```bash
+   adb shell content query --uri content://com.obsidianpay.mobile.provider.notes/checkpoint
+   ```
+   - Você verá `activityProof`, `receiverProof` e `providerProof`. Anote os três.
+7. **Envie as três provas ao checkpoint do backend** (Burp Repeater ou `curl`,
+   com um token válido obtido no login). A flag só volta quando as três batem:
+   ```bash
+   curl -s -X POST "$BASE_URL/api/mobile/challenge/checkpoint/exported-components" \
+     -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+     -d '{"activityProof":"<da Activity>","receiverProof":"<do Receiver>","providerProof":"<do Provider>"}'
+   ```
+   - Resposta `exported-components-verified` traz `exportedComponentsCheckpoint.flag`.
+8. Salve as saídas do ADB, a query `/checkpoint` e a resposta do backend como evidência.
 
 ### O que observar
 
-- A query do provider retorna **notas/estado local**; no path `/debug` o token
-  aparece **apenas mascarado** (`token_preview`) — o provider **não** devolve a
-  flag nem o token inteiro (limite intencional).
-- O broadcast e a Activity geram eventos visíveis na tela **Local State**.
+- A Activity exportada **emite uma prova** quando aberta em `OPERATOR_MODE=checkpoint`;
+  o Receiver exportado emite outra ao receber `command=emit_checkpoint_proof`.
+- O provider **consolida** as três provas em `/checkpoint`, mas só adiciona a
+  `providerProof` quando Activity **e** Receiver já foram acionados — exatamente o
+  fluxo de abuso dos três componentes exportados.
+- O backend valida as três provas e **só então** devolve a flag — que nunca esteve
+  no APK nem no provider.
 
 ### Por que isso é vulnerável
 
@@ -1046,19 +1065,20 @@ Android.
 
 ### Como obter a flag
 
-**Mecanismo real (sem inventar comportamento):** o ContentProvider deste lab
-**não** retorna a flag — por design ele só expõe notas de suporte, estado local e
-um `token_preview` mascarado. O Stage 03 é uma trilha **orientada ao Android**: a
-**evidência** vem do device (saídas de `content query` / `am broadcast` /
-`am start` demonstrando os componentes exportados), e a **flag** é o valor oficial
-do estágio registrado na cadeia (`api/src/flags.js`) — é essa flag que se submete.
+**Mecanismo real (Fase 20 — sem inventar comportamento):** os três componentes
+exportados produzem provas verificáveis. A Activity (`OPERATOR_MODE=checkpoint`) e
+o Receiver (`command=emit_checkpoint_proof`) gravam, cada um, uma prova no estado
+local; o ContentProvider as **consolida** no path `/checkpoint` e acrescenta a sua
+própria `providerProof` (só quando as outras duas já existem). Enviando as três
+provas a `POST /api/mobile/challenge/checkpoint/exported-components` (autenticado),
+o **backend** valida e devolve a flag. O provider continua **não** entregando o
+token inteiro nem a flag; a flag vive **apenas** no backend.
 
 **Flag:** `FLAG{obsidianpay_exported_components_03}`
 
-> **Nota de instrutor:** se um aluno disser “o provider não me deu a flag”, está
-> correto — não há flag no provider. A flag é validada no **submit** contra o
-> registro da cadeia; o que se exige aqui é a **evidência** de abuso dos
-> componentes exportados.
+> **Nota de instrutor:** o caminho é totalmente reproduzível por um iniciante via
+> ADB + Burp/curl — **não** é necessário (nem indicado) abrir `api/src/flags.js`.
+> O checkpoint rejeita provas ausentes/incorretas sem vazar a flag.
 
 ### Como submeter a flag
 
@@ -1073,19 +1093,24 @@ do estágio registrado na cadeia (`api/src/flags.js`) — é essa flag que se su
 ### Evidência obrigatória
 
 - Print do Manifest (JADX) com os três componentes exportados.
-- Saídas do `content query`, do `am broadcast` e do `am start`.
-- Print da tela **Local State** com os eventos `exported_*`/`external_debug_*`.
+- Saída do `am start` (tela Internal Operations mostrando `activityProof`).
+- Saída do `am broadcast` (comando `emit_checkpoint_proof`).
+- Saída do `content query .../checkpoint` com as três provas.
+- Resposta `exported-components-verified` do checkpoint contendo a flag.
 - Resposta do submit com `pointsAwarded:200`.
 
 ### Erros comuns
 
 - **`Unknown URI` na query:** confira a **authority** e o **path**
-  (`content://com.obsidianpay.mobile.provider.notes/notes`).
+  (`content://com.obsidianpay.mobile.provider.notes/checkpoint`).
+- **`/checkpoint` sem `providerProof`:** rode **primeiro** a Activity em
+  `OPERATOR_MODE=checkpoint` **e** o Receiver com `emit_checkpoint_proof`; a prova
+  do provider só aparece com as duas anteriores presentes.
 - **`Permission Denial` / `Activity not started`:** confirme que o app instalado
   é o **build debug** correto; o `-n` usa `com.obsidianpay.mobile.debug/...` mas a
   **classe** e a **action** usam o package base `com.obsidianpay.mobile`.
-- **Esperar a flag no provider:** ela **não** vem do provider — veja “Como obter a
-  flag”.
+- **400/403 no checkpoint:** envie as **três** provas exatas (sem espaços) e um
+  **Bearer token** válido; provas erradas/incompletas são recusadas sem vazar a flag.
 
 ### Checklist da etapa
 

@@ -44,7 +44,7 @@ fun CardsScreen(
     var lookupId by remember { mutableStateOf("") }
     var detail by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    val token = store.token
+    val token = store.getToken()
 
     LaunchedEffect(Unit) {
         if (token == null) {

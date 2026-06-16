@@ -35,6 +35,7 @@ class ObsidianNotesProvider : ContentProvider() {
         addURI(Constants.PROVIDER_AUTHORITY, "notes", CODE_NOTES)
         addURI(Constants.PROVIDER_AUTHORITY, "debug", CODE_DEBUG)
         addURI(Constants.PROVIDER_AUTHORITY, "cache", CODE_CACHE)
+        addURI(Constants.PROVIDER_AUTHORITY, Constants.PROVIDER_PATH_CHECKPOINT, CODE_CHECKPOINT)
     }
 
     override fun onCreate(): Boolean {
@@ -60,6 +61,7 @@ class ObsidianNotesProvider : ContentProvider() {
             CODE_NOTES -> notesCursor()
             CODE_DEBUG -> debugCursor()
             CODE_CACHE -> cacheCursor()
+            CODE_CHECKPOINT -> checkpointCursor()
             else -> null // unknown URI → controlled empty result
         }
     }
@@ -96,11 +98,33 @@ class ObsidianNotesProvider : ContentProvider() {
         }
     }
 
+    /**
+     * Stage 03 checkpoint consolidation (Phase 20).
+     *
+     * Surfaces the proofs left in local state by the exported Activity and
+     * BroadcastReceiver, and — only once BOTH are present — adds the provider's
+     * own consolidating proof. This is the single read point a student queries via
+     * `adb shell content query --uri content://com.obsidianpay.mobile.provider.notes/checkpoint`
+     * after driving the Activity and Receiver. The three proofs are then POSTed to
+     * the backend checkpoint endpoint, which returns the stage-03 flag. No flag is
+     * ever exposed here — only exploitation evidence that already exists on-device.
+     */
+    private fun checkpointCursor(): Cursor = MatrixCursor(arrayOf("proof", "value")).apply {
+        val activityProof = store.getCheckpointActivityProof()
+        val receiverProof = store.getCheckpointReceiverProof()
+        if (!activityProof.isNullOrEmpty()) addRow(arrayOf("activityProof", activityProof))
+        if (!receiverProof.isNullOrEmpty()) addRow(arrayOf("receiverProof", receiverProof))
+        if (!activityProof.isNullOrEmpty() && !receiverProof.isNullOrEmpty()) {
+            addRow(arrayOf("providerProof", Constants.CHECKPOINT_PROVIDER_PROOF))
+        }
+    }
+
     // Read-only provider: writes are intentionally not implemented.
     override fun getType(uri: Uri): String? = when (matcher.match(uri)) {
         CODE_NOTES -> "vnd.android.cursor.dir/vnd.obsidianpay.notes"
         CODE_DEBUG -> "vnd.android.cursor.dir/vnd.obsidianpay.debug"
         CODE_CACHE -> "vnd.android.cursor.dir/vnd.obsidianpay.cache"
+        CODE_CHECKPOINT -> "vnd.android.cursor.dir/vnd.obsidianpay.checkpoint"
         else -> null
     }
 
@@ -119,5 +143,6 @@ class ObsidianNotesProvider : ContentProvider() {
         private const val CODE_NOTES = 1
         private const val CODE_DEBUG = 2
         private const val CODE_CACHE = 3
+        private const val CODE_CHECKPOINT = 4
     }
 }

@@ -49,7 +49,7 @@ fun SecurityCheckScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val token = store.token
+    val token = store.getToken()
 
     var status by remember { mutableStateOf("") }
     var reportJson by remember { mutableStateOf("") }

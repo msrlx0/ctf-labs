@@ -46,7 +46,7 @@ fun ReceiptsScreen(
     var lookupId by remember { mutableStateOf(initialReceiptId ?: "") }
     var detail by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    val token = store.token
+    val token = store.getToken()
 
     LaunchedEffect(Unit) {
         if (token == null) {

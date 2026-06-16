@@ -29,7 +29,7 @@ obsidianpay-mobile-final-chain
 |---|---|---|---|---|---|
 | 1 | `stage-01-recon` | Mobile Recon & Config Review | easy | 100 | Bloco de checkpoint na config mobile ao usar o modo de revisão. |
 | 2 | `stage-02-insecure-storage` | Insecure Local Storage | easy | 150 | Checkpoint no sync de suporte + material cacheado localmente. |
-| 3 | `stage-03-exported-components` | Exported Android Components | medium | 200 | Saída de `adb` demonstrando o componente Android exportado. |
+| 3 | `stage-03-exported-components` | Exported Android Components | medium | 200 | Provas dos três componentes exportados (Activity/Receiver/Provider) aceitas pelo checkpoint que entrega a flag. |
 | 4 | `stage-04-webview-bridge` | WebView JavaScript Bridge | medium | 200 | Checkpoint da bridge no portal de suporte em WebView. |
 | 5 | `stage-05-device-trust` | Legacy Device Trust Bypass | medium | 250 | Resposta de confiança legada aceita pelo backend. |
 | 6 | `stage-06-biometric-vault` | Biometric Vault Bypass | hard | 250 | Resposta de acesso ao vault concedido. |
