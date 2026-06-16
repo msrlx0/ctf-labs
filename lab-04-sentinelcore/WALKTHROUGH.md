@@ -35,7 +35,7 @@ intern / intern2026
 
 ## Como usar este walkthrough
 
-Este walkthrough prioriza navegador, DevTools e Burp. Os comandos curl aparecem somente no apendice de validacao rapida. A resolucao recomendada em aula e conduzir a exploracao manualmente: observar a interface, capturar requests, enviar para Repeater, alterar parametros, comparar respostas e correlacionar pistas.
+Este walkthrough prioriza navegador, DevTools e Burp. Os comandos de terminal para validacao rapida ficam somente no apendice final. A resolucao recomendada em aula e conduzir a exploracao manualmente: observar a interface, capturar requests, enviar para Repeater, alterar parametros, comparar respostas e correlacionar pistas.
 
 Em cada etapa, primeiro demonstre o fluxo manual. Use o apendice final apenas para confirmar rapidamente que o ambiente esta consistente.
 
