@@ -185,12 +185,16 @@ Para o detalhamento por trilhas (com status), veja
 
 ## Vulnerabilidades presentes
 
-A tabela abaixo resume, em linguagem simples, as fraquezas que o ObsidianPay
-expõe **de propósito** para estudo. Ela serve de mapa: diz **onde** olhar e **o
-que** cada item ensina, mas **não** entrega flags, headers finais nem payloads
-completos — descobrir o "como" é o exercício. Tudo roda em ambiente **local e
-autorizado** (`127.0.0.1:8102` / emulador `10.0.2.2:8102`); nada aqui deve ser
-usado contra apps ou sistemas de terceiros.
+As tabelas abaixo resumem, em linguagem simples, **o que o ObsidianPay expõe de
+propósito**. Elas servem de mapa: dizem **onde** olhar e **o que** cada item
+ensina, mas **não** entregam flags, headers finais nem payloads — descobrir o
+"como" é o exercício. Tudo roda em ambiente **local e autorizado**
+(`127.0.0.1:8102` / emulador `10.0.2.2:8102`); nada aqui deve ser usado contra
+apps ou sistemas de terceiros.
+
+Esta primeira tabela lista as **vulnerabilidades reais e controles fracos** —
+itens efetivamente exploráveis no lab. (Scaffolds educacionais e recursos do CTF
+estão separados logo abaixo.)
 
 | Categoria | Vulnerabilidade | Onde aparece no lab | O que o aluno aprende |
 |---|---|---|---|
@@ -211,13 +215,36 @@ usado contra apps ou sistemas de terceiros.
 | Anti-análise | **Emulator Detection** bypass | `EmulatorDetector` (monitor-only). | Observar/contornar a detecção de ambiente. |
 | Autenticação local | **Biometric / Local Auth** bypass | `LocalAuthState` / `BiometricGate` e a tela Secure Vault. | O risco de usar autorização local como "prova" para o servidor. |
 | Rede | **Network Security / Cleartext / API Host** | `network_security_config`, cleartext local e a tela API Host. | A diferença entre emulador, celular físico e backend local. |
-| Rede | **Certificate Pinning** scaffold | `PinningPolicy` / `CertificatePinner` (report-only). | Observar e entender o bypass conceitual de pinning em lab. |
-| Integridade do app | **Native/JNI Integrity** scaffold | `NativeGate` (gate nativo opcional/fallback). | Que um gate nativo também precisa de validação no servidor. |
-| Integridade do app | **Anti-Tamper / Binary Patching** checks | `TamperCheck` (debuggable/installer/signature/package). | Os limites de checks de integridade locais. |
-| Instrumentação | **Dynamic Instrumentation** | Scripts Frida e playbook ADB do laboratório (`tools/`). | Observação/hooking controlado de um pacote local. |
-| CTF / Scoring | **Challenge Chain / Scoring Logic** | `challenge/progress`, `challenge/submit`, `challenge/scoreboard`, `finalize-operator`. | Como validar evidência e progresso numa cadeia de CTF. |
 
-> A tabela é **informativa**, não um walkthrough: ela cita telas, arquivos e
+## Scaffolds e técnicas educacionais
+
+Estes itens **não são vulnerabilidades exploráveis** por si só: são estruturas
+didáticas (scaffolds) e ferramentas para estudar técnicas de bypass de forma
+controlada. No estado atual do lab eles são **report-only / observacionais** — o
+servidor nunca bloqueia com base neles, e nenhum entrega flag sozinho.
+
+| Categoria | Item | Onde aparece no lab | O que o aluno aprende |
+|---|---|---|---|
+| Rede | **Certificate Pinning** scaffold | `PinningPolicy` / `CertificatePinner` em Kotlin (modo `disabled-local-lab` / report-only); **sem pinning nativo real**. | Observar e entender o bypass conceitual de pinning em lab. |
+| Integridade do app | **Native/JNI Integrity** scaffold (NativeGate) | `NativeGate` (gate nativo **opcional** com fallback Kotlin; nenhuma `.so` real é exigida). | Que um gate nativo também precisa de validação no servidor. |
+| Integridade do app | **Anti-Tamper** checks (TamperCheck) | `TamperCheck` (debuggable/installer/signature/package), report-only. | Os limites de checks de integridade locais (e binary patching como técnica). |
+| Instrumentação | **Dynamic Instrumentation** | Scripts Frida e playbook ADB do laboratório (`tools/`). | Observação/hooking controlado de um pacote local. |
+
+## Recursos do CTF
+
+Infraestrutura de CTF do lab — **não são vulnerabilidades**, e sim o mecanismo de
+progresso/pontuação. As flags reais vivem apenas em `api/src/flags.js` (e no
+`WALKTHROUGH.md`, material de instrutor); **nenhuma flag aparece neste README**.
+
+| Recurso | Onde aparece no lab | Para que serve |
+|---|---|---|
+| **Challenge Chain** (9 estágios) | `api/src/challenge-chain.js` + `challenge/progress` | Cadeia oficial de 9 estágios na ordem didática. |
+| Submissão de flags | `POST /api/mobile/challenge/submit` | Validar a flag de cada estágio e pontuar (idempotente). |
+| Scoreboard / progress | `challenge/scoreboard`, `challenge/progress` | Acompanhar `totalScore`, `completionPercent` e `finalUnlocked`. |
+| Final chain | `POST /api/mobile/internal/finalize-operator` | Estágio final (header device-trust + 4 provas). |
+| Flags | `api/src/flags.js` (privado) | Registro central das 9 flags — fora de docs públicos. |
+
+> As tabelas são **informativas**, não um walkthrough: citam telas, arquivos e
 > conceitos, mas a investigação (encontrar as flags e os caminhos exatos) é sua.
 > A solução completa fica apenas em `WALKTHROUGH.md` (material de instrutor).
 

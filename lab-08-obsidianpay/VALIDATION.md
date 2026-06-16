@@ -1228,3 +1228,103 @@ grep -n "FLAG{obsidianpay_final_operator_chain_09}" WALKTHROUGH.md
 - [ ] `WALKTHROUGH.md` continua instrutor-facing (com flags).
 - [ ] Docs públicos sem `FLAG{`; sem `analyst123`/`operator123` em material público.
 - [ ] Nenhum lab 1..7 alterado; `git diff --stat` mostra apenas `lab-08-obsidianpay/`.
+
+---
+
+## Fase 19 — Walkthrough final de instrutor + consolidação do roadmap
+
+> A Fase 19 **não** altera backend, app, flags nem os endpoints da Fase 14. Ela
+> reescreve o `WALKTHROUGH.md` como guia manual completo e **para iniciante
+> absoluto**, consolida a matriz final do `docs/VULNERABILITY-ROADMAP.md`,
+> classifica o `README.md` em três seções e corrige a pontuação total da cadeia
+> para **2100**. Entrega o script `scripts/validate-phase19.sh`. **Não exige
+> Android SDK.**
+
+### F19.1 — Rodar a validação
+
+```bash
+cd lab-08-obsidianpay
+bash scripts/validate-phase19.sh
+```
+
+Esperado: todos os checks PASS. As Fases 17 e 18 rodam embutidas (17 encadeia
+14/15/16; 18 encadeia 16/17), então a cadeia inteira é coberta.
+
+### F19.2 — WALKTHROUGH.md (estado final, sem conteúdo desatualizado)
+
+O `WALKTHROUGH.md` agora abre com **"Estado: Final — Fase 19"** e segue uma ordem
+operacional linear: Preparação completa, Configuração do Burp Suite, Análise
+estática do APK (JADX), ADB para iniciantes, Frida para iniciantes, Stages 01–09
+(cada um com objetivo, passos numerados, flag, submit, evidência, erros comuns e
+checklist), troubleshooting e apêndices. **Não** contém mais expressões como
+"Estado: Fase 12/13", "App Android (futuro)", "Cadeias futuras planejadas" nem
+"sem cadeia final completa".
+
+```bash
+grep -n "Estado: Final" WALKTHROUGH.md
+grep -c "Estado: Fase 12" WALKTHROUGH.md   # esperado: 0
+grep -n "Preparação completa" WALKTHROUGH.md
+grep -n "Configuração do Burp Suite" WALKTHROUGH.md
+grep -n "Frida para iniciantes" WALKTHROUGH.md
+```
+
+### F19.3 — README.md em três seções
+
+O `README.md` separa **"Vulnerabilidades presentes"** (vulns reais + controles
+fracos), **"Scaffolds e técnicas educacionais"** (pinning scaffold, NativeGate,
+TamperCheck, dynamic instrumentation) e **"Recursos do CTF"** (challenge chain,
+submit, scoreboard, final chain, flags). A tabela de vulnerabilidades mantém as 4
+colunas (compatível com a Fase 18). Sem flags.
+
+```bash
+grep -n "## Vulnerabilidades presentes" README.md
+grep -n "## Scaffolds e técnicas educacionais" README.md
+grep -n "## Recursos do CTF" README.md
+```
+
+### F19.4 — VULNERABILITY-ROADMAP.md (matriz final consolidada)
+
+A matriz final tem as colunas **ID / Trilha / Vulnerabilidade / Implementação
+real / Tipo / Stage relacionado / Status final**, revisada contra o código.
+**Exported Service** e **Native pinning** são marcados como **não implementados
+como desafio independente** (não há `<service>` no Manifest; só `PinningPolicy`
+em Kotlin). Não usa mais a marca "atualizado na Fase 2".
+
+```bash
+grep -nc "atualizado na Fase 2" docs/VULNERABILITY-ROADMAP.md  # esperado: 0
+grep -n "Status final" docs/VULNERABILITY-ROADMAP.md
+grep -nE "Exported Service.*[Nn]ão implementado" docs/VULNERABILITY-ROADMAP.md
+grep -nE "Native pinning.*[Nn]ão implementado" docs/VULNERABILITY-ROADMAP.md
+```
+
+### F19.5 — Pontuação corrigida (2100)
+
+O total real da cadeia (`api/src/challenge-chain.js`) é
+**2100** (100+150+200+200+250+250+250+300+400). A documentação que dizia "2000"
+foi corrigida (`WALKTHROUGH.md`, `STUDENT-GUIDE.md`, `docs/CHALLENGE-SCORING.md`,
+`docs/FINAL-QA.md`).
+
+### F19.6 — O que o script valida
+
+- **Scripts anteriores:** `validate-phase1.sh`..`validate-phase18.sh` existem.
+- **WALKTHROUGH:** sem as 8 expressões desatualizadas; com o estado final, as 5
+  partes de preparação, os 9 stages e a estrutura obrigatória de cada stage
+  (objetivo, passos numerados, flag, submit, evidência, erros comuns, checklist);
+  as 9 flags reais; `completionPercent`/`finalUnlocked`.
+- **README:** as 3 seções de classificação + cabeçalho de 4 colunas.
+- **ROADMAP:** sem "atualizado na Fase 2"; colunas Tipo/Stage relacionado/Status
+  final; diferencia scaffold de vulnerabilidade; Exported Service e Native pinning
+  como não implementados.
+- **Anti-leak:** sem `FLAG{` em docs públicos/tools.
+- **Labs 1..7 intocados** (ignorando ruído de modo do mount Win/WSL).
+- **Validações anteriores:** roda `validate-phase17.sh` e `validate-phase18.sh`.
+- **Android SDK:** não exigido.
+
+### Critérios de aceite (Fase 19)
+
+- [ ] `validate-phase18.sh` continua passando.
+- [ ] `validate-phase19.sh` passa (Fases 17 e 18 embutidas).
+- [ ] `WALKTHROUGH.md` é um guia iniciante completo, sem contradições histórica.
+- [ ] `README.md` tem as 3 seções; `VULNERABILITY-ROADMAP.md` tem a matriz final.
+- [ ] Total da cadeia documentado como **2100**.
+- [ ] Docs públicos sem `FLAG{`; nenhum lab 1..7 alterado.

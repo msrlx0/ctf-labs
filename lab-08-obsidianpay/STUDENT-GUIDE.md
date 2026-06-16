@@ -200,7 +200,7 @@ solução de nenhum estágio. Detalhes públicos de pontuação estão em
 da cadeia `obsidianpay-mobile-final-chain`, encontrando a flag de cada trilha,
 submetendo-a com a evidência, e por fim destravar a **etapa final do operador**
 (`stage-09-final-operator-chain`), que consolida o domínio das trilhas internas.
-O placar completo é `2000` pontos.
+O placar completo é `2100` pontos.
 
 > Você descobre as flags **resolvendo** cada trilha. Elas não estão em nenhum
 > arquivo público; "achar no código" não é o objetivo e não vale.

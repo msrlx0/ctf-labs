@@ -37,7 +37,7 @@ obsidianpay-mobile-final-chain
 | 8 | `stage-08-app-integrity` | App Integrity / NativeGate Bypass | hard | 300 | Checkpoint de integridade no relatório do cliente. |
 | 9 | `stage-09-final-operator-chain` | Final Operator Chain | insane | 400 | Resposta final que consolida as trilhas internas. |
 
-**Pontuação máxima:** 2000 pontos.
+**Pontuação máxima:** 2100 pontos (100+150+200+200+250+250+250+300+400).
 
 > A coluna de evidência é **alto nível** e descreve **o que** comprova o estágio —
 > não **como** chegar lá. Os endpoints, headers e payloads exatos fazem parte do
