@@ -19,7 +19,7 @@ release interno.
 - **Backend:** Node.js + Express, em memória, porta `8102` (Docker Compose).
 - **App Android:** Kotlin + Jetpack Compose, em `android-app/` (código-fonte).
   O **APK final ainda não foi publicado** — o build é feito no Android Studio.
-- **Cadeia de CTF:** `obsidianpay-mobile-final-chain`, 9 estágios, 2000 pontos
+- **Cadeia de CTF:** `obsidianpay-mobile-final-chain`, 9 estágios, 2100 pontos
   (scoring local + submissão de flags). Ver `docs/CHALLENGE-SCORING.md`.
 
 | Fase | Entrega | Status |
@@ -34,7 +34,9 @@ release interno.
 | 14 | Final Challenge Chain (flags, scoring, submit) | ✅ |
 | 15 | Documentação final (walkthrough, student guide) | ✅ |
 | 16 | QA final + preparação para build Android real | ✅ |
-| **17** | **Android build readiness (Kotlin/Gradle/Manifest QA + assembleDebug best-effort)** | ✅ Atual |
+| 17 | Android build readiness (Kotlin/Gradle/Manifest QA + assembleDebug best-effort) | ✅ |
+| 18 | Public docs polish (tabela de vulnerabilidades + trilha manual do aluno) | ✅ |
+| **19** | **Final instructor walkthrough (iniciante) + consolidação do roadmap + classificação do README** | ✅ Atual |
 
 ---
 

@@ -21,7 +21,8 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 | **Fase 15** | **Documentação final**: `WALKTHROUGH.md` manual completo de instrutor (Stages 01–09 + final operator chain, passo a passo, com flags); `STUDENT-GUIDE.md` polido (objetivo final, trilha de raciocínio, progress/submit, checklist) sem spoilers; `README.md`/`PLAYBOOK.md` alinhados à cadeia; `CHALLENGE-SCORING.md` mais útil; guards anti-spoiler/anti-leak reforçados em `scripts/validate-phase15.sh`. | ✅ Concluída |
 | **Fase 16** | **QA final / release readiness**: validação consolidada (`scripts/validate-phase16.sh`), revisão de docs (anti-spoiler/anti-leak), detecção de typos/placeholders perigosos, `docs/FINAL-QA.md` (matriz de validação + checklist de release) e `docs/ANDROID-BUILD-CHECKLIST.md` (preparação do build Android real no Android Studio). Não adiciona vulnerabilidades nem altera flags; build do APK continua best-effort no shell. | ✅ Concluída |
 | **Fase 17** | **Android build readiness**: QA estrutural de Kotlin/Gradle/Manifest/recursos (`scripts/validate-phase17.sh`), build `assembleDebug` **best-effort** (WARN sem Android SDK, FAIL se o build falhar com SDK presente), seção "Erros comuns de build" no `docs/ANDROID-BUILD-CHECKLIST.md` e status de build no `docs/FINAL-QA.md`/`VALIDATION.md`. Não altera backend, app, flags nem os endpoints da Fase 14. | ✅ Concluída |
-| **Fase 18** | **Public docs polish**: tabela final de vulnerabilidades no `README.md` (`Vulnerabilidades presentes`), trilha manual do aluno sem spoiler no `STUDENT-GUIDE.md` (`Passo a passo manual sugerido`), `WALKTHROUGH.md` mantido como material de instrutor (com flags), consistência final da documentação e `scripts/validate-phase18.sh`. Não altera backend, app, flags nem os endpoints da Fase 14. | ✅ Atual |
+| **Fase 18** | **Public docs polish**: tabela final de vulnerabilidades no `README.md` (`Vulnerabilidades presentes`), trilha manual do aluno sem spoiler no `STUDENT-GUIDE.md` (`Passo a passo manual sugerido`), `WALKTHROUGH.md` mantido como material de instrutor (com flags), consistência final da documentação e `scripts/validate-phase18.sh`. Não altera backend, app, flags nem os endpoints da Fase 14. | ✅ Concluída |
+| **Fase 19** | **Final instructor walkthrough + roadmap consolidation**: `WALKTHROUGH.md` reescrito como guia manual completo e para iniciante absoluto (Preparação, Burp, JADX, ADB, Frida, Stages 01–09, troubleshooting, com as flags reais); matriz final consolidada no `docs/VULNERABILITY-ROADMAP.md` (revisada contra o código; Exported Service e Native pinning corrigidos); `README.md` classificado em "Vulnerabilidades presentes" / "Scaffolds e técnicas educacionais" / "Recursos do CTF"; correção da pontuação total para 2100; `scripts/validate-phase19.sh`. Não altera backend, app, flags nem os endpoints da Fase 14. | ✅ Atual |
 
 ## Escopo da Fase 1 (entregue)
 
@@ -286,6 +287,31 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
   `docs/VULNERABILITY-ROADMAP.md` atualizados; `scripts/validate-phase18.sh` valida
   README/STUDENT-GUIDE/WALKTHROUGH, anti-leak, typos e labs 1..7 intocados, e roda
   `validate-phase16.sh`/`validate-phase17.sh` embutidos. Não exige Android SDK.
+
+## Escopo da Fase 19 (entregue)
+
+- **Final instructor walkthrough (beginner-grade):** `WALKTHROUGH.md` reescrito do
+  zero como guia manual completo, linear e para **iniciante absoluto** — abre com
+  "Estado: Final — Fase 19" e cobre Preparação completa (repo, backend, Android
+  Studio, emulador, instalação, API Host, login, evidências), Configuração do Burp
+  Suite, Análise estática do APK (JADX), ADB para iniciantes, Frida para
+  iniciantes, os 9 stages (cada um com objetivo, passos numerados, o que observar,
+  por que é vulnerável, como obter/submeter a flag, evidência, erros comuns e
+  checklist), troubleshooting e apêndices. Mantém as flags reais (instrutor).
+- **Roadmap consolidation:** `docs/VULNERABILITY-ROADMAP.md` ganha a **matriz final
+  consolidada** (ID / Trilha / Vulnerabilidade / Implementação real / Tipo / Stage
+  relacionado / Status final), revisada **contra o código**. Exported Service e
+  Native pinning marcados como **não implementados como desafio independente**;
+  scaffold diferenciado de vulnerabilidade; Challenge Chain/Dynamic Instrumentation
+  classificados como recurso/scaffold (não vulnerabilidades).
+- **README classification cleanup:** `README.md` separa "Vulnerabilidades
+  presentes", "Scaffolds e técnicas educacionais" e "Recursos do CTF". Sem flags.
+- **Correção de inconsistência:** total da cadeia corrigido para **2100**
+  (`WALKTHROUGH.md`, `STUDENT-GUIDE.md`, `docs/CHALLENGE-SCORING.md`,
+  `docs/FINAL-QA.md`), batendo com `api/src/challenge-chain.js`.
+- **Validação:** `scripts/validate-phase19.sh` (estrutura/anti-leak/estrutura por
+  stage; roda `validate-phase17.sh` e `validate-phase18.sh`). Não exige Android SDK;
+  não altera backend, app, flags ou endpoints.
 
 ## Princípios entre fases
 
