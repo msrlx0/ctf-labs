@@ -1,33 +1,50 @@
-# ObsidianPay — App Android (Fase 12)
+# ObsidianPay — App Android
 
 App Android nativo (Kotlin + Jetpack Compose) que consome a API mobile do
-**Lab 08 — ObsidianPay Mobile**. Mantém cache local/offline (Fase 4), suporta
-**deep links**, uma tela **QR Payment** e um **Web Support** em WebView (Fase 5),
-uma **support bridge** JavaScript na WebView (Fase 6), **componentes Android
-internos** (pacote `platform/`, Fase 7), um fluxo **Device Trust** com trilha de
-reverse engineering (pacote `security/`, Fase 8), uma tela **Security Check** com
-checagem local de ambiente/dispositivo (root e emulador, pacote `environment/`,
-Fase 9), um **Secure Vault** com fluxo local de autenticação (biometria scaffold +
-fallback PIN, pacote `auth/`, Fase 10), a partir da Fase 11 um scaffold de
-**Network Security / Certificate Pinning** (pacote `network/`) com tela **API Host**
-para override de base URL (emulador ↔ celular físico) e, a partir da Fase 12, um
-scaffold de **App Integrity** com `NativeGate` e `TamperCheck` (pacote `integrity/`)
-com tela **App Integrity**. JNI/NDK é opcional nesta fase — o app compila sem NDK
-e usa fallback Kotlin quando a biblioteca nativa está ausente.
+**Lab 08 — ObsidianPay Mobile**. O app está **implementado** (não é um scaffold
+inicial) e inclui: cache local/offline, **deep links**, tela **QR Payment** e
+**Web Support** em WebView com **support bridge** JavaScript (`ObsidianBridge`),
+**componentes Android exportados** (pacote `platform/`), fluxo **Device Trust**
+com trilha de reverse engineering (pacote `security/`), tela **Security Check**
+(root/emulador, pacote `environment/`), **Secure Vault** com autenticação local
+(biometria scaffold + fallback PIN, pacote `auth/`), scaffold de **Network
+Security / Certificate Pinning** (pacote `network/`) com tela **API Host** para
+override de base URL (emulador ↔ celular físico), scaffold de **App Integrity**
+(`NativeGate`/`TamperCheck`, pacote `integrity/`) e a integração com a **Final
+Challenge Chain** do backend. JNI/NDK é **opcional**: o app compila sem NDK e usa
+fallback Kotlin quando a biblioteca nativa está ausente.
 
 > **Ambiente somente local.** O app fala com o backend do lab em
 > `http://10.0.2.2:8102` (emulador) ou em um IP de LAN configurável via tela
 > "API Host" (celular físico). Veja a nota de dev abaixo.
 >
-> **Ainda não há APK final publicado.** Esta fase entrega o código-fonte do app.
+> **APK estável: ainda NÃO publicado.** O pipeline de build (Fase 22A) gera um
+> **APK candidato a QA** (`ObsidianPay-Lab08-v1.0.0-rc1.apk`), pendente de
+> validação em celular físico. Download e instalação: **[../DOWNLOAD.md](../DOWNLOAD.md)**.
 
 ---
 
-## Pré-requisitos
+## Pré-requisitos e configuração do build
 
-- Android Studio (recente) **ou** Gradle + Android SDK instalados.
-- JDK 17+ (o projeto usa `sourceCompatibility = 17`).
-- Backend do lab rodando (ver abaixo).
+O projeto é a **fonte da verdade** dos requisitos abaixo (ver
+[build.gradle](./build.gradle) e [app/build.gradle](./app/build.gradle)):
+
+| Item | Valor |
+|---|---|
+| JDK | **17** (Temurin) — `sourceCompatibility`/`targetCompatibility = 17`, `jvmTarget = 17` |
+| Gradle | **8.7** (via wrapper, `gradle/wrapper/gradle-wrapper.properties`) |
+| Android Gradle Plugin | **8.5.2** |
+| Kotlin | **1.9.24** (Compose compiler `1.5.14`) |
+| `compileSdk` / `targetSdk` | **34** |
+| `minSdk` | **24** (Android 7.0) |
+| `applicationId` (release) | `com.obsidianpay.mobile` |
+| `applicationId` (debug) | `com.obsidianpay.mobile.debug` (sufixo `.debug`) |
+| `versionCode` / `versionName` | `1` / `0.3.0-phase3` |
+| UI | Jetpack Compose (BOM `2024.06.00`), Material 3 |
+| HTTP | OkHttp `4.12.0` |
+
+Ferramentas: **Android Studio** (recente) **ou** Gradle + Android SDK instalados;
+backend do lab rodando (ver abaixo).
 
 ## 1. Suba o backend
 
@@ -62,17 +79,34 @@ O projeto inclui o **Gradle wrapper** (`gradlew` / `gradlew.bat`, Gradle 8.7).
 ```bash
 cd lab-08-obsidianpay/android-app
 
-# listar tarefas (requer JDK; baixa o Gradle na 1ª vez)
+# listar tarefas (requer JDK 17; baixa o Gradle na 1ª vez)
 ./gradlew tasks
 
-# gerar APK debug (requer Android SDK configurado)
-./gradlew assembleDebug
+# build limpo do APK debug (requer Android SDK configurado)
+./gradlew --no-daemon clean :app:assembleDebug
 ```
 
-O `assembleDebug` precisa do **Android SDK**. Defina o SDK via Android Studio ou
-crie um `local.properties` com `sdk.dir=/caminho/para/Android/Sdk`. Sem SDK, o
-build do APK não roda — use o Android Studio, que provisiona o SDK
-automaticamente.
+O `assembleDebug` gera o APK em:
+
+```
+app/build/outputs/apk/debug/app-debug.apk
+```
+
+O `assembleDebug` precisa do **Android SDK** (Platform `android-34` e
+`build-tools;34.0.0`). Defina o SDK via Android Studio ou crie um
+`local.properties` com `sdk.dir=/caminho/para/Android/Sdk`. Sem SDK, o build do
+APK não roda — use o Android Studio, que provisiona o SDK automaticamente.
+
+### Artefato candidato a QA (Fase 22A)
+
+O workflow **Lab 08 Android APK**
+([`.github/workflows/lab08-android-apk.yml`](../../.github/workflows/lab08-android-apk.yml))
+roda exatamente esse build, copia/renomeia o `app-debug.apk` para
+**`ObsidianPay-Lab08-v1.0.0-rc1.apk`**, gera o `.sha256` e publica os dois como
+artefato do GitHub Actions. O helper local
+[`../scripts/package-android-apk.sh`](../scripts/package-android-apk.sh) faz o
+mesmo empacotamento a partir de um build local. Download e verificação em
+**[../DOWNLOAD.md](../DOWNLOAD.md)**.
 
 > Se o `gradle-wrapper.jar` não estiver presente no seu clone, o Android Studio
 > o regenera no primeiro sync, ou rode `gradle wrapper --gradle-version 8.7`.

@@ -1,0 +1,107 @@
+name: Lab 08 Android APK
+
+# Builds ONLY the Lab 08 (ObsidianPay Mobile) debug APK and publishes it as a
+# GitHub Actions artifact for QA distribution. It is manual-only (workflow_dispatch),
+# does NOT create a GitHub Release, does NOT create or push tags, and does NOT
+# touch any other lab. The stable APK is published separately, only after the
+# physical-device smoke test passes.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  LAB_DIR: lab-08-obsidianpay
+  ANDROID_APP_DIR: lab-08-obsidianpay/android-app
+  ARTIFACT_APK: ObsidianPay-Lab08-v1.0.0-rc1.apk
+  ARTIFACT_NAME: obsidianpay-lab08-v1.0.0-rc1
+
+jobs:
+  build-debug-apk:
+    name: Build ObsidianPay Lab 08 debug APK
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Temurin JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install required Android platform and build-tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Matches the real Gradle config: compileSdk 34 / targetSdk 34, AGP 8.5.2.
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Grant execute permission to gradlew
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x "${ANDROID_APP_DIR}/gradlew"
+
+      - name: Build debug APK (clean, no daemon)
+        shell: bash
+        working-directory: ${{ env.ANDROID_APP_DIR }}
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon clean :app:assembleDebug
+
+      - name: Verify, rename and checksum the APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC_APK="${ANDROID_APP_DIR}/app/build/outputs/apk/debug/app-debug.apk"
+
+          if [ ! -f "${SRC_APK}" ]; then
+            echo "::error::Debug APK not found at ${SRC_APK} — build did not produce the expected artifact."
+            exit 1
+          fi
+
+          DIST_DIR="${RUNNER_TEMP}/obsidianpay-dist"
+          mkdir -p "${DIST_DIR}"
+          cp "${SRC_APK}" "${DIST_DIR}/${ARTIFACT_APK}"
+
+          (
+            cd "${DIST_DIR}"
+            sha256sum "${ARTIFACT_APK}" > "${ARTIFACT_APK}.sha256"
+          )
+
+          APK_SIZE="$(du -h "${DIST_DIR}/${ARTIFACT_APK}" | cut -f1)"
+          APK_SHA="$(cut -d' ' -f1 "${DIST_DIR}/${ARTIFACT_APK}.sha256")"
+
+          echo "APK file:   ${ARTIFACT_APK}"
+          echo "APK size:   ${APK_SIZE}"
+          echo "APK SHA256: ${APK_SHA}"
+
+          {
+            echo "### ObsidianPay Lab 08 — QA candidate APK"
+            echo ""
+            echo "| Campo | Valor |"
+            echo "|---|---|"
+            echo "| Arquivo | \`${ARTIFACT_APK}\` |"
+            echo "| Tamanho | ${APK_SIZE} |"
+            echo "| SHA256 | \`${APK_SHA}\` |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          # Export the dist dir for the upload step.
+          echo "DIST_DIR=${DIST_DIR}" >> "${GITHUB_ENV}"
+
+      - name: Upload APK and checksum artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            ${{ env.DIST_DIR }}/${{ env.ARTIFACT_APK }}
+            ${{ env.DIST_DIR }}/${{ env.ARTIFACT_APK }}.sha256
+          if-no-files-found: error
+          retention-days: 30
