@@ -1328,3 +1328,55 @@ foi corrigida (`WALKTHROUGH.md`, `STUDENT-GUIDE.md`, `docs/CHALLENGE-SCORING.md`
 - [ ] `README.md` tem as 3 seções; `VULNERABILITY-ROADMAP.md` tem a matriz final.
 - [ ] Total da cadeia documentado como **2100**.
 - [ ] Docs públicos sem `FLAG{`; nenhum lab 1..7 alterado.
+
+## Fase 20 — Runtime stabilization + build real + Stage 03 solucionável
+
+> A Fase 20 corrige seis problemas que só aparecem em build/execução real e torna
+> o Stage 03 solucionável sem depender de ler `api/src/flags.js`. **Não** altera
+> os valores das 9 flags nem os IDs dos 9 stages, **não** remove vulnerabilidades
+> intencionais e **não** torna o app seguro. Entrega `scripts/validate-phase20.sh`.
+
+### F20.1 — Rodar a validação
+
+```bash
+bash scripts/validate-phase20.sh
+```
+
+### F20.2 — O que foi corrigido
+
+- **Clash JVM** (`InsecureSessionStore.kt`): API única por métodos
+  (`getToken()/getUsername()/getRole()`); removidas as propriedades que colidiam.
+  O **build real** (`assembleDebug`) é a validação principal.
+- **Crash "Configuração"**: `ResponseBox` sem `verticalScroll` próprio (um único
+  dono de scroll por tela).
+- **WebView**: usa a **base URL efetiva** (`ApiClient.getBaseUrl()` /
+  `NetworkSecurityProfile.effectiveBaseUrl`), funcionando no emulador **e** em
+  celular físico; trata erros de carregamento.
+- **RootDetector**: caminhos comuns de root reais (incl. `/system_ext/bin/su` e
+  `/data/adb/magisk`); continua contornável.
+- **/health**: `version 1.0.0`, `phase 20-runtime-stabilization`, `challengeStages 9`.
+- **Stage 03**: checkpoint real
+  `POST /api/mobile/challenge/checkpoint/exported-components` com três provas
+  emitidas pelos componentes exportados; flag só no backend.
+
+### F20.3 — O que o script valida
+
+- **Build real:** com Android SDK, roda `./gradlew --no-daemon clean :app:assembleDebug`
+  e **falha** se o build falhar; sem SDK, emite **AVISO** (Fase 20 não totalmente
+  aprovada sem evidência externa de `BUILD SUCCESSFUL`).
+- **Clash JVM:** ausência das propriedades conflitantes (o build é a prova principal).
+- **Stage 03 (dinâmico):** auth, payload incompleto/incorreto/correto, flag só no
+  sucesso, submit, 200 pontos, idempotência.
+- **WebView/Configuração/RootDetector/health:** checagens estruturais + dinâmicas.
+- **Anti-leak:** flag 03 só em `api/src/flags.js`, fora do APK e dos docs públicos.
+- **Regressões:** roda `validate-phase18.sh` e `validate-phase19.sh`.
+
+### Critérios de aceite (Fase 20)
+
+- [ ] `assembleDebug` termina com `BUILD SUCCESSFUL` e o APK é gerado/instalável
+  (em ambiente com Android SDK).
+- [ ] `validate-phase18.sh` e `validate-phase19.sh` continuam passando.
+- [ ] `validate-phase20.sh` passa.
+- [ ] Stage 03 entrega a flag via checkpoint (provas válidas) e a recusa sem provas.
+- [ ] `/health` não exibe `0.2.0-phase2` e reporta `challengeStages: 9`.
+- [ ] Docs públicos sem `FLAG{`; flag 03 apenas no backend; nenhum lab 1..7 alterado.

@@ -53,7 +53,7 @@ fun DeviceTrustScreen(
     onBack: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val token = store.token
+    val token = store.getToken()
     val username = store.getUsername() ?: "guest"
     val deviceId = Constants.DEFAULT_DEVICE_ID
     val clientId = HardcodedSecrets.getInternalClientId()

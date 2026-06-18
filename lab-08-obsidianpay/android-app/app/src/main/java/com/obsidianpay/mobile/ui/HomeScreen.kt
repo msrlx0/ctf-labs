@@ -44,7 +44,7 @@ fun HomeScreen(
     var status by remember { mutableStateOf("") }
     var configText by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    val token = store.token
+    val token = store.getToken()
 
     // Hydrate the header from the locally cached profile on first show.
     LaunchedEffect(Unit) {

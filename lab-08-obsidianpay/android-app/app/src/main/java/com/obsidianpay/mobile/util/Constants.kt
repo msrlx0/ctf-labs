@@ -60,6 +60,27 @@ object Constants {
     const val EXTRA_OPERATOR_MODE: String = "obsidian.intent.extra.OPERATOR_MODE"
     const val EXTRA_RECEIPT_ID: String = "obsidian.intent.extra.RECEIPT_ID"
 
+    // Exported-components Stage 03 checkpoint (Phase 20). -----------------------
+    // These proof tokens are EMITTED by the exported components when they are
+    // exercised via adb and CONSOLIDATED by the exported ContentProvider. They
+    // are evidence that the exported Activity/Receiver/Provider were actually
+    // driven — NOT the flag and NOT a secret. The backend endpoint
+    // POST /api/mobile/challenge/checkpoint/exported-components validates the
+    // three proofs and only then returns the stage-03 flag, which is never stored
+    // in the app. The literal values MUST mirror api/src/data.js exactly.
+    const val CHECKPOINT_ACTIVITY_PROOF: String = "act:internal-ops:af83c1"
+    const val CHECKPOINT_RECEIVER_PROOF: String = "rcv:debug-command:7b21de"
+    const val CHECKPOINT_PROVIDER_PROOF: String = "prv:notes-consolidated:5c90af"
+
+    // Predictable trigger surfaces for the Stage 03 proofs (reachable from adb).
+    const val OPERATOR_MODE_CHECKPOINT: String = "checkpoint"
+    const val DEBUG_COMMAND_EMIT_CHECKPOINT_PROOF: String = "emit_checkpoint_proof"
+    const val PROVIDER_PATH_CHECKPOINT: String = "checkpoint"
+
+    // Local storage keys for the captured proofs (plaintext, intentional seam).
+    const val KEY_CHECKPOINT_ACTIVITY_PROOF: String = "obsidian.checkpoint.activity_proof"
+    const val KEY_CHECKPOINT_RECEIVER_PROOF: String = "obsidian.checkpoint.receiver_proof"
+
     // Default WebView support path on the backend.
     const val WEBVIEW_SUPPORT_PATH: String = "/api/mobile/webview/support"
 

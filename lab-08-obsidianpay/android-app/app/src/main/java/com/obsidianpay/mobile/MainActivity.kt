@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -33,6 +31,7 @@ import com.obsidianpay.mobile.api.ApiClient
 import com.obsidianpay.mobile.deeplink.DeepLinkData
 import com.obsidianpay.mobile.deeplink.DeepLinkRouter
 import com.obsidianpay.mobile.deeplink.DeepLinkType
+import com.obsidianpay.mobile.network.NetworkSecurityProfile
 import com.obsidianpay.mobile.storage.InsecureSessionStore
 import com.obsidianpay.mobile.storage.LocalCacheManager
 import com.obsidianpay.mobile.storage.ObsidianLocalDb
@@ -92,8 +91,8 @@ fun ObsidianPayApp(
     // continues reaching the correct host (emulator or physical device) after
     // a restart without asking the user to re-enter the URL.
     val apiClient = remember {
-        val override = store.getApiBaseUrlOverride()
-        if (override != null) ApiClient(override) else ApiClient()
+        // Single source of truth for the effective host (override ?: emulator default).
+        ApiClient(NetworkSecurityProfile.effectiveBaseUrl(store.getApiBaseUrlOverride()))
     }
     val db = remember { ObsidianLocalDb(context) }
     val cache = remember { LocalCacheManager(context.applicationContext, store, db) }
@@ -189,6 +188,7 @@ fun ObsidianPayApp(
         Screen.WebSupport -> {
             val s = prefill?.takeIf { it.type == DeepLinkType.SUPPORT }
             WebViewSupportScreen(
+                apiClient = apiClient,
                 store = store,
                 cache = cache,
                 topic = s?.topic,
@@ -236,7 +236,18 @@ fun ObsidianScaffold(
     }
 }
 
-/** Scrollable monospace box for showing raw API responses. */
+/**
+ * Monospace box for showing raw API responses.
+ *
+ * NOTE (Phase 20): this box must NOT own a vertical scroll. Every caller renders
+ * it inside a parent `Column(...).verticalScroll(...)`, and a scrollable child
+ * inside a scrollable parent is measured with an infinite max height, which
+ * crashes with:
+ *   "Vertically scrollable component was measured with an infinity maximum height".
+ * The single scroll owner is the screen's outer Column; this box simply lays its
+ * text out at natural height and scrolls together with the rest of the screen.
+ * Do NOT re-add `Modifier.verticalScroll(...)` here — see scripts/validate-phase20.sh.
+ */
 @Composable
 fun ResponseBox(text: String, modifier: Modifier = Modifier) {
     if (text.isBlank()) return
@@ -245,7 +256,6 @@ fun ResponseBox(text: String, modifier: Modifier = Modifier) {
             text = text,
             fontFamily = FontFamily.Monospace,
             fontSize = 12.sp,
-            modifier = Modifier.verticalScroll(rememberScrollState()),
         )
     }
 }

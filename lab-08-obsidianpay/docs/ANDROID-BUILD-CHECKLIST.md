@@ -4,9 +4,13 @@ Guia de **preparação do build real do APK** no Android Studio. O componente
 Android do Lab 08 é entregue como código-fonte (Kotlin + Jetpack Compose) em
 `android-app/`; o APK é gerado localmente.
 
-> **Documentação, não execução obrigatória.** A validação automatizada de shell
-> (`scripts/validate-phase*.sh`) **não exige Android SDK** e não gera o APK. O
-> build real é feito manualmente no Android Studio seguindo este checklist.
+> **Build real OBRIGATÓRIO (Fase 20).** A validação automatizada de shell
+> (`scripts/validate-phase*.sh`) **não exige Android SDK** e, sem SDK, apenas
+> **avisa**. A Fase 20 **não está completa** sem evidência de `BUILD SUCCESSFUL` +
+> APK instalado + smoke test. A Fase 20 corrigiu o **clash de assinatura JVM** que
+> impedia a compilação, o **crash da tela "Configuração"** (scroll aninhado) e a
+> **WebView** fixa em `10.0.2.2` (agora usa a base URL efetiva, funcionando em
+> celular físico). `scripts/validate-phase20.sh` roda o build real quando há SDK.
 >
 > **Sem flags.** Este documento é público e não contém valores de flag nem
 > credenciais internas. A única conta documentada é `guest` / `guest123`.
@@ -119,13 +123,26 @@ Com o app instalado e o backend no ar, confirme o caminho feliz:
 
 - [ ] **login guest / guest123** — autenticação funciona.
 - [ ] **Home carrega** — tela inicial com os dados do perfil.
+- [ ] **Configuração não crasha (Fase 20)** — toque em "Configuração" na Home,
+  role até o fim e confirme que **não** há crash (`IllegalStateException` de
+  altura infinita); o JSON de config aparece no `ResponseBox`.
+- [ ] **API Host persiste (Fase 20)** — abra "API Host", edite/salve a base URL,
+  volte, reabra e confirme a persistência do override.
+- [ ] **Web Support abre no emulador E em celular físico (Fase 20)** — a WebView
+  segue a base URL efetiva (no físico, o IP de LAN do PC), mostrando o host/URL.
+- [ ] **Security Check mostra root signals (Fase 20)** — em device rooted, sinais
+  como `file:/system_ext/bin/su` / `directory:/data/adb/magisk` aparecem.
+- [ ] **Stage 03 via checkpoint (Fase 20)** — `am start` (Activity, `OPERATOR_MODE=checkpoint`)
+  + `am broadcast` (`emit_checkpoint_proof`) + `content query .../checkpoint` →
+  POST das três provas em `/api/mobile/challenge/checkpoint/exported-components`
+  retorna a flag; submit dá **200 pontos**.
 - [ ] **Receipts carrega** — lista de recibos abre.
 - [ ] **Support Sync funciona** — o sync de suporte responde.
-- [ ] **Web Support abre** — a WebView do portal de suporte carrega.
 - [ ] **API Host screen abre** — a tela de override de base URL abre.
 - [ ] **Device Trust screen abre** — a tela de Device Trust abre.
 - [ ] **Vault screen abre** — a tela do Secure Vault abre.
 - [ ] **App Integrity screen abre** — a tela de App Integrity abre.
+- [ ] **logcat sem `FATAL EXCEPTION`** durante o smoke test.
 
 ---
 

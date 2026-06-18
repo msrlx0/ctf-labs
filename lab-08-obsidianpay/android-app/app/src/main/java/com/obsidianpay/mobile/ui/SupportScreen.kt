@@ -37,7 +37,7 @@ fun SupportScreen(
     var response by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    val token = store.token
+    val token = store.getToken()
 
     // Runs a call, shows the response and persists the raw body via [onCache].
     fun run(label: String, block: suspend () -> ApiResult<String>, onCache: (String) -> Unit) {

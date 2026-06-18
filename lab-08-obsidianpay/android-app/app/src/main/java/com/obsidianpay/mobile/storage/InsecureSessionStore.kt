@@ -96,6 +96,24 @@ class InsecureSessionStore(context: Context) {
     /** Last event triggered by any exported component (Activity/Receiver/Provider). */
     fun saveLastExportedEvent(value: String) = putAndTouch(Constants.KEY_LAST_EXPORTED_EVENT, value)
 
+    // --- Stage 03 exported-components checkpoint proofs (Phase 20) ---------------
+    // Written by the exported Activity / Receiver when triggered; read back (and
+    // consolidated with the provider proof) by the exported ContentProvider.
+
+    /** Proof emitted by the exported [com.obsidianpay.mobile.platform.InternalOpsActivity]. */
+    fun saveCheckpointActivityProof(value: String) =
+        putAndTouch(Constants.KEY_CHECKPOINT_ACTIVITY_PROOF, value)
+
+    fun getCheckpointActivityProof(): String? =
+        prefs.getString(Constants.KEY_CHECKPOINT_ACTIVITY_PROOF, null)
+
+    /** Proof emitted by the exported [com.obsidianpay.mobile.platform.DebugCommandReceiver]. */
+    fun saveCheckpointReceiverProof(value: String) =
+        putAndTouch(Constants.KEY_CHECKPOINT_RECEIVER_PROOF, value)
+
+    fun getCheckpointReceiverProof(): String? =
+        prefs.getString(Constants.KEY_CHECKPOINT_RECEIVER_PROOF, null)
+
     // --- Device Trust / reverse-engineering trail (Phase 8) ---------------------
 
     fun saveLastDeviceTrustJson(rawJson: String) =
@@ -286,11 +304,12 @@ class InsecureSessionStore(context: Context) {
         return "${t.take(8)}…(${t.length} chars)"
     }
 
-    // Backwards-compatible accessors used by earlier-phase screens.
-    val token: String? get() = getToken()
-    val username: String? get() = getUsername()
-    val role: String? get() = getRole()
-
+    // NOTE (Phase 20): the session getters are exposed ONLY as explicit methods
+    // (getToken()/getUsername()/getRole()). Do NOT re-add Kotlin `val token`/
+    // `val username`/`val role` properties: each would synthesise a JVM getter
+    // with the SAME signature as the method above (e.g. `getToken()`), producing
+    // a "platform declaration clash" that breaks compilation. The single-API rule
+    // (methods, not properties) is the fix — see scripts/validate-phase20.sh.
     fun isLoggedIn(): Boolean = !getToken().isNullOrEmpty()
 
     /** Snapshot of the main local values, for the internal state screen. */
@@ -317,6 +336,8 @@ class InsecureSessionStore(context: Context) {
         Constants.KEY_OPERATOR_HINT to getOperatorHint(),
         Constants.KEY_LAST_EXTERNAL_DEBUG_COMMAND to getLastExternalDebugCommand(),
         Constants.KEY_LAST_EXPORTED_EVENT to getLastExportedEvent(),
+        Constants.KEY_CHECKPOINT_ACTIVITY_PROOF to getCheckpointActivityProof(),
+        Constants.KEY_CHECKPOINT_RECEIVER_PROOF to getCheckpointReceiverProof(),
         Constants.KEY_LAST_DEVICE_TRUST to getLastDeviceTrustJson(),
         Constants.KEY_LAST_LEGACY_SIGNATURE to getLastLegacySignature(),
         Constants.KEY_LAST_ENCODED_OPERATOR_HINT to getLastEncodedOperatorHint(),

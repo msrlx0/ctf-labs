@@ -142,11 +142,16 @@ Use **guest / guest123** no app e em `POST /api/mobile/login`.
 
 ## Status final e QA (Fase 16)
 
-- **Status do lab:** completo (Fases 1–15 entregues). O backend mobile na porta
+- **Status do lab:** completo (Fases 1–20 entregues). O backend mobile na porta
   `8102`, o app Android (código-fonte) e a Challenge Chain de 9 estágios estão
   prontos. **Pendência conhecida:** o build/publicação do **APK real**.
-- **Fase atual:** **QA final** — validação consolidada, revisão de docs
-  (anti-spoiler/anti-leak) e preparação para o build Android real.
+- **Fase atual:** **Fase 20 — runtime stabilization**: build Android real
+  obrigatório; correções de compilação (clash JVM), de navegação (crash da tela
+  "Configuração"), de WebView (funciona em celular físico via base URL efetiva) e
+  de detecção de root básico (`RootDetector`); `/health` em `version 1.0.0` com
+  `challengeStages: 9`; e **Stage 03** com checkpoint real
+  (`/api/mobile/challenge/checkpoint/exported-components`) — a flag continua só no
+  backend, sem precisar abrir `api/src/flags.js`.
 - **Antes do build real**, consulte:
   - [STUDENT-GUIDE.md](./STUDENT-GUIDE.md) — guia do aluno (sem spoilers).
   - [docs/CHALLENGE-SCORING.md](./docs/CHALLENGE-SCORING.md) — pontuação da cadeia.
@@ -207,7 +212,7 @@ estão separados logo abaixo.)
 | Entrada não confiável | **Deep Link / QR Input Abuse** | Scheme `obsidianpay://` (transfer/support/receipt) e a tela QR Payment com payloads previsíveis. | Testar entrada via deep link e QR como vetor não confiável. |
 | Componentes Android | **Exported Activity** | `InternalOpsActivity` exportada no `AndroidManifest`. | Reconhecer o risco de uma Activity exportada para outros apps. |
 | Componentes Android | **Exported BroadcastReceiver** | `DebugCommandReceiver` exportado, com comandos previsíveis. | Entender o abuso de broadcasts previsíveis. |
-| Componentes Android | **Exported ContentProvider** | `ObsidianNotesProvider` exportado (authority `provider.notes`). | Enumerar dados locais via `content://`. |
+| Componentes Android | **Exported ContentProvider** | `ObsidianNotesProvider` exportado (authority `provider.notes`, incl. path `/checkpoint` que consolida provas dos componentes). | Enumerar dados locais via `content://` e coletar provas para o checkpoint do Stage 03. |
 | Reverse engineering | **Hardcoded Secrets** | `HardcodedSecrets` (segredos/rotas/valores internos fragmentados no binário). | Engenharia reversa básica de um APK com JADX/apktool. |
 | Reverse engineering | **Weak Crypto / Legacy Signature** | `WeakCrypto` (Base64/XOR/SHA-1/MD5) e `LegacyRequestSigner`. | Por que assinatura/cripto client-side fraca é quebrável. |
 | Confiança no cliente | **Device Trust** bypass | Fluxo Device Trust e endpoint interno baseado em headers montados no cliente. | Que confiar no que o cliente afirma é frágil. |
@@ -258,15 +263,19 @@ A partir da Fase 3 existe um **app Android base** (Kotlin + Jetpack Compose) em
 - No **Android Emulator**, o app usa `http://10.0.2.2:8102` (alias do emulador
   para o `127.0.0.1` do host).
 - Em um **celular físico**, use a tela **API Host** (Fase 11) para apontar o app
-  ao IP do PC na rede, por exemplo `http://192.168.0.50:8102`.
+  ao IP do PC na rede, por exemplo `http://192.168.0.50:8102`. A partir da Fase 20
+  a **WebView de suporte** também segue essa base URL efetiva, funcionando no
+  emulador **e** em celular físico (antes ficava fixa em `10.0.2.2`).
 - Abra a pasta `android-app/` no Android Studio e rode em um emulador (API 24+).
 - Login de teste: `guest` / `guest123`.
 
-> **Build Android real (Fase 17):** o build/instalação do APK deve seguir
-> [docs/ANDROID-BUILD-CHECKLIST.md](./docs/ANDROID-BUILD-CHECKLIST.md) no Android
-> Studio. A validação de shell (`scripts/validate-phase17.sh`) faz a inspeção
-> estrutural do projeto e um build best-effort — **não substitui** o Android
-> Studio nem exige Android SDK.
+> **Build Android real (Fase 20):** o build/instalação do APK é **obrigatório** e
+> deve seguir [docs/ANDROID-BUILD-CHECKLIST.md](./docs/ANDROID-BUILD-CHECKLIST.md)
+> no Android Studio (`./gradlew --no-daemon clean :app:assembleDebug` →
+> `BUILD SUCCESSFUL`). A Fase 20 corrigiu o clash de assinatura JVM que impedia a
+> compilação, o crash da tela "Configuração" e a WebView fixa. A validação de
+> shell (`scripts/validate-phase20.sh`) roda o build real quando há Android SDK e
+> apenas **avisa** quando não há — **não substitui** o Android Studio.
 
 Detalhes de build e execução em [android-app/README.md](./android-app/README.md).
 
@@ -285,6 +294,7 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 - ✅ **App Integrity / NativeGate / TamperCheck scaffold** — **Fase 12**
 - ✅ **Dynamic Instrumentation scaffold** (scripts Frida, playbook ADB, docs de pentest mobile) — **Fase 13**
 - ✅ **Final Challenge Chain** (9 estágios, flags internas, scoring local, endpoint de submissão — ver `docs/CHALLENGE-SCORING.md`) — **Fase 14**
+- ✅ **Runtime stabilization + build real + Stage 03 solucionável** (clash JVM, crash da "Configuração", WebView em celular físico, RootDetector básico, `/health 1.0.0`, checkpoint do Stage 03) — **Fase 20**
 - ✅ Documentação base e arquitetura
 - 🔜 APK final publicado
 - 🔜 Cadeias completas app ↔ API

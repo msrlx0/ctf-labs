@@ -22,7 +22,8 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 | **Fase 16** | **QA final / release readiness**: validação consolidada (`scripts/validate-phase16.sh`), revisão de docs (anti-spoiler/anti-leak), detecção de typos/placeholders perigosos, `docs/FINAL-QA.md` (matriz de validação + checklist de release) e `docs/ANDROID-BUILD-CHECKLIST.md` (preparação do build Android real no Android Studio). Não adiciona vulnerabilidades nem altera flags; build do APK continua best-effort no shell. | ✅ Concluída |
 | **Fase 17** | **Android build readiness**: QA estrutural de Kotlin/Gradle/Manifest/recursos (`scripts/validate-phase17.sh`), build `assembleDebug` **best-effort** (WARN sem Android SDK, FAIL se o build falhar com SDK presente), seção "Erros comuns de build" no `docs/ANDROID-BUILD-CHECKLIST.md` e status de build no `docs/FINAL-QA.md`/`VALIDATION.md`. Não altera backend, app, flags nem os endpoints da Fase 14. | ✅ Concluída |
 | **Fase 18** | **Public docs polish**: tabela final de vulnerabilidades no `README.md` (`Vulnerabilidades presentes`), trilha manual do aluno sem spoiler no `STUDENT-GUIDE.md` (`Passo a passo manual sugerido`), `WALKTHROUGH.md` mantido como material de instrutor (com flags), consistência final da documentação e `scripts/validate-phase18.sh`. Não altera backend, app, flags nem os endpoints da Fase 14. | ✅ Concluída |
-| **Fase 19** | **Final instructor walkthrough + roadmap consolidation**: `WALKTHROUGH.md` reescrito como guia manual completo e para iniciante absoluto (Preparação, Burp, JADX, ADB, Frida, Stages 01–09, troubleshooting, com as flags reais); matriz final consolidada no `docs/VULNERABILITY-ROADMAP.md` (revisada contra o código; Exported Service e Native pinning corrigidos); `README.md` classificado em "Vulnerabilidades presentes" / "Scaffolds e técnicas educacionais" / "Recursos do CTF"; correção da pontuação total para 2100; `scripts/validate-phase19.sh`. Não altera backend, app, flags nem os endpoints da Fase 14. | ✅ Atual |
+| **Fase 19** | **Final instructor walkthrough + roadmap consolidation**: `WALKTHROUGH.md` reescrito como guia manual completo e para iniciante absoluto (Preparação, Burp, JADX, ADB, Frida, Stages 01–09, troubleshooting, com as flags reais); matriz final consolidada no `docs/VULNERABILITY-ROADMAP.md` (revisada contra o código; Exported Service e Native pinning corrigidos); `README.md` classificado em "Vulnerabilidades presentes" / "Scaffolds e técnicas educacionais" / "Recursos do CTF"; correção da pontuação total para 2100; `scripts/validate-phase19.sh`. Não altera backend, app, flags nem os endpoints da Fase 14. | ✅ Concluída |
+| **Fase 20** | **Runtime stabilization + build real + Stage 03 solucionável**: corrige 6 problemas só visíveis em build/execução real — clash de assinatura JVM em `InsecureSessionStore.kt`, crash de scroll vertical aninhado da tela "Configuração", WebView fixa em `10.0.2.2` (agora usa a base URL efetiva, funcionando em celular físico), `RootDetector` ampliado (caminhos reais de root, incl. `/system_ext/bin/su` e `/data/adb/magisk`; segue contornável), `/health` atualizado (`version 1.0.0`, `phase 20-runtime-stabilization`, `challengeStages 9`) e **checkpoint real do Stage 03** (`POST /api/mobile/challenge/checkpoint/exported-components`) com provas emitidas pelos componentes exportados. Build Android real obrigatório. `scripts/validate-phase20.sh`. Não altera valores de flags nem IDs de stages. | ✅ Atual |
 
 ## Escopo da Fase 1 (entregue)
 
@@ -312,6 +313,40 @@ Plano de fases do laboratório. Fases 1–5 implementadas.
 - **Validação:** `scripts/validate-phase19.sh` (estrutura/anti-leak/estrutura por
   stage; roda `validate-phase17.sh` e `validate-phase18.sh`). Não exige Android SDK;
   não altera backend, app, flags ou endpoints.
+
+## Escopo da Fase 20 (entregue)
+
+- **Estabilização de runtime** (problemas só visíveis em build/execução real):
+  - **Clash JVM** em `InsecureSessionStore.kt`: removidas as propriedades
+    `val token/username/role` (geravam getters colidindo com os métodos
+    `getToken()/getUsername()/getRole()`); API única = métodos, call sites
+    atualizados. O armazenamento inseguro **permanece** intencional.
+  - **Crash da tela "Configuração"**: `ResponseBox` não possui mais
+    `verticalScroll` próprio — evita o scroll vertical aninhado (altura infinita)
+    quando renderizado dentro do `Column.verticalScroll` das telas.
+  - **WebView para celular físico**: `WebViewSupportScreen` usa a **base URL
+    efetiva** (`ApiClient.getBaseUrl()`), com fonte única
+    `NetworkSecurityProfile.effectiveBaseUrl(...)` e `joinUrl(...)`; respeita o
+    override de host e trata erros de carregamento de forma visível.
+  - **RootDetector**: lista de caminhos ampliada (`/system_ext/bin/su`,
+    `/vendor/bin/su`, `/data/local/{bin,xbin}/su`, `/data/adb/magisk`,
+    `/data/adb/modules`, `which su`), sinais `file:`/`directory:`/`package:`.
+    Detecta root **básico/visível** e **continua contornável** (Frida/patch/ocultação).
+  - **/health**: `version 1.0.0`, `phase 20-runtime-stabilization`,
+    `app obsidianpay-mobile-api`, `challengeStages 9` (não mais `0.2.0-phase2`).
+- **Stage 03 solucionável de verdade**: `POST /api/mobile/challenge/checkpoint/exported-components`
+  (auth obrigatória) valida três provas emitidas pelos componentes exportados
+  (`InternalOpsActivity` em `OPERATOR_MODE=checkpoint`, `DebugCommandReceiver`
+  com `emit_checkpoint_proof`, consolidadas pelo `ObsidianNotesProvider` em
+  `/checkpoint`) e só então retorna a flag do Stage 03. A flag continua **apenas**
+  no backend (`api/src/flags.js`); não está no APK nem em docs públicos.
+- **Build Android real obrigatório** + smoke test no emulador/celular físico
+  (ver `docs/ANDROID-BUILD-CHECKLIST.md`).
+- **Validação**: `scripts/validate-phase20.sh` (build real quando há SDK; clash
+  JVM; checkpoint dinâmico do Stage 03; WebView; ausência de scroll aninhado;
+  caminhos de root; `/health`; anti-leak; roda `validate-phase18.sh`/`19.sh`).
+  Não altera valores de flags nem IDs de stages; não remove vulnerabilidades
+  intencionais; não torna o app "seguro".
 
 ## Princípios entre fases
 
