@@ -2,8 +2,28 @@
 
 **Tema:** Segurança de aplicações mobile (Android) — backend + app
 **Porta oficial:** http://127.0.0.1:8102
-**Status:** Fase 14 (app com **deep links, QR Payment, Web Support, WebView bridge, componentes Android internos, fluxo Device Trust legado, checagem local de ambiente/dispositivo, Secure Vault com fluxo local de autenticação, Network Security / API Host override, App Integrity / NativeGate / TamperCheck scaffold**, **Dynamic Instrumentation scaffold** com scripts Frida e playbook ADB, e a **Final Challenge Chain** — 9 estágios, scoring local e endpoint de submissão). O APK final ainda não foi publicado.
 **Dificuldade alvo:** Hard / realista (acima de labs introdutórios como AndroGoat).
+
+Backend mobile (porta `8102`), app Android (Kotlin + Jetpack Compose) e a
+**Final Challenge Chain** (9 estágios) estão implementados. O foco atual é a
+**distribuição do APK**: a validação em **celular físico está em andamento** e o
+teste de runtime **ainda não está concluído**.
+
+---
+
+## 📥 Download e status do APK
+
+> **APK estável: ainda NÃO publicado.** O que existe hoje é um **candidato a QA
+> (`v1.0.0-rc1`)**, pendente de aprovação em **celular físico**.
+
+A **Fase 22A** adiciona o **pipeline automatizado de build** do APK via GitHub
+Actions ([`.github/workflows/lab08-android-apk.yml`](../.github/workflows/lab08-android-apk.yml)),
+que gera o artefato candidato `ObsidianPay-Lab08-v1.0.0-rc1.apk` (+ `.sha256`)
+para o smoke test em dispositivo físico. A **publicação estável** ocorrerá apenas
+**depois** que esse smoke test passar.
+
+- **Como baixar, verificar o SHA256 e instalar:** veja **[DOWNLOAD.md](./DOWNLOAD.md)**.
+- Build manual no Android Studio: [docs/ANDROID-BUILD-CHECKLIST.md](./docs/ANDROID-BUILD-CHECKLIST.md).
 
 ---
 
@@ -140,19 +160,24 @@ Use **guest / guest123** no app e em `POST /api/mobile/login`.
 
 ---
 
-## Status final e QA (Fase 16)
+## Status atual e QA
 
-- **Status do lab:** completo (Fases 1–20 entregues). O backend mobile na porta
-  `8102`, o app Android (código-fonte) e a Challenge Chain de 9 estágios estão
-  prontos. **Pendência conhecida:** o build/publicação do **APK real**.
-- **Fase atual:** **Fase 20 — runtime stabilization**: build Android real
-  obrigatório; correções de compilação (clash JVM), de navegação (crash da tela
-  "Configuração"), de WebView (funciona em celular físico via base URL efetiva) e
-  de detecção de root básico (`RootDetector`); `/health` em `version 1.0.0` com
-  `challengeStages: 9`; e **Stage 03** com checkpoint real
-  (`/api/mobile/challenge/checkpoint/exported-components`) — a flag continua só no
-  backend, sem precisar abrir `api/src/flags.js`.
-- **Antes do build real**, consulte:
+- **Backend e app:** o backend mobile (porta `8102`), o código-fonte do app
+  Android e a Challenge Chain de 9 estágios estão implementados e estáveis em
+  runtime (clash JVM, crash da tela "Configuração", WebView em celular físico,
+  `RootDetector` básico, `/health` em `version 1.0.0` com `challengeStages: 9` e
+  o **Stage 03** com checkpoint real
+  `/api/mobile/challenge/checkpoint/exported-components` — a flag continua só no
+  backend).
+- **Distribuição do APK (Fase 22A):** o GitHub passa a ser o ponto oficial de
+  download. O workflow **Lab 08 Android APK** gera um **candidato a QA**
+  (`ObsidianPay-Lab08-v1.0.0-rc1.apk` + `.sha256`) como artefato do GitHub
+  Actions. Veja **[DOWNLOAD.md](./DOWNLOAD.md)**.
+- **APK estável:** **ainda NÃO publicado.** A **validação em celular físico está
+  em andamento**; o teste de runtime ponta a ponta **ainda não está concluído**.
+  A publicação estável (GitHub Releases) ocorrerá só depois do smoke test passar.
+- **Documentação de apoio:**
+  - [DOWNLOAD.md](./DOWNLOAD.md) — download, verificação de SHA256 e instalação do APK.
   - [STUDENT-GUIDE.md](./STUDENT-GUIDE.md) — guia do aluno (sem spoilers).
   - [docs/CHALLENGE-SCORING.md](./docs/CHALLENGE-SCORING.md) — pontuação da cadeia.
   - [docs/mobile-pentest/SETUP.md](./docs/mobile-pentest/SETUP.md) — ambiente de pentest mobile.
@@ -262,10 +287,13 @@ A partir da Fase 3 existe um **app Android base** (Kotlin + Jetpack Compose) em
 
 - No **Android Emulator**, o app usa `http://10.0.2.2:8102` (alias do emulador
   para o `127.0.0.1` do host).
-- Em um **celular físico**, use a tela **API Host** (Fase 11) para apontar o app
-  ao IP do PC na rede, por exemplo `http://192.168.0.50:8102`. A partir da Fase 20
-  a **WebView de suporte** também segue essa base URL efetiva, funcionando no
-  emulador **e** em celular físico (antes ficava fixa em `10.0.2.2`).
+- Em um **celular físico**, use a tela **API Host** para apontar o app ao IP do
+  PC na rede, por exemplo `http://192.168.0.50:8102`. A **WebView de suporte**
+  também segue essa base URL efetiva, funcionando no emulador **e** em celular
+  físico (antes ficava fixa em `10.0.2.2`).
+- **QA em celular físico sem expor a LAN:** use `adb reverse tcp:8102 tcp:8102` e
+  configure o **API Host** para `http://127.0.0.1:8102` — o tráfego do aparelho é
+  encaminhado ao backend local do PC pelo USB (ver [DOWNLOAD.md](./DOWNLOAD.md)).
 - Abra a pasta `android-app/` no Android Studio e rode em um emulador (API 24+).
 - Login de teste: `guest` / `guest123`.
 
@@ -296,8 +324,9 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 - ✅ **Final Challenge Chain** (9 estágios, flags internas, scoring local, endpoint de submissão — ver `docs/CHALLENGE-SCORING.md`) — **Fase 14**
 - ✅ **Runtime stabilization + build real + Stage 03 solucionável** (clash JVM, crash da "Configuração", WebView em celular físico, RootDetector básico, `/health 1.0.0`, checkpoint do Stage 03) — **Fase 20**
 - ✅ Documentação base e arquitetura
-- 🔜 APK final publicado
-- 🔜 Cadeias completas app ↔ API
+- ✅ Pipeline automatizado de build do APK (GitHub Actions) — **Fase 22A**
+- 🚧 Validação em celular físico (smoke test) — **em andamento**
+- 🔜 APK estável publicado (após o smoke test em celular físico passar)
 
 > A Fase 5 adiciona **deep links** (`obsidianpay://transfer|support|receipt`),
 > uma tela **QR Payment** que interpreta payloads colados/digitados, e um
@@ -336,5 +365,7 @@ Detalhes de build e execução em [android-app/README.md](./android-app/README.m
 > mostrando onde o `CertificatePinner` seria anexado. O backend expõe
 > `/api/mobile/internal/network-profile` com o perfil de rede atual.
 
-> **O APK final ainda não foi publicado.** A Fase 3 entrega o código-fonte do
-> app base. Trate o app e a API como alvos reais: explore, observe e questione.
+> **O APK estável ainda não foi publicado.** A Fase 22A entrega o pipeline de
+> build e um **APK candidato a QA** (ver [DOWNLOAD.md](./DOWNLOAD.md)); a validação
+> em celular físico está em andamento. Trate o app e a API como alvos reais:
+> explore, observe e questione.

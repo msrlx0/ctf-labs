@@ -7,3 +7,8 @@ build/
 coverage/
 .DS_Store
 
+# Lab 08 — distribuição local do APK candidato a QA (nunca commitar o binário)
+lab-08-obsidianpay/android-app/dist/
+ObsidianPay-Lab08-*.apk
+ObsidianPay-Lab08-*.apk.sha256
+

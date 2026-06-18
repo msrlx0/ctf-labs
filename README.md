@@ -46,6 +46,7 @@ cd ctf-labs
 | [lab-04-sentinelcore](./lab-04-sentinelcore/) | Cadeia hard de SOC/IR: BOLA, mass assignment, JWT, SSRF, serviços internos, worker e file read | 8094 | Finalizado |
 | [Lab 5 — BlackGate](./lab-05-blackgate/) | Dificuldade: Boss Final / Hard; cadeia corporativa manual de acesso, auditoria, tickets e ativos | 8096 | Completo |
 | [Lab 6 - VioletCart](./lab-06-violetcart/) | Dificuldade: Impossible; marketplace premium de veiculos com logica de checkout, reservas e fluxo seller-assisted | 8098 | Completo |
+| [Lab 08 — ObsidianPay](./lab-08-obsidianpay/) | Mobile Android: carteira/pagamentos (backend + app Kotlin/Compose); storage inseguro, IDOR/mass assignment, WebView bridge, deep links, componentes exportados, RE e Challenge Chain. APK: [DOWNLOAD.md](./lab-08-obsidianpay/DOWNLOAD.md) | 8102 | QA / validação em celular físico |
 
 ## Como rodar um lab
 
