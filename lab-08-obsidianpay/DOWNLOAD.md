@@ -18,8 +18,8 @@ smoke test em celular físico passar.
 
 | Item | Valor |
 |---|---|
-| Arquivo do APK | `ObsidianPay-Lab08-v1.0.0-rc1.apk` |
-| Arquivo do checksum | `ObsidianPay-Lab08-v1.0.0-rc1.apk.sha256` |
+| Arquivo do APK | `ObsidianPay-Lab08-v1.0.0-rc2.apk` |
+| Arquivo do checksum | `ObsidianPay-Lab08-v1.0.0-rc2.apk.sha256` |
 | Tipo de build | Debug (`com.obsidianpay.mobile.debug`) |
 | Android mínimo | **Android 7.0 (API 24)** — derivado de `minSdk 24` |
 | Arquitetura | **Universal** — o app é Kotlin/Compose **sem biblioteca nativa obrigatória** (sem `abiFilters`/sem splits por ABI), então o mesmo APK roda em `arm64-v8a`, `armeabi-v7a`, `x86` e `x86_64`. |
@@ -36,10 +36,10 @@ GitHub Actions**:
    ([`.github/workflows/lab08-android-apk.yml`](../.github/workflows/lab08-android-apk.yml)).
 3. Abra a execução mais recente concluída com sucesso (✅).
 4. Na seção **Artifacts** da execução, baixe o artefato
-   **`obsidianpay-lab08-v1.0.0-rc1`**.
+   **`obsidianpay-lab08-v1.0.0-rc2`**.
 5. Descompacte o `.zip` baixado. Dentro dele estão:
-   - `ObsidianPay-Lab08-v1.0.0-rc1.apk`
-   - `ObsidianPay-Lab08-v1.0.0-rc1.apk.sha256`
+   - `ObsidianPay-Lab08-v1.0.0-rc2.apk`
+   - `ObsidianPay-Lab08-v1.0.0-rc2.apk.sha256`
 
 > **Login no GitHub pode ser necessário.** O download de artefatos do GitHub
 > Actions normalmente exige que você esteja **autenticado** no GitHub (artefatos
@@ -59,22 +59,22 @@ nome e o arquivo `.sha256` correspondente. Até lá, **use o artefato de QA acim
 ## Verificação do SHA256
 
 Sempre confira o hash antes de instalar. Compare o valor calculado com o conteúdo
-do arquivo `ObsidianPay-Lab08-v1.0.0-rc1.apk.sha256`.
+do arquivo `ObsidianPay-Lab08-v1.0.0-rc2.apk.sha256`.
 
 **Linux / macOS:**
 
 ```bash
-sha256sum ObsidianPay-Lab08-v1.0.0-rc1.apk
+sha256sum ObsidianPay-Lab08-v1.0.0-rc2.apk
 # compare com:
-cat ObsidianPay-Lab08-v1.0.0-rc1.apk.sha256
+cat ObsidianPay-Lab08-v1.0.0-rc2.apk.sha256
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-Get-FileHash .\ObsidianPay-Lab08-v1.0.0-rc1.apk -Algorithm SHA256
+Get-FileHash .\ObsidianPay-Lab08-v1.0.0-rc2.apk -Algorithm SHA256
 # compare com o conteúdo de:
-Get-Content .\ObsidianPay-Lab08-v1.0.0-rc1.apk.sha256
+Get-Content .\ObsidianPay-Lab08-v1.0.0-rc2.apk.sha256
 ```
 
 Os hashes devem ser **idênticos** (ignore maiúsculas/minúsculas). Se divergirem,
@@ -88,7 +88,7 @@ Com o **Android SDK Platform Tools** (`adb`) no PATH e o dispositivo/emulador
 conectado:
 
 ```bash
-adb install -r ObsidianPay-Lab08-v1.0.0-rc1.apk
+adb install -r ObsidianPay-Lab08-v1.0.0-rc2.apk
 ```
 
 A flag `-r` reinstala mantendo os dados, útil ao atualizar uma versão anterior.
@@ -135,29 +135,33 @@ Para derrubar: `docker compose down`.
 
 ---
 
-## API Host: emulador vs. celular físico
+## Conexão: emulador vs. celular físico
 
-O destino de rede muda conforme o ambiente:
+A configuração de conexão fica em **Conta → Configurações → Conexão avançada**.
+Lá você escolhe um **preset** que se ajusta ao seu ambiente. A seleção e o
+endpoint personalizado são **persistidos** e sobrevivem ao reinício do app.
 
-| Ambiente | API Host | Como configurar |
-|---|---|---|
-| **Emulador Android** | `http://10.0.2.2:8102` | Padrão do app — `10.0.2.2` é o alias do emulador para o `127.0.0.1` do host. Sem configuração extra. |
-| **Celular físico (LAN)** | `http://<IP_DO_PC>:8102` | Abra a tela **API Host** no app e salve a URL com o IP de LAN do PC (ex.: `http://192.168.0.50:8102`). O backend precisa estar acessível na rede e a porta `8102` liberada no firewall. |
+| Ambiente | Preset | API Host | Observações |
+|---|---|---|---|
+| **Emulador Android** | Emulador Android | `http://10.0.2.2:8102` | **Padrão do app** — `10.0.2.2` é o alias do emulador para o `127.0.0.1` do host. Sem configuração extra. |
+| **Celular físico (USB)** | Dispositivo físico (USB) | `http://127.0.0.1:8102` | Use com `adb reverse` (abaixo). É o caminho recomendado para o smoke test em celular físico. |
+| **Celular físico (LAN)** | Endpoint personalizado | `http://<IP_DO_PC>:8102` | Informe o IP de LAN do PC (ex.: `http://192.168.0.50:8102`). O backend precisa estar acessível na rede e a porta `8102` liberada no firewall. |
 
-> No celular físico, `127.0.0.1`/`10.0.2.2` apontam para o **próprio aparelho**,
-> não para o PC — por isso use o IP de LAN via tela **API Host**.
+> No celular físico, `127.0.0.1`/`10.0.2.2` apontam para o **próprio aparelho**.
+> Sem `adb reverse`, use o IP de LAN via preset **Endpoint personalizado**.
 
-### Alternativa de QA com `adb reverse` (celular físico)
+### QA em celular físico com `adb reverse` (recomendado)
 
-Para um smoke test rápido em celular físico **sem** expor o backend na LAN, use
-`adb reverse` para tunelar a porta `8102` do aparelho para o `127.0.0.1` do PC:
+Para o smoke test em celular físico **sem** expor o backend na LAN, tunele a
+porta `8102` do aparelho para o `127.0.0.1` do PC pelo cabo USB:
 
 ```bash
 adb reverse tcp:8102 tcp:8102
 ```
 
-Com o reverse ativo, configure a tela **API Host** para `http://127.0.0.1:8102`
-(o tráfego do aparelho é encaminhado para o backend local do PC pelo cabo USB).
+Com o reverse ativo, selecione o preset **Dispositivo físico (USB)**
+(`http://127.0.0.1:8102`) em **Conta → Configurações → Conexão avançada**.
+Toque em **Testar conexão** para confirmar o acesso aos serviços.
 
 ---
 

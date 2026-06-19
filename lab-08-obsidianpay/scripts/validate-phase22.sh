@@ -15,7 +15,7 @@
 #   D. Workflow: mira o gradlew real do Lab 08 (lab-08-obsidianpay/android-app).
 #   E. Workflow: builda o APK debug (assembleDebug, --no-daemon).
 #   F. Workflow: verifica a existência do APK e falha se ausente.
-#   G. Workflow: cria o APK renomeado esperado (ObsidianPay-Lab08-v1.0.0-rc1.apk).
+#   G. Workflow: cria o APK renomeado esperado (ObsidianPay-Lab08-v1.0.0-rc2.apk).
 #   H. Workflow: gera o arquivo .sha256.
 #   I. Workflow: faz upload apenas do APK e do checksum (sem caches/fonte/backend).
 #   J. Workflow: NÃO cria release nem push de tag; não expõe segredos.
@@ -49,8 +49,8 @@ APP_README="android-app/README.md"
 DOWNLOAD="DOWNLOAD.md"
 PKG="scripts/package-android-apk.sh"
 
-ARTIFACT_APK="ObsidianPay-Lab08-v1.0.0-rc1.apk"
-ARTIFACT_NAME="obsidianpay-lab08-v1.0.0-rc1"
+ARTIFACT_APK="ObsidianPay-Lab08-v1.0.0-rc2.apk"
+ARTIFACT_NAME="obsidianpay-lab08-v1.0.0-rc2"
 
 pass() { printf '  \033[32m[PASS]\033[0m %s\n' "$1"; }
 warn() { printf '  \033[33m[WARN]\033[0m %s\n' "$1"; }

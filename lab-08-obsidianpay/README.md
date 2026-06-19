@@ -14,16 +14,27 @@ teste de runtime **ainda não está concluído**.
 ## 📥 Download e status do APK
 
 > **APK estável: ainda NÃO publicado.** O que existe hoje é um **candidato a QA
-> (`v1.0.0-rc1`)**, pendente de aprovação em **celular físico**.
+> (`v1.0.0-rc2`)**, pendente de aprovação em **celular físico**.
 
 A **Fase 22A** adiciona o **pipeline automatizado de build** do APK via GitHub
 Actions ([`.github/workflows/lab08-android-apk.yml`](../.github/workflows/lab08-android-apk.yml)),
-que gera o artefato candidato `ObsidianPay-Lab08-v1.0.0-rc1.apk` (+ `.sha256`)
+que gera o artefato candidato `ObsidianPay-Lab08-v1.0.0-rc2.apk` (+ `.sha256`)
 para o smoke test em dispositivo físico. A **publicação estável** ocorrerá apenas
 **depois** que esse smoke test passar.
 
 - **Como baixar, verificar o SHA256 e instalar:** veja **[DOWNLOAD.md](./DOWNLOAD.md)**.
 - Build manual no Android Studio: [docs/ANDROID-BUILD-CHECKLIST.md](./docs/ANDROID-BUILD-CHECKLIST.md).
+
+> **Fase 23A — redesign de UI/UX + RC2.** O app Android foi redesenhado como um
+> produto fintech coeso (Material 3, tema escuro "obsidian", navegação por abas
+> Início / Transferir / Cartões / Segurança / Conta), preservando integralmente
+> todas as vulnerabilidades intencionais, componentes exportados, deep links,
+> WebView/bridge, armazenamento inseguro, biometria, detecção de root/emulador,
+> rede/pinning e o contrato da Final Challenge Chain. O candidato passou de `rc1`
+> para **`v1.0.0-rc2`** (`versionCode 2`). A configuração de rede agora usa
+> **presets** (emulador `10.0.2.2:8102`, dispositivo físico via `adb reverse`
+> `127.0.0.1:8102`, ou endpoint personalizado) — o app **não** usa mais nenhum
+> default de runtime na porta `8080`.
 
 ---
 
@@ -171,7 +182,7 @@ Use **guest / guest123** no app e em `POST /api/mobile/login`.
   backend).
 - **Distribuição do APK (Fase 22A):** o GitHub passa a ser o ponto oficial de
   download. O workflow **Lab 08 Android APK** gera um **candidato a QA**
-  (`ObsidianPay-Lab08-v1.0.0-rc1.apk` + `.sha256`) como artefato do GitHub
+  (`ObsidianPay-Lab08-v1.0.0-rc2.apk` + `.sha256`) como artefato do GitHub
   Actions. Veja **[DOWNLOAD.md](./DOWNLOAD.md)**.
 - **APK estável:** **ainda NÃO publicado.** A **validação em celular físico está
   em andamento**; o teste de runtime ponta a ponta **ainda não está concluído**.

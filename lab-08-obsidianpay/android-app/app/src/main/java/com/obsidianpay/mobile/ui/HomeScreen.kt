@@ -2,13 +2,24 @@ package com.obsidianpay.mobile.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.SupportAgent
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,16 +28,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.obsidianpay.mobile.ObsidianScaffold
-import com.obsidianpay.mobile.ResponseBox
 import com.obsidianpay.mobile.Screen
 import com.obsidianpay.mobile.api.ApiClient
 import com.obsidianpay.mobile.api.ApiResult
+import com.obsidianpay.mobile.api.Receipt
 import com.obsidianpay.mobile.api.UserProfile
 import com.obsidianpay.mobile.storage.InsecureSessionStore
 import com.obsidianpay.mobile.storage.LocalCacheManager
+import com.obsidianpay.mobile.ui.components.ActivityRow
+import com.obsidianpay.mobile.ui.components.QuickAction
+import com.obsidianpay.mobile.ui.components.SectionHeader
+import com.obsidianpay.mobile.ui.components.StatusPill
+import com.obsidianpay.mobile.ui.components.StatusTone
+import com.obsidianpay.mobile.ui.components.SurfaceCard
+import com.obsidianpay.mobile.ui.components.VSpace
+import com.obsidianpay.mobile.ui.components.formatBrl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,117 +54,170 @@ import org.json.JSONObject
 
 @Composable
 fun HomeScreen(
+    modifier: Modifier,
     apiClient: ApiClient,
     store: InsecureSessionStore,
     cache: LocalCacheManager,
     onNavigate: (Screen) -> Unit,
-    onLogout: () -> Unit,
 ) {
     var profile by remember { mutableStateOf<UserProfile?>(null) }
-    var status by remember { mutableStateOf("") }
-    var configText by remember { mutableStateOf("") }
+    var receipts by remember { mutableStateOf<List<Receipt>>(emptyList()) }
+    var refreshing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val token = store.getToken()
 
-    // Hydrate the header from the locally cached profile on first show.
+    fun refresh() {
+        if (token == null || refreshing) return
+        refreshing = true
+        scope.launch {
+            val pr = withContext(Dispatchers.IO) { apiClient.getProfile(token) }
+            if (pr is ApiResult.Success) {
+                profile = pr.data
+                cache.cacheProfile(pr.rawBody)
+            }
+            val rc = withContext(Dispatchers.IO) { apiClient.getReceipts(token) }
+            if (rc is ApiResult.Success) {
+                receipts = rc.data
+                cache.cacheReceiptList(rc.rawBody)
+            }
+            refreshing = false
+        }
+    }
+
+    // Hydrate from the local cache immediately, then refresh from the network.
     LaunchedEffect(Unit) {
         val cached = store.getRawProfileJson()
         if (cached != null && profile == null) {
             runCatching { profile = UserProfile.fromJson(JSONObject(cached)) }
         }
+        refresh()
     }
 
-    ObsidianScaffold(title = "Início") { modifier ->
-        Column(
-            modifier = modifier.fillMaxWidth().padding(16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+    val greetingName = profile?.displayName ?: profile?.username ?: store.getUsername() ?: "cliente"
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        VSpace(4)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Usuário: ${profile?.username ?: store.getUsername() ?: "-"}")
-                    Text("Papel: ${profile?.role ?: store.getRole() ?: "-"}")
-                    Text("Plano: ${profile?.plan ?: store.getPlan() ?: "-"}")
-                    Text("Limite diário: ${profile?.dailyLimit?.toString() ?: store.getDailyLimit() ?: "-"}")
-                    Text("Saldo (BRL): ${profile?.balanceBRL?.toString() ?: "-"}")
+            Column {
+                Text("Olá,", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(greetingName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            }
+            IconButton(onClick = { refresh() }) {
+                Icon(Icons.Filled.Refresh, contentDescription = "Atualizar", tint = MaterialTheme.colorScheme.secondary)
+            }
+        }
+
+        // --- Balance card -------------------------------------------------------
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(22.dp),
+            color = MaterialTheme.colorScheme.primaryContainer,
+            tonalElevation = 4.dp,
+        ) {
+            Column(Modifier.padding(20.dp)) {
+                Text(
+                    "Saldo disponível",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                )
+                VSpace(6)
+                Text(
+                    formatBrl(profile?.balanceBRL),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                VSpace(14)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatusPill(
+                        text = "Plano ${profile?.plan ?: store.getPlan() ?: "—"}",
+                        tone = StatusTone.NEUTRAL,
+                    )
+                    val kyc = profile?.kycApproved
+                    StatusPill(
+                        text = if (kyc == true) "Conta verificada" else "Verificação pendente",
+                        tone = if (kyc == true) StatusTone.POSITIVE else StatusTone.CAUTION,
+                    )
                 }
             }
+        }
 
-            Button(
-                onClick = {
-                    if (token == null) {
-                        status = "Sessão ausente."
-                        return@Button
+        // --- Quick actions ------------------------------------------------------
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            QuickAction(Icons.Filled.SwapHoriz, "Transferir", { onNavigate(Screen.Transfer) }, Modifier.weight(1f))
+            QuickAction(Icons.Filled.QrCodeScanner, "Pagar", { onNavigate(Screen.Qr) }, Modifier.weight(1f))
+            QuickAction(Icons.Filled.CreditCard, "Cartões", { onNavigate(Screen.Cards) }, Modifier.weight(1f))
+            QuickAction(Icons.Filled.SupportAgent, "Ajuda", { onNavigate(Screen.Support) }, Modifier.weight(1f))
+        }
+
+        // --- Security status shortcut ------------------------------------------
+        Surface(
+            onClick = { onNavigate(Screen.Security) },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+        ) {
+            Row(
+                Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Icon(Icons.Filled.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                Column(Modifier.weight(1f)) {
+                    Text("Central de segurança", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Revise o status do dispositivo, o cofre e a proteção da conta.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                StatusPill("Ativa", StatusTone.POSITIVE)
+            }
+        }
+
+        // --- Recent activity ----------------------------------------------------
+        SectionHeader(
+            title = "Atividade recente",
+            actionLabel = "Ver tudo",
+            onAction = { onNavigate(Screen.Receipts) },
+        )
+        SurfaceCard {
+            if (receipts.isEmpty()) {
+                Text(
+                    if (refreshing) "Carregando sua atividade..." else "Nenhuma movimentação recente.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                receipts.take(4).forEachIndexed { i, r ->
+                    val credit = r.type?.contains("credit", true) == true ||
+                        r.type?.contains("received", true) == true
+                    ActivityRow(
+                        title = r.counterparty ?: "Movimentação",
+                        subtitle = "${r.type ?: "transação"} · ${(r.createdAt ?: "").take(10)}",
+                        amount = formatBrl(r.amountBRL),
+                        amountPositive = credit,
+                        statusLabel = r.status,
+                    )
+                    if (i < minOf(3, receipts.size - 1)) {
+                        androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                     }
-                    status = "Atualizando perfil..."
-                    scope.launch {
-                        val res = withContext(Dispatchers.IO) { apiClient.getProfile(token) }
-                        when (res) {
-                            is ApiResult.Success -> {
-                                profile = res.data
-                                cache.cacheProfile(res.rawBody)
-                                status = "Perfil atualizado."
-                            }
-                            is ApiResult.Error -> status = "Erro: ${res.message}"
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Atualizar perfil") }
-
-            OutlinedButton(onClick = { onNavigate(Screen.Receipts) }, modifier = Modifier.fillMaxWidth()) { Text("Recibos") }
-            OutlinedButton(onClick = { onNavigate(Screen.Cards) }, modifier = Modifier.fillMaxWidth()) { Text("Cartões") }
-            OutlinedButton(onClick = { onNavigate(Screen.Support) }, modifier = Modifier.fillMaxWidth()) { Text("Suporte") }
-            OutlinedButton(onClick = { onNavigate(Screen.Transfer) }, modifier = Modifier.fillMaxWidth()) { Text("Prévia de transferência") }
-            OutlinedButton(onClick = { onNavigate(Screen.Qr) }, modifier = Modifier.fillMaxWidth()) { Text("QR Payment") }
-
-            OutlinedButton(
-                onClick = {
-                    status = "Buscando config..."
-                    scope.launch {
-                        val res = withContext(Dispatchers.IO) { apiClient.getConfig(token) }
-                        when (res) {
-                            is ApiResult.Success -> {
-                                configText = res.data.raw
-                                cache.cacheConfig(res.rawBody)
-                                status = "Config carregada."
-                            }
-                            is ApiResult.Error -> status = "Erro: ${res.message}"
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Configuração") }
-
-            // Routine device security/attestation check.
-            OutlinedButton(onClick = { onNavigate(Screen.DeviceTrust) }, modifier = Modifier.fillMaxWidth()) { Text("Device Trust") }
-
-            // Environment / risk check (Phase 9).
-            OutlinedButton(onClick = { onNavigate(Screen.SecurityCheck) }, modifier = Modifier.fillMaxWidth()) { Text("Security Check") }
-
-            // Secure Vault (Phase 10): local auth / biometric gate.
-            OutlinedButton(onClick = { onNavigate(Screen.Vault) }, modifier = Modifier.fillMaxWidth()) { Text("Secure Vault") }
-
-            // API host override (Phase 11): switch between emulator and physical device.
-            OutlinedButton(onClick = { onNavigate(Screen.ApiHost) }, modifier = Modifier.fillMaxWidth()) { Text("API Host") }
-
-            // App Integrity (Phase 12): NativeGate / TamperCheck / attestation.
-            OutlinedButton(onClick = { onNavigate(Screen.Integrity) }, modifier = Modifier.fillMaxWidth()) { Text("App Integrity") }
-
-            // Internal support/dev tooling — local state inspector.
-            OutlinedButton(onClick = { onNavigate(Screen.LocalState) }, modifier = Modifier.fillMaxWidth()) { Text("Local State") }
-            OutlinedButton(
-                onClick = {
-                    cache.clearLocalArtifacts()
-                    cache.addEvent("clear_local_data", "home")
-                    status = "Dados locais limpos."
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Clear Local Data") }
-
-            Button(onClick = onLogout, modifier = Modifier.fillMaxWidth()) { Text("Sair") }
-
-            if (status.isNotBlank()) Text(status)
-            ResponseBox(configText)
+                }
+            }
         }
     }
 }

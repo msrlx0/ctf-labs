@@ -19,7 +19,7 @@ fallback Kotlin quando a biblioteca nativa está ausente.
 > "API Host" (celular físico). Veja a nota de dev abaixo.
 >
 > **APK estável: ainda NÃO publicado.** O pipeline de build (Fase 22A) gera um
-> **APK candidato a QA** (`ObsidianPay-Lab08-v1.0.0-rc1.apk`), pendente de
+> **APK candidato a QA** (`ObsidianPay-Lab08-v1.0.0-rc2.apk`), pendente de
 > validação em celular físico. Download e instalação: **[../DOWNLOAD.md](../DOWNLOAD.md)**.
 
 ---
@@ -39,8 +39,8 @@ O projeto é a **fonte da verdade** dos requisitos abaixo (ver
 | `minSdk` | **24** (Android 7.0) |
 | `applicationId` (release) | `com.obsidianpay.mobile` |
 | `applicationId` (debug) | `com.obsidianpay.mobile.debug` (sufixo `.debug`) |
-| `versionCode` / `versionName` | `1` / `0.3.0-phase3` |
-| UI | Jetpack Compose (BOM `2024.06.00`), Material 3 |
+| `versionCode` / `versionName` | `2` / `1.0.0-rc2` |
+| UI | Jetpack Compose (BOM `2024.06.00`), Material 3 (tema escuro "obsidian", navegação por abas) |
 | HTTP | OkHttp `4.12.0` |
 
 Ferramentas: **Android Studio** (recente) **ou** Gradle + Android SDK instalados;
@@ -67,8 +67,11 @@ curl -s http://127.0.0.1:8102/health
 ## 3. Use o app
 
 - Login já vem preenchido com `guest` / `guest123` para teste rápido.
-- Navegue por: Início, Recibos, Cartões, Suporte, Prévia de transferência e
-  Configuração.
+- A navegação principal usa **abas inferiores**: **Início** (dashboard com saldo,
+  ações rápidas e atividade), **Transferir**, **Cartões**, **Segurança** (central
+  de segurança) e **Conta** (perfil, ajuda e **Configurações**).
+- A configuração de conexão (emulador ↔ dispositivo físico) fica em
+  **Conta → Configurações → Conexão avançada**, com presets persistentes.
 
 ---
 
@@ -102,7 +105,7 @@ APK não roda — use o Android Studio, que provisiona o SDK automaticamente.
 O workflow **Lab 08 Android APK**
 ([`.github/workflows/lab08-android-apk.yml`](../../.github/workflows/lab08-android-apk.yml))
 roda exatamente esse build, copia/renomeia o `app-debug.apk` para
-**`ObsidianPay-Lab08-v1.0.0-rc1.apk`**, gera o `.sha256` e publica os dois como
+**`ObsidianPay-Lab08-v1.0.0-rc2.apk`**, gera o `.sha256` e publica os dois como
 artefato do GitHub Actions. O helper local
 [`../scripts/package-android-apk.sh`](../scripts/package-android-apk.sh) faz o
 mesmo empacotamento a partir de um build local. Download e verificação em

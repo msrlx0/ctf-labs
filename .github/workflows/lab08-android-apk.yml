@@ -15,8 +15,8 @@ permissions:
 env:
   LAB_DIR: lab-08-obsidianpay
   ANDROID_APP_DIR: lab-08-obsidianpay/android-app
-  ARTIFACT_APK: ObsidianPay-Lab08-v1.0.0-rc1.apk
-  ARTIFACT_NAME: obsidianpay-lab08-v1.0.0-rc1
+  ARTIFACT_APK: ObsidianPay-Lab08-v1.0.0-rc2.apk
+  ARTIFACT_NAME: obsidianpay-lab08-v1.0.0-rc2
 
 jobs:
   build-debug-apk:

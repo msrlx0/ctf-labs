@@ -7,7 +7,7 @@
 # local já existente:
 #   1. localiza o APK debug real (app/build/outputs/apk/debug/app-debug.apk);
 #   2. falha se o APK não existir (não dispara build sozinho);
-#   3. copia/renomeia para ObsidianPay-Lab08-v1.0.0-rc1.apk em um diretório de
+#   3. copia/renomeia para ObsidianPay-Lab08-v1.0.0-rc2.apk em um diretório de
 #      distribuição local IGNORADO pelo Git (android-app/dist/);
 #   4. gera o arquivo .sha256;
 #   5. imprime caminhos finais, tamanho e checksum.
@@ -24,7 +24,7 @@ LAB_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 APP_DIR="$LAB_DIR/android-app"
 SRC_APK="$APP_DIR/app/build/outputs/apk/debug/app-debug.apk"
 DIST_DIR="$APP_DIR/dist"
-ARTIFACT_APK="ObsidianPay-Lab08-v1.0.0-rc1.apk"
+ARTIFACT_APK="ObsidianPay-Lab08-v1.0.0-rc2.apk"
 
 err() { printf '\033[31m[ERRO]\033[0m %s\n' "$1" >&2; }
 info() { printf '\033[36m[*]\033[0m %s\n' "$1"; }
